@@ -95,8 +95,9 @@ foto en un vector y se compara con las fotos de referencia de cada producto.
 2. **Retirar.** Botón azul de la cámara → encuadra el producto en el marco → foto. Si la app está
    segura, propone el producto y basta con «Confirmar retirada». Si no, dice «No estoy seguro» y
    enseña las alternativas; también se puede buscar a mano.
-3. **Aprende.** Al confirmar una retirada reconocida con seguridad, guarda esa foto como referencia
-   (se puede desactivar en Ajustes). Máximo 20 fotos por producto.
+3. **Aprende.** Al confirmar una retirada guarda esa foto como referencia del producto confirmado,
+   también cuando se ha corregido con «¿No es este?» o a mano (se puede desmarcar cada vez o
+   desactivar en Ajustes). Máximo 20 fotos por producto.
 4. **Calibrar.** En Ajustes → Reconocimiento, activa el *modo diagnóstico*: tras cada foto se ven las
    puntuaciones de los 5 mejores productos. Si confunde productos, sube el umbral; si duda con
    productos que acierta, bájalo.
