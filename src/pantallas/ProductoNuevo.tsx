@@ -19,12 +19,14 @@ export function ProductoNuevo() {
         <FormularioProducto
           valoresIniciales={VALORES_PRODUCTO_VACIOS}
           esAlta
-          textoGuardar="Dar de alta"
+          textoGuardar="Dar de alta y hacer fotos"
           alGuardar={async (datos) => {
             const producto = await repo.crearProducto(datos, ajustes.usuario)
-            // La etapa 3 llevará de aquí directamente a hacer las fotos de referencia.
+            // Se pasa directamente a hacer las fotos de referencia (§7). La ficha queda detrás:
+            // al terminar las fotos se vuelve a ella.
             navegar({ pantalla: 'producto', id: producto.id }, { reemplazar: true })
-            mostrarAviso({ texto: `${producto.codigo} dado de alta. Falta hacerle las fotos de referencia.` })
+            navegar({ pantalla: 'producto-fotos', id: producto.id })
+            mostrarAviso({ texto: `${producto.codigo} dado de alta. Ahora, sus fotos de referencia.` })
           }}
         />
       )}

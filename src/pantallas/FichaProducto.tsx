@@ -9,11 +9,14 @@ import {
   conPunto,
   formatearCantidadConSigno,
   formatearDiaMes,
+  formatearFechaHora,
   formatearMesAnio,
   formatearMomento,
   formatearNumero,
 } from '../dominio/formato'
 import { describirMovimiento } from '../dominio/movimientos'
+import { MAX_FOTOS_POR_PRODUCTO } from '../datos/StockRepository'
+import { FOTOS_MINIMAS, FOTOS_RECOMENDADAS, objetivoFotos } from '../reconocimiento/fotos'
 import { lotesCaducados } from '../dominio/resumen'
 import { leerNumero, numeroParaCampo } from '../dominio/numeros'
 import { cantidadDeAjuste, estaBajoMinimo } from '../dominio/stock'
@@ -21,13 +24,10 @@ import { ubicacionCompleta } from '../dominio/ubicacion'
 import { CabeceraVolver } from '../ui/CabeceraVolver'
 import { CambioStock } from '../ui/CambioStock'
 import { Dialogo } from '../ui/Dialogo'
-import { EnConstruccion } from '../ui/EnConstruccion'
 import { Icono } from '../ui/Icono'
 import { PantallaCompleta } from '../ui/Pantalla'
 import './FichaProducto.css'
 
-/** Fotos que se recomiendan por producto (CLAUDE.md §5: entre 5 y 10). La galería muestra «n / 10». */
-const FOTOS_RECOMENDADAS = 10
 const MOVIMIENTOS_INICIALES = 15
 const MOTIVOS_AJUSTE = ['Recuento', 'Rotura', 'Caducado', 'Corrección de un error']
 
@@ -146,7 +146,7 @@ export function FichaProducto({ id }: { id: string }) {
               </button>
             </div>
 
-            <GaleriaFotos fotos={datos.fotos} />
+            <GaleriaFotos productoId={id} fotos={datos.fotos} />
 
             {producto.notas && (
               <section className="seccion" aria-labelledby="ficha-notas">
@@ -277,8 +277,24 @@ function DatosProducto({
   )
 }
 
-function GaleriaFotos({ fotos }: { fotos: FotoReferencia[] }) {
-  const huecos = Math.max(0, FOTOS_RECOMENDADAS - fotos.length - 1)
+function GaleriaFotos({ productoId, fotos }: { productoId: string; fotos: FotoReferencia[] }) {
+  const { repo } = useServicios()
+  const [vista, setVista] = useState<FotoReferencia | null>(null)
+  const objetivo = objetivoFotos(fotos.length)
+  const huecos = Math.max(0, objetivo - fotos.length - 1)
+  // Ordenadas de la más antigua a la más reciente, como se hicieron.
+  const ordenadas = [...fotos].sort((a, b) => a.creadoEn.localeCompare(b.creadoEn))
+
+  async function borrar(foto: FotoReferencia) {
+    setVista(null)
+    try {
+      await repo.borrarFoto(foto.id)
+      mostrarAviso({ texto: 'Foto borrada.' })
+    } catch (error) {
+      mostrarAviso({ texto: mensajeDeError(error) })
+    }
+  }
+
   return (
     <section className="seccion galeria" aria-labelledby="ficha-fotos">
       <div className="galeria__cabecera">
@@ -286,42 +302,71 @@ function GaleriaFotos({ fotos }: { fotos: FotoReferencia[] }) {
           Fotos de reconocimiento
         </h2>
         <span className="galeria__contador">
-          {fotos.length} / {FOTOS_RECOMENDADAS}
+          {fotos.length} / {objetivo}
         </span>
       </div>
       <div className="galeria__rejilla">
-        {fotos.map((foto) => (
-          <Miniatura key={foto.id} foto={foto} />
+        {ordenadas.map((foto, i) => (
+          <button
+            key={foto.id}
+            type="button"
+            className="galeria__foto"
+            aria-label={`Ver la foto ${i + 1}`}
+            onClick={() => setVista(foto)}
+          >
+            <ImagenBlob blob={foto.miniatura} alt="" />
+          </button>
         ))}
-        <button type="button" className="galeria__anadir" aria-label="Añadir fotos (llega en la etapa 3)" disabled>
-          <Icono nombre="mas" tamano={18} grosor={2} />
-        </button>
+        {fotos.length < MAX_FOTOS_POR_PRODUCTO && (
+          <Enlace ruta={{ pantalla: 'producto-fotos', id: productoId }} className="galeria__anadir" aria-label="Añadir fotos">
+            <Icono nombre="mas" tamano={18} grosor={2} />
+          </Enlace>
+        )}
         {Array.from({ length: huecos }, (_, i) => (
           <span key={i} className="galeria__hueco" aria-hidden="true" />
         ))}
       </div>
-      <p className="texto-secundario">Distintos ángulos y luces mejoran el reconocimiento.</p>
-      <EnConstruccion etapa={3}>Hacer las fotos de referencia con la cámara.</EnConstruccion>
+      <p className="texto-secundario">
+        {fotos.length < FOTOS_MINIMAS
+          ? `Haz al menos ${FOTOS_MINIMAS} fotos, mejor ${FOTOS_RECOMENDADAS}, desde distintos ángulos y con distinta luz.`
+          : 'Distintos ángulos y luces mejoran el reconocimiento.'}
+      </p>
+
+      <Dialogo abierto={vista !== null} alCerrar={() => setVista(null)} titulo="Foto de reconocimiento">
+        {vista && (
+          <>
+            <ImagenBlob blob={vista.miniatura} alt="Foto de reconocimiento ampliada" className="galeria__ampliada" />
+            <p className="texto-secundario">
+              {vista.origen === 'alta' ? 'Hecha a propósito' : 'Guardada al confirmar una retirada'} el{' '}
+              <span className="mono">{formatearFechaHora(vista.creadoEn)}</span>.
+            </p>
+            <div className="hoja__acciones">
+              <button type="button" className="boton" onClick={() => setVista(null)}>
+                Cerrar
+              </button>
+              <button type="button" className="boton boton--oscuro" onClick={() => void borrar(vista)}>
+                Borrar foto
+              </button>
+            </div>
+          </>
+        )}
+      </Dialogo>
     </section>
   )
 }
 
-function Miniatura({ foto }: { foto: FotoReferencia }) {
-  // La URL de la imagen vive lo mismo que el <img>: se libera al quitarlo o al cambiar de foto.
+/** Imagen guardada como Blob. La URL vive lo mismo que el <img>: se libera al quitarlo o al cambiar. */
+function ImagenBlob({ blob, alt, className }: { blob: Blob; alt: string; className?: string }) {
   const ponerImagen = useCallback(
     (img: HTMLImageElement | null) => {
       if (!img) return
-      const url = URL.createObjectURL(foto.miniatura)
+      const url = URL.createObjectURL(blob)
       img.src = url
       return () => URL.revokeObjectURL(url)
     },
-    [foto.miniatura],
+    [blob],
   )
-  return (
-    <span className="galeria__foto">
-      <img ref={ponerImagen} alt={foto.origen === 'alta' ? 'Foto de referencia' : 'Foto guardada al retirar'} />
-    </span>
-  )
+  return <img ref={ponerImagen} alt={alt} className={className} />
 }
 
 function DialogoAjuste({ producto, abierto, alCerrar }: { producto: Producto; abierto: boolean; alCerrar: () => void }) {

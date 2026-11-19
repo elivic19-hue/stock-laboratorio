@@ -3,7 +3,9 @@ import { useServicios } from '../app/contexto'
 import { useAjustes, useConsulta } from '../app/hooks'
 import { navegar } from '../app/navegacion'
 import { consultarAlmacenamiento, type EstadoAlmacenamiento } from '../app/plataforma'
-import type { AjustesDispositivo } from '../datos/ajustes'
+import { AJUSTES_INICIALES, type AjustesDispositivo } from '../datos/ajustes'
+import { leerNumero, numeroParaCampo } from '../dominio/numeros'
+import { useEstadoModelo, type EstadoModelo } from '../reconocimiento/modelo'
 import { mensajeDeError } from '../dominio/errores'
 import { formatearFechaHora, formatearNumero, formatearTamano } from '../dominio/formato'
 import { CabeceraVolver } from '../ui/CabeceraVolver'
@@ -12,7 +14,7 @@ import { EnConstruccion } from '../ui/EnConstruccion'
 import { PantallaCompleta } from '../ui/Pantalla'
 import './Ajustes.css'
 
-/** Ajustes (sin maqueta). En la etapa 1: perfil, datos del móvil y borrado. */
+/** Ajustes (sin maqueta): perfil, reconocimiento, datos del móvil y borrado. */
 export function Ajustes() {
   const { repo, ajustes: almacen } = useServicios()
   const ajustes = useAjustes()
@@ -50,6 +52,8 @@ export function Ajustes() {
       <main className="contenido ajustes">
         {ajustes && <FormularioPerfil ajustes={ajustes} alGuardar={(cambios) => almacen.guardar(cambios)} />}
 
+        {ajustes && <FormularioReconocimiento ajustes={ajustes} alGuardar={(cambios) => almacen.guardar(cambios)} />}
+
         <section className="seccion" aria-labelledby="ajustes-datos">
           <h2 id="ajustes-datos" className="seccion__titulo">
             Datos en este móvil
@@ -72,7 +76,6 @@ export function Ajustes() {
           <h2 id="ajustes-proximamente" className="seccion__titulo">
             Próximamente
           </h2>
-          <EnConstruccion etapa={3}>Reconocimiento: umbral, temperatura y modo diagnóstico.</EnConstruccion>
           <EnConstruccion etapa={4}>
             Copia de seguridad: exportar e importar todos los datos (con fotos) en un archivo JSON.
           </EnConstruccion>
@@ -255,3 +258,148 @@ function DialogoBorrar({
     </Dialogo>
   )
 }
+
+function describirModelo(modelo: EstadoModelo): string {
+  switch (modelo.estado) {
+    case 'sin-cargar':
+    case 'cargando':
+      return 'Cargando el modelo…'
+    case 'error':
+      return modelo.mensaje
+    case 'listo':
+      return `Modelo listo (${modelo.motor === 'webgl' ? 'con la GPU' : modelo.motor}), cargado en ${formatearNumero(
+        Math.round(modelo.msCarga / 100) / 10,
+      )} s.`
+  }
+}
+
+function FormularioReconocimiento({
+  ajustes,
+  alGuardar,
+}: {
+  ajustes: AjustesDispositivo
+  alGuardar: (cambios: Partial<AjustesDispositivo>) => Promise<unknown>
+}) {
+  const modelo = useEstadoModelo()
+  const [umbral, setUmbral] = useState(numeroParaCampo(ajustes.umbral))
+  const [temperatura, setTemperatura] = useState(numeroParaCampo(ajustes.temperatura))
+  const [error, setError] = useState<string | null>(null)
+  const [guardado, setGuardado] = useState(false)
+
+  const valorUmbral = leerNumero(umbral)
+  const valorTemperatura = leerNumero(temperatura)
+  const hayCambios = valorUmbral !== ajustes.umbral || valorTemperatura !== ajustes.temperatura
+  const sonLosDeFabrica =
+    ajustes.umbral === AJUSTES_INICIALES.umbral && ajustes.temperatura === AJUSTES_INICIALES.temperatura
+
+  async function guardar(evento: FormEvent<HTMLFormElement>) {
+    evento.preventDefault()
+    if (valorUmbral === null || valorUmbral < 0 || valorUmbral > 1) {
+      setError('El umbral tiene que estar entre 0 y 1 (p. ej. 0,6).')
+      return
+    }
+    if (valorTemperatura === null || valorTemperatura <= 0 || valorTemperatura > 1) {
+      setError('La temperatura tiene que ser mayor que 0 y como mucho 1 (p. ej. 0,05).')
+      return
+    }
+    setError(null)
+    await alGuardar({ umbral: valorUmbral, temperatura: valorTemperatura })
+    setGuardado(true)
+  }
+
+  async function restaurar() {
+    setUmbral(numeroParaCampo(AJUSTES_INICIALES.umbral))
+    setTemperatura(numeroParaCampo(AJUSTES_INICIALES.temperatura))
+    setError(null)
+    await alGuardar({ umbral: AJUSTES_INICIALES.umbral, temperatura: AJUSTES_INICIALES.temperatura })
+    setGuardado(true)
+  }
+
+  return (
+    <form className="seccion" onSubmit={(e) => void guardar(e)} noValidate aria-labelledby="ajustes-reconocimiento">
+      <h2 id="ajustes-reconocimiento" className="seccion__titulo">
+        Reconocimiento
+      </h2>
+      <p className="texto-secundario" role="status">
+        {describirModelo(modelo)}
+      </p>
+      <div className="ajustes__pareja">
+        <label className="campo">
+          <span className="etiqueta">Umbral</span>
+          <input
+            className="campo__entrada campo__entrada--mono"
+            inputMode="decimal"
+            value={umbral}
+            onChange={(e) => {
+              setUmbral(e.target.value)
+              setGuardado(false)
+            }}
+            autoComplete="off"
+          />
+        </label>
+        <label className="campo">
+          <span className="etiqueta">Temperatura</span>
+          <input
+            className="campo__entrada campo__entrada--mono"
+            inputMode="decimal"
+            value={temperatura}
+            onChange={(e) => {
+              setTemperatura(e.target.value)
+              setGuardado(false)
+            }}
+            autoComplete="off"
+          />
+        </label>
+      </div>
+      <p className="campo__ayuda">
+        Umbral: puntuación mínima (de 0 a 1) para dar un producto por seguro; más alto, más veces dirá «No estoy
+        seguro». Temperatura: cuánto se separa el % del primero del de los demás; más baja, más separación. Calíbralos
+        con el modo diagnóstico.
+      </p>
+      {error && (
+        <p className="mensaje-error" role="alert">
+          {error}
+        </p>
+      )}
+      <div className="ajustes__guardar">
+        <button type="submit" className="boton boton--primario" disabled={!hayCambios}>
+          Guardar
+        </button>
+        <button type="button" className="boton" onClick={() => void restaurar()} disabled={sonLosDeFabrica && !hayCambios}>
+          Valores iniciales
+        </button>
+        <span className="texto-secundario" role="status">
+          {guardado && !hayCambios ? 'Guardado.' : ''}
+        </span>
+      </div>
+
+      <label className="opcion">
+        <input
+          type="checkbox"
+          checked={ajustes.guardarFotoAlConfirmar}
+          onChange={(e) => void alGuardar({ guardarFotoAlConfirmar: e.target.checked })}
+        />
+        <span className="opcion__texto">
+          <span className="opcion__titulo">Aprender de las retiradas</span>
+          <span className="opcion__detalle">
+            Al confirmar una retirada reconocida con seguridad, se propone guardar la foto como referencia.
+          </span>
+        </span>
+      </label>
+      <label className="opcion">
+        <input
+          type="checkbox"
+          checked={ajustes.modoDiagnostico}
+          onChange={(e) => void alGuardar({ modoDiagnostico: e.target.checked })}
+        />
+        <span className="opcion__texto">
+          <span className="opcion__titulo">Modo diagnóstico</span>
+          <span className="opcion__detalle">
+            Tras cada foto, enseña las puntuaciones de los 5 mejores productos y el tiempo de reconocimiento.
+          </span>
+        </span>
+      </label>
+    </form>
+  )
+}
+

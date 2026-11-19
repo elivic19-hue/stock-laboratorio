@@ -20,6 +20,7 @@ describe('rutas', () => {
       { pantalla: 'producto-nuevo' },
       { pantalla: 'producto', id: '4f1c2d3e-0000-4000-8000-000000000001' },
       { pantalla: 'producto-editar', id: '4f1c2d3e-0000-4000-8000-000000000001' },
+      { pantalla: 'producto-fotos', id: '4f1c2d3e-0000-4000-8000-000000000001' },
       { pantalla: 'ajustes' },
       { pantalla: 'no-encontrada' },
     ]

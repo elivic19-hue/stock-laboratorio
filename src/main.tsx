@@ -17,6 +17,7 @@ import { ProveedorServicios } from './app/ProveedorServicios'
 import { AlmacenAjustesLocal } from './datos/ajustes'
 import { BaseDatosStock } from './datos/db'
 import { LocalRepository } from './datos/LocalRepository'
+import { precargarModelo } from './reconocimiento/modelo'
 
 // Fase 1: todo en IndexedDB, en este móvil. En la fase 2 solo cambiará esta línea del repositorio.
 const baseDatos = new BaseDatosStock()
@@ -35,3 +36,7 @@ createRoot(raiz).render(
     </ProveedorServicios>
   </StrictMode>,
 )
+
+// El modelo de reconocimiento se carga al arrancar, con calentamiento, para que la cámara
+// responda enseguida (CLAUDE.md §5, paso 8).
+precargarModelo()

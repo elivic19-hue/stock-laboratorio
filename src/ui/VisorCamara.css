@@ -1,0 +1,228 @@
+/* Visor de cámara (maqueta diseno/Retirar.dc.html): fondo oscuro, marco cuadrado y disparador */
+
+.pantalla--visor {
+  height: 100dvh;
+  min-height: 0;
+  overflow: hidden;
+  background: var(--visor);
+  color: #ffffff;
+}
+
+.visor {
+  position: relative;
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  background-color: var(--visor);
+}
+
+.visor__video {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.visor__barra {
+  position: relative;
+  z-index: 2;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+  padding: calc(24px + env(safe-area-inset-top, 0px)) 16px 0;
+}
+
+.visor__boton,
+.visor__hueco {
+  width: var(--tactil);
+  height: var(--tactil);
+  flex-shrink: 0;
+}
+
+.visor__boton {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: none;
+  border-radius: 22px;
+  background: var(--sobre-visor);
+  color: #ffffff;
+  backdrop-filter: blur(6px);
+}
+
+.visor__boton[aria-pressed='true'] {
+  background: #ffffff;
+  color: var(--visor);
+}
+
+.visor :focus-visible {
+  outline-color: #ffffff;
+}
+
+.visor__titulo {
+  min-width: 0;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  font-size: 15px;
+  font-weight: 500;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.4);
+}
+
+.visor__zona {
+  position: relative;
+  z-index: 1;
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 20px;
+  padding: 16px 24px;
+}
+
+/* Marco cuadrado (§5). Fuera del marco la imagen se oscurece un poco. */
+.visor__marco {
+  position: relative;
+  width: min(72vw, 280px, 42dvh);
+  aspect-ratio: 1;
+  flex-shrink: 0;
+  color: #ffffff;
+  box-shadow: 0 0 0 100vmax rgba(14, 17, 20, 0.42);
+}
+
+.visor--compacto .visor__marco {
+  width: min(60vw, 230px, 30dvh);
+}
+
+.visor__marco svg {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+}
+
+.visor__congelada {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.visor__aviso {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: var(--fuente-mono);
+  font-size: 11px;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.visor__error {
+  max-width: 320px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 14px;
+  border-radius: var(--radio-campo);
+  background: var(--superficie);
+  color: var(--tinta);
+  font-size: 14px;
+  line-height: 1.45;
+}
+
+.visor__error-acciones {
+  display: flex;
+  gap: 8px;
+}
+
+.visor__pastilla {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 12px;
+  border-radius: 16px;
+  background: rgba(14, 17, 20, 0.6);
+  font-family: var(--fuente-mono);
+  font-size: 11px;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  backdrop-filter: blur(6px);
+}
+
+.visor__punto {
+  width: 7px;
+  height: 7px;
+  flex-shrink: 0;
+  border-radius: 4px;
+  background: var(--visor-punto);
+}
+
+.visor__controles {
+  position: relative;
+  z-index: 2;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
+  align-items: center;
+  gap: 12px;
+  padding: 12px 20px max(28px, calc(16px + env(safe-area-inset-bottom, 0px)));
+}
+
+.visor__lado {
+  display: flex;
+  align-items: center;
+  min-width: 0;
+}
+
+.visor__lado--derecha {
+  justify-content: flex-end;
+}
+
+.visor__disparador {
+  width: 76px;
+  height: 76px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  border: 3px solid #ffffff;
+  border-radius: 38px;
+  background: transparent;
+}
+
+.visor__disparador-centro {
+  width: 60px;
+  height: 60px;
+  border-radius: 30px;
+  background: #ffffff;
+}
+
+.visor__disparador:not(:disabled):active .visor__disparador-centro {
+  transform: scale(0.92);
+}
+
+.visor__disparador:disabled {
+  opacity: 0.4;
+}
+
+/* Botón de texto sobre el visor («Listo», «Buscar a mano») */
+.visor__texto-boton {
+  min-height: var(--tactil);
+  padding: 0 14px;
+  border: none;
+  border-radius: 22px;
+  background: var(--sobre-visor);
+  color: #ffffff;
+  font-size: 14px;
+  font-weight: 600;
+  backdrop-filter: blur(6px);
+}

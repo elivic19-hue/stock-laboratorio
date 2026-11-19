@@ -1,87 +1,258 @@
-/* Maqueta diseno/Retirar.dc.html: visor oscuro con marco cuadrado */
+/* Maqueta diseno/Retirar.dc.html: visor arriba y hoja blanca con el resultado */
 
-.pantalla--visor {
-  background: var(--visor);
-  color: #ffffff;
+.retirar--resultado .visor {
+  flex: 0 0 auto;
+  height: min(410px, 44dvh);
 }
 
-.visor {
+.retirar--resultado .visor__zona {
+  padding-bottom: 32px;
+}
+
+.hoja-resultado {
+  position: relative;
+  z-index: 2;
   flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  overscroll-behavior: contain;
   display: flex;
   flex-direction: column;
+  gap: 14px;
+  margin-top: -20px;
+  padding: 20px 20px max(24px, calc(12px + env(safe-area-inset-bottom, 0px)));
+  border-radius: 20px 20px 0 0;
+  background: var(--superficie);
+  color: var(--tinta);
 }
 
-.visor__barra {
+/* Con la hoja a altura fija y scroll, nada se encoge (la rejilla desaparecía) */
+.hoja-resultado > * {
+  flex-shrink: 0;
+}
+
+.hoja-resultado__fila {
   display: flex;
   justify-content: space-between;
   align-items: center;
   gap: 12px;
-  padding: calc(24px + env(safe-area-inset-top, 0px)) 16px 0;
 }
 
-.visor__boton,
-.visor__hueco {
-  width: var(--tactil);
-  height: var(--tactil);
-  flex-shrink: 0;
+.insignia-confianza {
+  padding: 3px 8px;
+  border-radius: var(--radio-codigo);
+  background: var(--accion-suave);
+  color: var(--accion-texto);
+  font-family: var(--fuente-mono);
+  font-size: 13px;
+  font-weight: 600;
 }
 
-.visor__boton {
+.hoja-resultado__producto {
   display: flex;
-  align-items: center;
-  justify-content: center;
-  border: none;
-  border-radius: 22px;
-  background: var(--sobre-visor);
-  color: #ffffff;
+  flex-direction: column;
+  gap: 4px;
 }
 
-.visor__boton:focus-visible {
-  outline-color: #ffffff;
+.hoja-resultado__titulo {
+  font-size: 22px;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+  line-height: 1.25;
 }
 
-.visor__titulo {
+.hoja-resultado__ubicacion {
+  font-family: var(--fuente-mono);
+  font-size: 12px;
+  text-transform: uppercase;
+  color: var(--tinta-2);
+}
+
+.hoja-resultado__duda {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+/* STOCK ACTUAL / TRAS RETIRAR */
+.ficha--retirar {
+  margin: 0;
+}
+
+.ficha--retirar dd {
+  margin: 0;
+}
+
+.ficha--retirar .ficha__valor {
+  font-size: 22px;
+}
+
+.ficha__celda--resaltada {
+  background: var(--fondo);
+}
+
+.hoja-resultado__etiqueta-cantidad {
   font-size: 15px;
   font-weight: 500;
 }
 
-.visor__zona {
-  flex: 1;
+/* Selector −/1/+ */
+.paso {
+  display: flex;
+  align-items: stretch;
+  overflow: hidden;
+  border: 1px solid var(--linea);
+  border-radius: var(--radio-campo);
+}
+
+.paso__boton {
+  width: 48px;
+  height: 46px;
+  border: none;
+  background: transparent;
+  color: var(--tinta);
+  font-size: 22px;
+}
+
+.paso__boton:disabled {
+  opacity: 0.35;
+}
+
+.paso__valor {
+  width: 56px;
+  padding: 0;
+  border: none;
+  border-inline: 1px solid var(--linea);
+  border-radius: 0;
+  background: transparent;
+  font-family: var(--fuente-mono);
+  font-size: 18px;
+  font-weight: 600;
+  text-align: center;
+}
+
+.paso__valor:focus-visible {
+  outline: 2px solid var(--accion);
+  outline-offset: -2px;
+}
+
+.paso__valor[aria-invalid='true'] {
+  box-shadow: inset 0 0 0 2px var(--tinta);
+}
+
+.casilla {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-height: var(--tactil);
+  font-size: 14px;
+}
+
+.casilla input {
+  width: 20px;
+  height: 20px;
+  margin: 0;
+  accent-color: var(--accion);
+}
+
+/* ¿No es este? */
+.hoja-resultado__alternativas {
   display: flex;
   flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  gap: 28px;
-  padding: 24px;
+  gap: 8px;
 }
 
-.visor__marco {
-  width: min(70vw, 260px);
-  aspect-ratio: 1;
-  color: #ffffff;
-}
-
-.visor__marco svg {
-  width: 100%;
-  height: 100%;
-}
-
-.visor__pastilla {
+.alternativas {
   display: flex;
+  gap: 8px;
+}
+
+.alternativas > * {
+  flex: 1;
+  min-width: 0;
+}
+
+.alternativas--lista {
+  flex-direction: column;
+}
+
+.alternativa {
+  min-height: var(--tactil);
+  display: flex;
+  justify-content: space-between;
   align-items: center;
   gap: 8px;
-  padding: 8px 12px;
-  border-radius: 16px;
-  background: var(--sobre-visor);
-  font-family: var(--fuente-mono);
-  font-size: 11px;
-  letter-spacing: 0.04em;
-  text-transform: uppercase;
+  padding: 0 12px;
+  border: 1px solid var(--linea);
+  border-radius: var(--radio-campo);
+  background: var(--superficie);
+  color: var(--tinta);
+  font-size: 13px;
+  text-align: left;
 }
 
-.visor__punto {
-  width: 7px;
-  height: 7px;
-  border-radius: 4px;
-  background: var(--visor-punto);
+.alternativas--lista .alternativa {
+  min-height: 52px;
+  font-size: 15px;
+}
+
+.alternativa__nombre {
+  min-width: 0;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+.alternativa__porcentaje {
+  flex-shrink: 0;
+  font-family: var(--fuente-mono);
+  color: var(--tinta-2);
+}
+
+.hoja-resultado__enlaces {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+/* Modo diagnóstico (Ajustes) */
+.diagnostico {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 12px;
+  border: 1px dashed var(--linea-hueco);
+  border-radius: var(--radio-campo);
+}
+
+.diagnostico__resumen {
+  font-size: 12px;
+  color: var(--tinta-2);
+}
+
+.diagnostico__tabla {
+  width: 100%;
+  border-collapse: collapse;
+  font-family: var(--fuente-mono);
+  font-size: 12px;
+  font-variant-numeric: tabular-nums;
+}
+
+.diagnostico__tabla th,
+.diagnostico__tabla td {
+  padding: 4px 6px;
+  border-bottom: 1px solid var(--linea-2);
+  text-align: right;
+  font-weight: 400;
+}
+
+.diagnostico__tabla th:first-child {
+  text-align: left;
+}
+
+.diagnostico__tabla thead th {
+  font-size: 10px;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: var(--tinta-2);
 }

@@ -7,6 +7,7 @@ import { Catalogo } from '../pantallas/Catalogo'
 import { EditarProducto } from '../pantallas/EditarProducto'
 import { Entrada } from '../pantallas/Entrada'
 import { FichaProducto } from '../pantallas/FichaProducto'
+import { FotosReferencia } from '../pantallas/FotosReferencia'
 import { NoEncontrada } from '../pantallas/NoEncontrada'
 import { ProductoNuevo } from '../pantallas/ProductoNuevo'
 import { Retirar } from '../pantallas/Retirar'
@@ -62,6 +63,8 @@ function Pantalla({ ruta }: { ruta: Ruta }) {
       return <FichaProducto id={ruta.id} />
     case 'producto-editar':
       return <EditarProducto id={ruta.id} />
+    case 'producto-fotos':
+      return <FotosReferencia id={ruta.id} />
     case 'ajustes':
       return <Ajustes />
     case 'no-encontrada':

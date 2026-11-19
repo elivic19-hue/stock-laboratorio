@@ -12,6 +12,7 @@ export type Ruta =
   | { pantalla: 'producto-nuevo' }
   | { pantalla: 'producto'; id: string }
   | { pantalla: 'producto-editar'; id: string }
+  | { pantalla: 'producto-fotos'; id: string }
   | { pantalla: 'ajustes' }
   | { pantalla: 'no-encontrada' }
 
@@ -53,7 +54,9 @@ export function leerRuta(hash: string): Ruta {
       if (segunda === undefined) return NO_ENCONTRADA
       if (segunda === 'nuevo') return tercera === undefined ? { pantalla: 'producto-nuevo' } : NO_ENCONTRADA
       if (tercera === undefined) return { pantalla: 'producto', id: segunda }
-      return tercera === 'editar' ? { pantalla: 'producto-editar', id: segunda } : NO_ENCONTRADA
+      if (tercera === 'editar') return { pantalla: 'producto-editar', id: segunda }
+      if (tercera === 'fotos') return { pantalla: 'producto-fotos', id: segunda }
+      return NO_ENCONTRADA
     default:
       return NO_ENCONTRADA
   }
@@ -79,6 +82,8 @@ export function hashDeRuta(ruta: Ruta): string {
       return `#/producto/${encodeURIComponent(ruta.id)}`
     case 'producto-editar':
       return `#/producto/${encodeURIComponent(ruta.id)}/editar`
+    case 'producto-fotos':
+      return `#/producto/${encodeURIComponent(ruta.id)}/fotos`
     case 'ajustes':
       return '#/ajustes'
     case 'no-encontrada':

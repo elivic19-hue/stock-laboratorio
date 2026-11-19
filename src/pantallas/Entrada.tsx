@@ -5,20 +5,17 @@ import { Enlace } from '../app/Enlace'
 import { useAjustes, useConsulta } from '../app/hooks'
 import { volver } from '../app/navegacion'
 import type { Pedido, Producto } from '../datos/tipos'
-import { coincideBusqueda } from '../dominio/busqueda'
 import { formatearEntradaMesAnio, leerMesAnio, yaCaducado } from '../dominio/caducidad'
 import { mensajeDeError } from '../dominio/errores'
 import { conPunto, formatearDiaMes, formatearNumero } from '../dominio/formato'
 import { leerNumero, numeroParaCampo, redondear } from '../dominio/numeros'
-import { efectoEntrada, estaBajoMinimo } from '../dominio/stock'
+import { efectoEntrada } from '../dominio/stock'
 import { ubicacionCorta } from '../dominio/ubicacion'
-import { Buscador } from '../ui/Buscador'
 import { CabeceraVolver } from '../ui/CabeceraVolver'
 import { CambioStock } from '../ui/CambioStock'
-import { Dialogo } from '../ui/Dialogo'
 import { Icono } from '../ui/Icono'
 import { PantallaCompleta } from '../ui/Pantalla'
-import '../ui/FilaProducto.css'
+import { SelectorProducto } from '../ui/SelectorProducto'
 import './Entrada.css'
 
 type CampoError = 'producto' | 'cantidad' | 'caducidad' | null
@@ -357,71 +354,5 @@ function MensajeError({ id, texto }: { id: string; texto: string }) {
       <Icono nombre="info" tamano={18} />
       {texto}
     </p>
-  )
-}
-
-function SelectorProducto({
-  abierto,
-  productos,
-  elegido,
-  alElegir,
-  alCerrar,
-}: {
-  abierto: boolean
-  productos: Producto[]
-  elegido: string | undefined
-  alElegir: (id: string) => void
-  alCerrar: () => void
-}) {
-  const [texto, setTexto] = useState('')
-  const lista = productos.filter((p) => coincideBusqueda(p, texto))
-
-  return (
-    <Dialogo
-      abierto={abierto}
-      alCerrar={() => {
-        setTexto('')
-        alCerrar()
-      }}
-      titulo="Elegir producto"
-    >
-      <Buscador
-        etiqueta="Buscar producto"
-        placeholder="Nombre, código o ubicación"
-        valor={texto}
-        alCambiar={setTexto}
-        className="buscador--claro"
-      />
-      {lista.length === 0 && <p className="texto-secundario">Ningún producto coincide con la búsqueda.</p>}
-      <ul className="lista-tarjeta selector-lista">
-        {lista.map((p) => (
-          <li key={p.id}>
-            <button
-              type="button"
-              className="selector-lista__opcion"
-              aria-current={p.id === elegido || undefined}
-              onClick={() => {
-                setTexto('')
-                alElegir(p.id)
-              }}
-            >
-              <span className="codigo-producto">{p.codigo}</span>
-              <span className="fila-producto__textos">
-                <span className="fila-producto__nombre">{p.nombre}</span>
-                <span className="fila-producto__linea">
-                  {p.formato} · {ubicacionCorta(p)}
-                </span>
-              </span>
-              <span className="fila-producto__derecha">
-                <span className={estaBajoMinimo(p) ? 'cantidad-fila cantidad-fila--bajo' : 'cantidad-fila'}>
-                  {formatearNumero(p.stockActual)} <span className="cantidad-fila__unidad">{p.unidadCorta}</span>
-                </span>
-                {estaBajoMinimo(p) && <span className="insignia-bajo-minimo">Bajo mín. {formatearNumero(p.stockMinimo)}</span>}
-              </span>
-            </button>
-          </li>
-        ))}
-      </ul>
-    </Dialogo>
   )
 }

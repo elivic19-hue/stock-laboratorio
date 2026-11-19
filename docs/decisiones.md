@@ -56,9 +56,9 @@ Si algo de aquí contradice CLAUDE.md, manda CLAUDE.md y hay que preguntar.
 | Duda | Qué hay ahora |
 | --- | --- |
 | 6. ¿Al «Marcar pedido» sale el producto de la lista y de los contadores? | Provisional: sí. Los contadores (celda «Bajo mínimo», barra y, más adelante, el icono) cuentan lo pendiente de pedir. |
-| 8. % de confianza con softmax: las alternativas salen bajas (no 71 % / 38 % como en la maqueta). | Se propone mantener el softmax (§5). |
-| 9. Cantidad por retirada (p. ej. bolsa de 100 tapones). | Se propone poder teclear la cantidad y un campo opcional «cantidad por retirada». |
-| 10. Fotos: la ficha muestra «n / 10» y el máximo es 20. | El repositorio ya aplica el máximo de 20; la galería se decide en la etapa 3. |
+| 8. % de confianza con softmax: las alternativas salen muy bajas (0–2 %, no 71 % / 38 % como en la maqueta). | Se mantiene el softmax de §5. Si prefieres que las alternativas se vean «comparables», se puede enseñar la puntuación bruta en los botones. |
+| 9. Cantidad por retirada (p. ej. bolsa de 100 tapones). | La cantidad se puede teclear (y −/+). Falta decidir el campo opcional «cantidad por retirada» por producto. |
+| 11. ¿Guardar como referencia la foto cuando el usuario corrige el producto («¿No es este?»)? | §5 dice solo con buena confianza, así que ahora no se ofrece. Esas fotos serían de las más útiles para aprender. |
 | ¿El móvil de prueba lo usará una persona o varias? | Sin respuesta: un usuario por móvil, que se cambia en Ajustes. |
 
 ## Etapa 2 (19/11/2026)
@@ -135,4 +135,48 @@ Si algo de aquí contradice CLAUDE.md, manda CLAUDE.md y hay que preguntar.
     junto con el resto de avisos.
 - El filtro de Stock pasa a ser «Caducados o caducan en menos de 30 días».
 - Datos de ejemplo: el ácido acético (R-031) tiene un lote caducado el mes pasado.
+
+## Etapa 3 (19/11/2026)
+
+### Modelo
+
+- `@tensorflow/tfjs` 4.22 y `@tensorflow-models/mobilenet` 2.1.1 (§3). MobileNet v2 1.0 a 224 px de
+  TF Hub (`google/imagenet/mobilenet_v2_100_224/classification/2`, Apache 2.0), con los pesos en
+  `public/models/` (14 MB, precargados por el service worker). `npm run modelo` los vuelve a bajar.
+- TensorFlow.js se importa bajo demanda: no retrasa el arranque de la app. El modelo se empieza a
+  cargar al abrir la app, cuando el navegador está libre, y se calienta con una inferencia vacía.
+- Embedding: `infer(img, true)` y normalización L2 propia (MobileNet no lo normaliza).
+
+### Reconocimiento
+
+- Puntuación del producto: media de sus 3 mejores similitudes coseno (§5). % de confianza: softmax
+  con la temperatura de Ajustes (0,05 por defecto).
+- «No estoy seguro» si la mejor puntuación no llega al umbral (0,6 por defecto) **o** si el segundo
+  está a menos de 0,03 del primero. Ese margen es fijo; si hace falta, se puede llevar a Ajustes.
+- Prueba en el ordenador con una cámara simulada y productos dibujados (6 fotos de referencia de 3
+  productos): acierta los dos productos conocidos con fotos nuevas (puntuación 0,95 y 0,91, frente a
+  0,38 y 0,65 del segundo) y duda con un objeto desconocido (0,45). Unos 30 ms por foto. Falta
+  calibrar con los productos reales en el móvil (etapa 5).
+
+### Pantallas
+
+- Visor: vídeo a pantalla completa con el marco cuadrado; fuera del marco se oscurece. Linterna solo
+  si el móvil la ofrece. Si no hay cámara o permiso, se explica por qué y se puede elegir una foto de
+  la galería (se usa el cuadrado central).
+- Retirar: tras la foto, el visor se encoge con la foto fija en el marco y aparece la hoja de la
+  maqueta. «¿No es este?» enseña las 2 alternativas siguientes; al elegir una, la retirada sigue
+  siendo «foto» con su %. «Buscar a mano» (también desde el visor, sin foto) registra una
+  `retirada_manual`. La cantidad no puede pasar del stock.
+- Tras confirmar se vuelve a la pantalla anterior con «Deshacer», que también borra la foto guardada
+  como referencia. Si la retirada deja el producto en su mínimo, el aviso lo dice y dura más (la
+  notificación del móvil llega en la etapa 4).
+- La foto se ofrece como referencia solo si el reconocimiento estaba seguro de ese mismo producto
+  (casilla marcada según Ajustes).
+- **Duda 10 (resuelta):** el contador cuenta sobre 10 (lo recomendado) hasta llegar a 10 y después
+  sobre 20 (el máximo). Al tocar una foto de la galería se ve en grande y se puede borrar.
+- Fotos de referencia: visor con el contador «6 / 10», la última foto hecha y «Listo». Indica qué
+  hacer en cada momento («cambia de ángulo y de luz…»). Las fotos guardadas al retirar dejan sitio a
+  las nuevas; con 20 hechas a propósito, no se pueden hacer más.
+- Ajustes → Reconocimiento: estado del modelo (GPU o no, tiempo de carga), umbral, temperatura,
+  «Aprender de las retiradas», modo diagnóstico y volver a los valores iniciales.
 

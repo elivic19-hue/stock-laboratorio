@@ -1,0 +1,26 @@
+/* Alta de fotos de referencia: contador «6 / 10» junto al disparador */
+
+.fotos-ref__contador {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-width: 0;
+}
+
+.fotos-ref__ultima {
+  width: 44px;
+  height: 44px;
+  flex-shrink: 0;
+  border: 2px solid #ffffff;
+  border-radius: var(--radio-control);
+  object-fit: cover;
+}
+
+.fotos-ref__numero {
+  font-family: var(--fuente-mono);
+  font-size: 18px;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.4);
+}

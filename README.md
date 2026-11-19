@@ -7,7 +7,7 @@ cuando un producto llega a su mínimo. Funciona sin conexión y no tiene ningún
 La especificación completa está en [CLAUDE.md](CLAUDE.md); las maquetas, en [diseno/](diseno/), y las
 decisiones tomadas por el camino, en [docs/decisiones.md](docs/decisiones.md).
 
-**Estado:** etapa 2 de 5 (Stock, Ficha, Catálogo/alta, Entrada y Caducidades). Fase 1: todos los datos se guardan solo en el móvil.
+**Estado:** etapa 3 de 5 (cámara y reconocimiento en el móvil). Fase 1: todos los datos se guardan solo en el móvil.
 
 ## Requisitos
 
@@ -84,6 +84,26 @@ Cuando se publica una versión nueva, la app muestra «Hay una versión nueva de
    Si falló porque el paso 2 no estaba hecho, hazlo y pulsa **Re-run jobs**.
 5. Cada `git push` a `main` pasa los tests y vuelve a publicarla.
 
+## Reconocimiento por foto
+
+Todo ocurre en el móvil, sin internet ni servicios de pago: MobileNet v2 (TensorFlow.js) convierte la
+foto en un vector y se compara con las fotos de referencia de cada producto.
+
+1. **Fotos de referencia.** En la ficha de cada producto, «+» en *Fotos de reconocimiento*. Haz entre
+   5 y 10, cambiando el ángulo, la distancia y la luz. Al dar de alta un producto se pasa directamente
+   a hacerlas.
+2. **Retirar.** Botón azul de la cámara → encuadra el producto en el marco → foto. Si la app está
+   segura, propone el producto y basta con «Confirmar retirada». Si no, dice «No estoy seguro» y
+   enseña las alternativas; también se puede buscar a mano.
+3. **Aprende.** Al confirmar una retirada reconocida con seguridad, guarda esa foto como referencia
+   (se puede desactivar en Ajustes). Máximo 20 fotos por producto.
+4. **Calibrar.** En Ajustes → Reconocimiento, activa el *modo diagnóstico*: tras cada foto se ven las
+   puntuaciones de los 5 mejores productos. Si confunde productos, sube el umbral; si duda con
+   productos que acierta, bájalo.
+
+Los pesos del modelo (14 MB) están en `public/models/` y la app los guarda para funcionar sin
+conexión desde la primera vez. Para volver a descargarlos: `npm run modelo`.
+
 ## Copias de seguridad
 
 En la fase 1 los datos **solo están en el móvil**. Se pierden si se pierde el móvil, si se borran los
@@ -105,6 +125,7 @@ datos del navegador o si se desinstala la app.
 | `npm run preview` | Sirve `dist/` con HTTPS en la red local |
 | `npm run preview:local` | Sirve `dist/` por HTTP solo en este ordenador (instalación y modo sin conexión) |
 | `npm run iconos` | Regenera los iconos PNG a partir del dibujo SVG (usa Edge o Chrome) |
+| `npm run modelo` | Vuelve a descargar los pesos de MobileNet v2 a `public/models/` |
 
 ## Estructura
 
@@ -115,9 +136,10 @@ src/
               (funciones puras, con tests)
   app/        arranque, navegación por #/rutas, hooks y avisos (versión nueva, «Deshacer»)
   ui/         tokens de diseño, estilos base, iconos y componentes comunes
+  reconocimiento/  modelo, cámara, recorte del marco y comparación de fotos (la comparación, con tests)
   pantallas/  una por pantalla
-public/       icono de la app (y en la etapa 3, el modelo de reconocimiento en public/models/)
-scripts/      generador de iconos
+public/       icono de la app y el modelo de reconocimiento (public/models/)
+scripts/      generador de iconos y descarga del modelo
 diseno/       maquetas de referencia
 docs/         decisiones tomadas durante el desarrollo
 ```
@@ -129,6 +151,6 @@ añadirá otra implementación sin tocarlas.
 
 1. Esqueleto: Vite, PWA, fuentes, tokens, navegación y repositorio local con datos de ejemplo. **Hecha.**
 2. Pantallas Stock, Ficha, Catálogo/alta y Entrada, con la lógica de stock y sus tests (más Caducidades). **Hecha.**
-3. Cámara y reconocimiento: fotos de referencia, retirada con foto y modo diagnóstico.
+3. Cámara y reconocimiento: fotos de referencia, retirada con foto y modo diagnóstico. **Hecha.**
 4. A pedir, avisos, compartir lista y copia de seguridad.
 5. Pulido visual, accesibilidad y prueba en móvil real.

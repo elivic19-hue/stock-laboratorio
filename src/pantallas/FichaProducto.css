@@ -123,6 +123,7 @@
 
 .galeria__foto {
   overflow: hidden;
+  padding: 0;
   border: 1px solid var(--tinta);
   background: var(--visor);
 }
@@ -144,8 +145,13 @@
   color: var(--accion);
 }
 
-.galeria__anadir:disabled {
-  opacity: 0.45;
+.galeria__ampliada {
+  display: block;
+  width: min(100%, 320px);
+  aspect-ratio: 1;
+  margin: 0 auto;
+  border-radius: var(--radio-campo);
+  object-fit: cover;
 }
 
 .galeria__hueco {
