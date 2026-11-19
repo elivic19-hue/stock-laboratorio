@@ -142,6 +142,25 @@
   font-weight: 600;
 }
 
+/* Lotes caducados: alarma en tinta (el naranja es solo para «bajo mínimo») */
+.resumen__celda--caducados {
+  background: var(--tinta);
+}
+
+.resumen__celda--caducados .resumen__etiqueta,
+.resumen__celda--caducados .resumen__valor,
+.resumen__celda--caducados .resumen__valor svg {
+  color: #ffffff;
+}
+
+.resumen__celda--caducados .resumen__valor {
+  font-weight: 600;
+}
+
+.stock-contenido > .banda-caducados {
+  margin-top: 12px;
+}
+
 .stock-busqueda {
   display: flex;
   gap: 8px;

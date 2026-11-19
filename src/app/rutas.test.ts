@@ -16,6 +16,7 @@ describe('rutas', () => {
       { pantalla: 'entrada' },
       { pantalla: 'entrada', productoId: '4f1c2d3e-0000-4000-8000-000000000001' },
       { pantalla: 'catalogo' },
+      { pantalla: 'caducidades' },
       { pantalla: 'producto-nuevo' },
       { pantalla: 'producto', id: '4f1c2d3e-0000-4000-8000-000000000001' },
       { pantalla: 'producto-editar', id: '4f1c2d3e-0000-4000-8000-000000000001' },

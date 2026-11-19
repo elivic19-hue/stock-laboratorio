@@ -648,3 +648,53 @@ body:has(.barra-accion) .aviso {
   font-weight: 600;
   color: var(--tinta);
 }
+
+/* ── Caducados (duda 7b): alarma en tinta, no en naranja (reservado a «bajo mínimo») ── */
+
+.insignia-caducado {
+  flex-shrink: 0;
+  padding: 2px 6px;
+  border-radius: var(--radio-insignia);
+  background: var(--tinta);
+  color: #ffffff;
+  font-family: var(--fuente-mono);
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+.banda-caducados {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-height: var(--tactil);
+  padding: 10px 12px;
+  border-radius: var(--radio-campo);
+  background: var(--tinta);
+  color: #ffffff;
+  font-size: 14px;
+  line-height: 1.35;
+  text-decoration: none;
+}
+
+.banda-caducados__texto {
+  flex: 1;
+}
+
+.banda-caducados__texto strong {
+  font-weight: 600;
+}
+
+.banda-caducados__ver {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.banda-caducados:focus-visible {
+  outline-color: var(--accion);
+}

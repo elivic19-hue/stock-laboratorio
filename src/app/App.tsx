@@ -2,6 +2,7 @@ import { useLayoutEffect } from 'react'
 import { Ajustes } from '../pantallas/Ajustes'
 import { APedir } from '../pantallas/APedir'
 import { Bienvenida } from '../pantallas/Bienvenida'
+import { Caducidades } from '../pantallas/Caducidades'
 import { Catalogo } from '../pantallas/Catalogo'
 import { EditarProducto } from '../pantallas/EditarProducto'
 import { Entrada } from '../pantallas/Entrada'
@@ -53,6 +54,8 @@ function Pantalla({ ruta }: { ruta: Ruta }) {
       return <Entrada productoId={ruta.productoId} />
     case 'catalogo':
       return <Catalogo />
+    case 'caducidades':
+      return <Caducidades />
     case 'producto-nuevo':
       return <ProductoNuevo />
     case 'producto':

@@ -8,6 +8,7 @@ export type Ruta =
   | { pantalla: 'retirar' }
   | { pantalla: 'entrada'; productoId?: string }
   | { pantalla: 'catalogo' }
+  | { pantalla: 'caducidades' }
   | { pantalla: 'producto-nuevo' }
   | { pantalla: 'producto'; id: string }
   | { pantalla: 'producto-editar'; id: string }
@@ -44,6 +45,8 @@ export function leerRuta(hash: string): Ruta {
     }
     case 'catalogo':
       return sinMas ? { pantalla: 'catalogo' } : NO_ENCONTRADA
+    case 'caducidades':
+      return sinMas ? { pantalla: 'caducidades' } : NO_ENCONTRADA
     case 'ajustes':
       return sinMas ? { pantalla: 'ajustes' } : NO_ENCONTRADA
     case 'producto':
@@ -68,6 +71,8 @@ export function hashDeRuta(ruta: Ruta): string {
       return ruta.productoId ? `#/entrada?producto=${encodeURIComponent(ruta.productoId)}` : '#/entrada'
     case 'catalogo':
       return '#/catalogo'
+    case 'caducidades':
+      return '#/caducidades'
     case 'producto-nuevo':
       return '#/producto/nuevo'
     case 'producto':

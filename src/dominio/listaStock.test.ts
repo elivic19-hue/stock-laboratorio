@@ -79,6 +79,14 @@ describe('lineaSecundaria', () => {
     expect(lineaSecundaria(p, info, ahora)).toBe('Botella 1 L · últ. mov. hoy 08:12')
   })
 
+  it('primero, un lote ya caducado', () => {
+    const info = {
+      ultimoMovimiento: movimiento({ fecha: new Date(2026, 10, 19, 8, 12).toISOString() }),
+      caducidadVencida: '2026-10-31',
+    }
+    expect(lineaSecundaria(p, info, ahora)).toBe('Botella 1 L · cad. 10/2026')
+  })
+
   it('si no, la caducidad cercana en mes/año', () => {
     const info = { ultimoMovimiento: movimiento({}), caducidadProxima: '2026-12-31' }
     expect(lineaSecundaria(p, info, ahora)).toBe('Botella 1 L · cad. 12/2026')
@@ -144,9 +152,11 @@ describe('lista agrupada por armario', () => {
     expect(filtrarSinCategoria(productos, info, { ...base, soloBajoMinimo: true }).map((p) => p.codigo).sort()).toEqual(
       ['F-007', 'F-012', 'F-024', 'F-030', 'R-014', 'R-031'],
     )
-    expect(filtrarSinCategoria(productos, info, { ...base, soloCaducanPronto: true }).map((p) => p.codigo)).toEqual([
-      'R-022',
-    ])
+    expect(
+      filtrarSinCategoria(productos, info, { ...base, soloCaducanPronto: true })
+        .map((p) => p.codigo)
+        .sort(),
+    ).toEqual(['R-022', 'R-031'])
     expect(filtrarSinCategoria(productos, info, { ...base, texto: 'puntas' })).toHaveLength(3)
   })
 })

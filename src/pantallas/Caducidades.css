@@ -1,0 +1,87 @@
+/* Caducidades (sin maqueta: mismo lenguaje que Stock y la ficha) */
+
+.caducidades {
+  gap: 22px;
+}
+
+.caducidades__titulo {
+  display: flex;
+  justify-content: space-between;
+}
+
+.caducidades__contador {
+  font-weight: 600;
+  color: var(--tinta);
+}
+
+.caducidades__lista {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.tarjeta-lote {
+  overflow: hidden;
+  border: 1px solid var(--linea);
+  border-radius: var(--radio-campo);
+  background: var(--superficie);
+}
+
+/* Caducado: borde de tinta completo (nunca un borde lateral de color) y la insignia con texto */
+.tarjeta-lote--vencido {
+  border-color: var(--tinta);
+}
+
+.tarjeta-lote__producto {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-height: 58px;
+  padding: 10px 12px;
+  color: var(--tinta);
+  text-decoration: none;
+}
+
+.tarjeta-lote__producto:focus-visible {
+  outline-offset: -2px;
+}
+
+.tarjeta-lote__datos {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 1px;
+  margin: 0;
+  border-top: 1px solid var(--linea-2);
+  border-bottom: 1px solid var(--linea-2);
+  background: var(--linea-2);
+}
+
+.tarjeta-lote__datos > div {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  padding: 7px 12px;
+  background: var(--superficie);
+}
+
+.tarjeta-lote__datos dd {
+  margin: 0;
+  font-size: 13px;
+  overflow-wrap: anywhere;
+}
+
+.tarjeta-lote__acciones {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+  padding: 10px 12px;
+}
+
+.dialogo-desechar {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}

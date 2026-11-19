@@ -114,6 +114,21 @@ export function Stock() {
       </header>
 
       <main id={idLista} role="tabpanel" aria-label="Productos" className="stock-contenido">
+        {(resumen?.caducados ?? 0) > 0 && (
+          <Enlace ruta={{ pantalla: 'caducidades' }} className="banda-caducados">
+            <Icono nombre="alerta" />
+            <span className="banda-caducados__texto">
+              <strong>
+                {resumen?.caducados === 1 ? '1 lote caducado' : `${resumen?.caducados} lotes caducados`}
+              </strong>{' '}
+              con stock en el armario
+            </span>
+            <span className="banda-caducados__ver">
+              Ver
+              <Icono nombre="siguiente" tamano={14} />
+            </span>
+          </Enlace>
+        )}
         {filtrosActivos && (
           <div className="filtros-activos">
             <span className="etiqueta etiqueta--pequena">{describirFiltros(opciones)}</span>
@@ -160,7 +175,15 @@ export function Stock() {
               <ul className="lista-tarjeta">
                 {grupo.productos.map((p) => (
                   <li key={p.id}>
-                    <FilaProducto producto={p} linea={lineaSecundaria(p, info.get(p.id), datos.ahora)}>
+                    <FilaProducto
+                      producto={p}
+                      linea={
+                        <>
+                          {info.get(p.id)?.caducidadVencida && <span className="insignia-caducado">Caducado</span>}
+                          {lineaSecundaria(p, info.get(p.id), datos.ahora)}
+                        </>
+                      }
+                    >
                       <CantidadYEstado producto={p} />
                     </FilaProducto>
                   </li>
@@ -183,7 +206,7 @@ export function Stock() {
 function describirFiltros(opciones: OpcionesLista): string {
   const partes: string[] = []
   if (opciones.soloBajoMinimo) partes.push('solo bajo mínimo')
-  if (opciones.soloCaducanPronto) partes.push('caducan <30 d')
+  if (opciones.soloCaducanPronto) partes.push('caducados o <30 d')
   if (opciones.orden !== 'nombre') partes.push(TEXTO_ORDEN[opciones.orden].toLowerCase())
   return partes.join(' · ')
 }
@@ -191,6 +214,7 @@ function describirFiltros(opciones: OpcionesLista): string {
 function BloqueResumen({ resumen }: { resumen: ResumenStock | undefined }) {
   const valor = (n: number | undefined) => (n === undefined ? '–' : formatearNumero(n))
   const hayQuePedir = (resumen?.aPedir ?? 0) > 0
+  const hayCaducados = (resumen?.caducados ?? 0) > 0
 
   return (
     <div className="resumen" role="group" aria-label="Resumen del stock">
@@ -208,10 +232,17 @@ function BloqueResumen({ resumen }: { resumen: ResumenStock | undefined }) {
           <Icono nombre="siguiente" tamano={14} />
         </span>
       </Enlace>
-      <div className="resumen__celda">
-        <span className="resumen__etiqueta">Caducan &lt;30 d</span>
-        <span className="resumen__valor">{valor(resumen?.caducanPronto)}</span>
-      </div>
+      {/* Si hay lotes caducados, la celda los cuenta a ellos; si no, los que caducan en menos de 30 días. */}
+      <Enlace
+        ruta={{ pantalla: 'caducidades' }}
+        className={hayCaducados ? 'resumen__celda resumen__celda--caducados' : 'resumen__celda'}
+      >
+        <span className="resumen__etiqueta">{hayCaducados ? 'Caducados' : 'Caducan <30 d'}</span>
+        <span className="resumen__valor">
+          {hayCaducados ? valor(resumen?.caducados) : valor(resumen?.caducanPronto)}
+          <Icono nombre="siguiente" tamano={14} />
+        </span>
+      </Enlace>
     </div>
   )
 }
@@ -249,8 +280,8 @@ function DialogoFiltros({
             onChange={(e) => alCambiar({ soloCaducanPronto: e.target.checked })}
           />
           <span className="opcion__texto">
-            <span className="opcion__titulo">Caducan en menos de 30 días</span>
-            <span className="opcion__detalle">Con alguna entrada que caduca pronto y stock.</span>
+            <span className="opcion__titulo">Caducados o caducan en menos de 30 días</span>
+            <span className="opcion__detalle">Con algún lote así y stock.</span>
           </span>
         </label>
       </fieldset>

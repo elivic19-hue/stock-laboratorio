@@ -211,6 +211,76 @@ describe('movimientos', () => {
   })
 })
 
+describe('lotes caducados', () => {
+  async function conLote() {
+    const p = await repo.crearProducto(etanol, 'JA')
+    const { movimiento } = await repo.registrarMovimiento({
+      productoId: p.id,
+      tipo: 'entrada',
+      cantidad: 6,
+      usuario: 'LP',
+      lote: 'K4920113',
+      caducidad: '2026-10-31',
+    })
+    return { p, entrada: movimiento }
+  }
+
+  it('desechar resta con un ajuste «Caducado · lote …» y cierra el lote a la vez', async () => {
+    const { p, entrada } = await conLote()
+    const cerrada = await repo.cerrarLote(entrada.id, { como: 'desechado', cantidad: 4, usuario: 'MG' })
+    expect(cerrada.loteCerrado).toMatchObject({ como: 'desechado', usuario: 'MG' })
+    expect((await repo.obtenerProducto(p.id))?.stockActual).toBe(2)
+    const [ajuste] = await repo.listarMovimientos({ productoId: p.id })
+    expect(ajuste).toMatchObject({ tipo: 'ajuste', cantidad: -4, nota: 'Caducado · lote K4920113', usuario: 'MG' })
+    expect(cerrada.loteCerrado?.ajusteId).toBe(ajuste?.id)
+  })
+
+  it('«ya no queda» solo marca el lote, sin tocar el stock', async () => {
+    const { p, entrada } = await conLote()
+    await repo.cerrarLote(entrada.id, { como: 'agotado', usuario: 'MG' })
+    expect((await repo.obtenerProducto(p.id))?.stockActual).toBe(6)
+    expect(await repo.listarMovimientos({ productoId: p.id })).toHaveLength(1)
+  })
+
+  it('reabrir deshace el ajuste y quita la marca', async () => {
+    const { p, entrada } = await conLote()
+    await repo.cerrarLote(entrada.id, { como: 'desechado', cantidad: 6, usuario: 'MG' })
+    await repo.reabrirLote(entrada.id)
+    expect((await repo.obtenerProducto(p.id))?.stockActual).toBe(6)
+    const historial = await repo.listarMovimientos({ productoId: p.id })
+    expect(historial).toHaveLength(1)
+    expect(historial[0]?.loteCerrado).toBeUndefined()
+  })
+
+  it('si falla el ajuste no se cierra nada', async () => {
+    const { p, entrada } = await conLote()
+    await expect(repo.cerrarLote(entrada.id, { como: 'desechado', cantidad: 9, usuario: 'MG' })).rejects.toMatchObject({
+      codigo: 'stock-insuficiente',
+    })
+    expect((await repo.listarMovimientos({ productoId: p.id }))[0]?.loteCerrado).toBeUndefined()
+  })
+
+  it('solo entradas con caducidad, una sola vez y con cantidad al desechar', async () => {
+    const { p, entrada } = await conLote()
+    const { movimiento: sinCaducidad } = await repo.registrarMovimiento({
+      productoId: p.id,
+      tipo: 'entrada',
+      cantidad: 1,
+      usuario: 'LP',
+    })
+    await expect(repo.cerrarLote(sinCaducidad.id, { como: 'agotado', usuario: 'MG' })).rejects.toMatchObject({
+      codigo: 'datos-no-validos',
+    })
+    await expect(repo.cerrarLote(entrada.id, { como: 'desechado', usuario: 'MG' })).rejects.toMatchObject({
+      codigo: 'cantidad-no-valida',
+    })
+    await repo.cerrarLote(entrada.id, { como: 'agotado', usuario: 'MG' })
+    await expect(repo.cerrarLote(entrada.id, { como: 'agotado', usuario: 'MG' })).rejects.toMatchObject({
+      codigo: 'datos-no-validos',
+    })
+  })
+})
+
 describe('fotos de referencia', () => {
   const miniatura = new Blob(['jpeg'], { type: 'image/jpeg' })
   const foto = (productoId: string, origen: FotoNueva['origen']): FotoNueva => ({

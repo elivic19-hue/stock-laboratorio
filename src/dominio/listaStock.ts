@@ -1,7 +1,7 @@
 import type { Categoria, Movimiento, Producto } from '../datos/tipos'
 import { coincideBusqueda } from './busqueda'
 import { diasEntre, formatearMesAnio, formatearMomento } from './formato'
-import { entradasQueCaducanPronto } from './resumen'
+import { entradasQueCaducanPronto, lotesCaducados } from './resumen'
 import { estaBajoMinimo } from './stock'
 
 const orden = new Intl.Collator('es', { numeric: true, sensitivity: 'base' })
@@ -31,6 +31,8 @@ export interface InfoProducto {
   ultimoMovimiento?: Movimiento
   /** Caducidad más cercana (AAAA-MM-DD) entre las entradas que caducan en menos de 30 días. */
   caducidadProxima?: string
+  /** Caducidad más antigua de los lotes ya caducados y sin cerrar. */
+  caducidadVencida?: string
 }
 
 export function infoPorProducto(
@@ -54,6 +56,12 @@ export function infoPorProducto(
       actual.caducidadProxima = m.caducidad
     }
   }
+  for (const m of lotesCaducados(productos, movimientos, hoy)) {
+    const actual = de(m.productoId)
+    if (m.caducidad && (!actual.caducidadVencida || m.caducidad < actual.caducidadVencida)) {
+      actual.caducidadVencida = m.caducidad
+    }
+  }
   return info
 }
 
@@ -64,13 +72,16 @@ function baldaEnLinea(balda: string): string {
 }
 
 /**
- * Línea secundaria de la fila (docs/decisiones.md): formato y, detrás, el último movimiento si
- * es de hoy; si no, la caducidad si está cerca; si no, la balda.
+ * Línea secundaria de la fila (docs/decisiones.md): formato y, detrás, la caducidad vencida si
+ * hay un lote caducado; si no, el último movimiento si es de hoy; si no, la caducidad si está
+ * cerca; si no, la balda.
  */
 export function lineaSecundaria(producto: Producto, info: InfoProducto | undefined, ahora: Date): string {
   const partes = [producto.formato]
   const ultimo = info?.ultimoMovimiento
-  if (ultimo && diasEntre(new Date(ultimo.fecha), ahora) === 0) {
+  if (info?.caducidadVencida) {
+    partes.push(`cad. ${formatearMesAnio(info.caducidadVencida)}`)
+  } else if (ultimo && diasEntre(new Date(ultimo.fecha), ahora) === 0) {
     partes.push(`últ. mov. ${formatearMomento(ultimo.fecha, ahora)}`)
   } else if (info?.caducidadProxima) {
     partes.push(`cad. ${formatearMesAnio(info.caducidadProxima)}`)
@@ -110,7 +121,9 @@ export function filtrarSinCategoria(
       !p.archivado &&
       coincideBusqueda(p, opciones.texto) &&
       (!opciones.soloBajoMinimo || estaBajoMinimo(p)) &&
-      (!opciones.soloCaducanPronto || info.get(p.id)?.caducidadProxima !== undefined),
+      (!opciones.soloCaducanPronto ||
+        info.get(p.id)?.caducidadProxima !== undefined ||
+        info.get(p.id)?.caducidadVencida !== undefined),
   )
 }
 

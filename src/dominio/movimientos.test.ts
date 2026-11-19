@@ -48,6 +48,17 @@ describe('describirMovimiento', () => {
     expect(describirMovimiento(entrada, [pedido]).titulo).toBe('Entrada · pedido')
   })
 
+  it('dice si el lote se cerró y quién', () => {
+    const entrada: Movimiento = {
+      ...base,
+      tipo: 'entrada',
+      cantidad: 4,
+      lote: 'A0907-23',
+      loteCerrado: { como: 'desechado', usuario: 'AR', fecha: '2026-11-19T08:00:00.000Z' },
+    }
+    expect(describirMovimiento(entrada).detalle).toBe('MG · lote A0907-23 · lote desechado (AR)')
+  })
+
   it('ajustes con su motivo', () => {
     expect(describirMovimiento({ ...base, tipo: 'ajuste', cantidad: -2, nota: 'Recuento' })).toEqual({
       titulo: 'Ajuste',

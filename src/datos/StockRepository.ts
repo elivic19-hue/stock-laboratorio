@@ -20,6 +20,7 @@ import type {
  * - Cada cambio de stock es una transacción: se actualiza stockActual y se crea el Movimiento.
  * - El stock nunca queda negativo (se lanza ErrorStock con código 'stock-insuficiente').
  * - Una entrada pasa a «recibido» el pedido en curso del producto.
+ * - Cerrar un lote caducado como desechado resta el stock con un ajuste, en la misma transacción.
  * - Máximo MAX_FOTOS_POR_PRODUCTO referencias por producto; al pasarse se descarta la
  *   foto de confirmación más antigua.
  */
@@ -38,6 +39,15 @@ export interface StockRepository {
   deshacerMovimiento(movimientoId: string): Promise<Producto>
   /** Del más reciente al más antiguo. */
   listarMovimientos(filtro?: FiltroMovimientos): Promise<Movimiento[]>
+
+  // Lotes caducados
+  /**
+   * Da por terminado el lote de una entrada con caducidad. «desechado» resta `cantidad` con un
+   * ajuste «Caducado · lote …» en la misma transacción; «agotado» solo lo marca (ya no quedaba).
+   */
+  cerrarLote(entradaId: string, cierre: CierreLote): Promise<Movimiento>
+  /** Deshace cerrarLote (y su ajuste, que tiene que ser el último movimiento del producto). */
+  reabrirLote(entradaId: string): Promise<void>
 
   // Fotos de referencia
   listarFotos(productoId?: string): Promise<FotoReferencia[]>
@@ -108,6 +118,13 @@ export interface CambioStock {
   nota?: string
   /** Solo en retirada_foto. */
   confianza?: number
+}
+
+export interface CierreLote {
+  como: 'desechado' | 'agotado'
+  usuario: string
+  /** Unidades desechadas (solo con «desechado», mayor que cero). */
+  cantidad?: number
 }
 
 export interface FiltroMovimientos {

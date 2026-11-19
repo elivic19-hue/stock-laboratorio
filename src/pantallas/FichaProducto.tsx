@@ -9,10 +9,12 @@ import {
   conPunto,
   formatearCantidadConSigno,
   formatearDiaMes,
+  formatearMesAnio,
   formatearMomento,
   formatearNumero,
 } from '../dominio/formato'
 import { describirMovimiento } from '../dominio/movimientos'
+import { lotesCaducados } from '../dominio/resumen'
 import { leerNumero, numeroParaCampo } from '../dominio/numeros'
 import { cantidadDeAjuste, estaBajoMinimo } from '../dominio/stock'
 import { ubicacionCompleta } from '../dominio/ubicacion'
@@ -44,7 +46,15 @@ export function FichaProducto({ id }: { id: string }) {
       r.listarFotos(id),
       r.listarPedidos(),
     ])
-    return { producto, movimientos, fotos, pedidos: pedidos.filter((p) => p.productoId === id), ahora: new Date() }
+    const ahora = new Date()
+    return {
+      producto,
+      movimientos,
+      fotos,
+      pedidos: pedidos.filter((p) => p.productoId === id),
+      caducados: producto ? lotesCaducados([producto], movimientos, ahora) : [],
+      ahora,
+    }
   }, [id])
   const producto = datos?.producto
 
@@ -93,10 +103,27 @@ export function FichaProducto({ id }: { id: string }) {
               </div>
             )}
 
+            {datos.caducados.length > 0 && (
+              <Enlace ruta={{ pantalla: 'caducidades' }} className="banda-caducados">
+                <Icono nombre="alerta" />
+                <span className="banda-caducados__texto">
+                  <strong>
+                    {datos.caducados.length === 1 ? 'Lote caducado' : `${datos.caducados.length} lotes caducados`}
+                  </strong>
+                  : {datos.caducados.map((m) => `${m.lote ?? 'sin lote'} (${formatearMesAnio(m.caducidad ?? '')})`).join(', ')}
+                </span>
+                <span className="banda-caducados__ver">
+                  Ver
+                  <Icono nombre="siguiente" tamano={14} />
+                </span>
+              </Enlace>
+            )}
+
             <div className="ficha-producto__titulo">
               <div className="ficha-producto__insignias">
                 <span className="insignia-categoria">{producto.categoria === 'reactivo' ? 'Reactivo' : 'Fungible'}</span>
                 <span className="etiqueta">{producto.codigo}</span>
+                {datos.caducados.length > 0 && <span className="insignia-caducado">Caducado</span>}
               </div>
               <h1 className="ficha-producto__nombre">{producto.nombre}</h1>
             </div>

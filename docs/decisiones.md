@@ -56,7 +56,6 @@ Si algo de aquí contradice CLAUDE.md, manda CLAUDE.md y hay que preguntar.
 | Duda | Qué hay ahora |
 | --- | --- |
 | 6. ¿Al «Marcar pedido» sale el producto de la lista y de los contadores? | Provisional: sí. Los contadores (celda «Bajo mínimo», barra y, más adelante, el icono) cuentan lo pendiente de pedir. |
-| 7b. Caducidad: ¿estimar qué lotes quedan y contar también lo ya caducado? | Regla de §4 tal cual: entradas que caducan entre hoy y 30 días, de productos con stock. |
 | 8. % de confianza con softmax: las alternativas salen bajas (no 71 % / 38 % como en la maqueta). | Se propone mantener el softmax (§5). |
 | 9. Cantidad por retirada (p. ej. bolsa de 100 tapones). | Se propone poder teclear la cantidad y un campo opcional «cantidad por retirada». |
 | 10. Fotos: la ficha muestra «n / 10» y el máximo es 20. | El repositorio ya aplica el máximo de 20; la galería se decide en la etapa 3. |
@@ -68,8 +67,7 @@ Si algo de aquí contradice CLAUDE.md, manda CLAUDE.md y hay que preguntar.
 - **Duda 7 (resuelta): la caducidad se apunta como mes/año** («03 / 2029»), como viene en las
   etiquetas. Se guarda como el último día de ese mes (2029-03-31): el producto vale hasta final de
   mes y el campo sigue siendo una fecha normal para «Caducan <30 d» y para la fase 2. Se aceptan
-  «3/29», «03-2029» o «032029», y avisa (sin bloquear) si la fecha ya ha pasado. Lo de estimar lotes
-  y contar lo ya caducado sigue pendiente (7b).
+  «3/29», «03-2029» o «032029», y avisa (sin bloquear) si la fecha ya ha pasado.
 - Datos de ejemplo: la caducidad del isooctano pasa a ser fin del mes en curso, para que siga
   contando en «Caducan <30 d» con fechas por mes.
 
@@ -111,4 +109,30 @@ Si algo de aquí contradice CLAUDE.md, manda CLAUDE.md y hay que preguntar.
   pedir» o sigue bajo mínimo.
 - Tras guardar se vuelve a la pantalla anterior con un aviso «Entrada guardada… Deshacer» durante
   6 s. Lo mismo al ajustar stock y al archivar.
+
+### Lotes caducados (duda 7b, resuelta)
+
+- **No se estima qué lotes quedan.** Como las retiradas no dicen de qué lote salen, todo lote
+  caducado de un producto con stock cuenta como caducado hasta que alguien lo marque:
+  - «Desechar»: se indican las unidades y se restan con un ajuste «Caducado · lote …», en la misma
+    transacción.
+  - «Ya no queda»: solo se marca, sin tocar el stock.
+  Las dos cosas se pueden deshacer. «Ya no queda» también vale para los lotes que caducan en menos
+  de 30 días. Un lote marcado deja de contar en las dos listas.
+- Un lote caduca al terminar su mes: el día 30/11 aún vale; el 01/12, ya no.
+- Modelo: las entradas guardan el cierre en un campo opcional `loteCerrado` (cómo, quién, cuándo y
+  el ajuste que restó lo desechado). Es un añadido a §4 compatible con la fase 2.
+- **Pantalla «Caducidades»** (sin maqueta), fuera de la barra inferior: secciones «Caducados» y
+  «Caducan en menos de 30 días», con lote, caducidad, fecha de entrada y stock del producto.
+- **Alarmas**, en tinta (el naranja sigue siendo solo para «bajo mínimo») y siempre con texto:
+  - Celda del resumen: si hay caducados pasa a «CADUCADOS n» en negro; si no, «CADUCAN <30 D n».
+    Las dos llevan a Caducidades.
+  - Banda negra en Stock mientras haya algo caducado: «n lotes caducados con stock en el armario ·
+    Ver».
+  - Insignia «CADUCADO» en la fila de Stock y en la ficha, más una banda en la ficha con los lotes.
+  - El historial de la ficha dice si un lote se desechó o se agotó, y quién lo hizo.
+  - **Pendiente para la etapa 4:** notificación del móvil una vez al día si hay lotes caducados,
+    junto con el resto de avisos.
+- El filtro de Stock pasa a ser «Caducados o caducan en menos de 30 días».
+- Datos de ejemplo: el ácido acético (R-031) tiene un lote caducado el mes pasado.
 

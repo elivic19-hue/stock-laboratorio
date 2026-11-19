@@ -46,6 +46,18 @@ export interface FotoReferencia {
   creadoEn: string
 }
 
+/**
+ * Lote caducado que alguien ha dado por terminado (docs/decisiones.md, duda 7b): desechado (se resta
+ * con un ajuste) o que ya no quedaba en el armario. Solo en entradas con caducidad.
+ */
+export interface LoteCerrado {
+  como: 'desechado' | 'agotado'
+  usuario: string
+  fecha: string
+  /** Ajuste con el que se restó lo desechado (para poder deshacerlo). */
+  ajusteId?: string
+}
+
 export type TipoMovimiento = 'retirada_foto' | 'retirada_manual' | 'entrada' | 'ajuste'
 
 export interface Movimiento {
@@ -64,6 +76,8 @@ export interface Movimiento {
   /** Nombre o iniciales de quien hizo el movimiento. */
   usuario: string
   fecha: string
+  /** Solo en entradas: el lote se ha dado por terminado. */
+  loteCerrado?: LoteCerrado
 }
 
 export type EstadoPedido = 'pedido' | 'recibido'

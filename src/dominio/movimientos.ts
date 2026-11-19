@@ -33,5 +33,9 @@ export function describirMovimiento(m: Movimiento, pedidos: readonly Pedido[] = 
   if (m.lote) detalle.push(`lote ${m.lote}`)
   if (m.caducidad) detalle.push(`cad. ${formatearMesAnio(m.caducidad)}`)
   if (m.nota) detalle.push(m.nota)
+  if (m.loteCerrado) {
+    const como = m.loteCerrado.como === 'desechado' ? 'lote desechado' : 'lote agotado'
+    detalle.push(`${como} (${m.loteCerrado.usuario})`)
+  }
   return { titulo, detalle: detalle.join(' · ') }
 }

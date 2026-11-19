@@ -7,7 +7,7 @@ cuando un producto llega a su mínimo. Funciona sin conexión y no tiene ningún
 La especificación completa está en [CLAUDE.md](CLAUDE.md); las maquetas, en [diseno/](diseno/), y las
 decisiones tomadas por el camino, en [docs/decisiones.md](docs/decisiones.md).
 
-**Estado:** etapa 2 de 5 (Stock, Ficha, Catálogo/alta y Entrada). Fase 1: todos los datos se guardan solo en el móvil.
+**Estado:** etapa 2 de 5 (Stock, Ficha, Catálogo/alta, Entrada y Caducidades). Fase 1: todos los datos se guardan solo en el móvil.
 
 ## Requisitos
 
@@ -128,7 +128,7 @@ añadirá otra implementación sin tocarlas.
 ## Etapas
 
 1. Esqueleto: Vite, PWA, fuentes, tokens, navegación y repositorio local con datos de ejemplo. **Hecha.**
-2. Pantallas Stock, Ficha, Catálogo/alta y Entrada, con la lógica de stock y sus tests. **Hecha.**
+2. Pantallas Stock, Ficha, Catálogo/alta y Entrada, con la lógica de stock y sus tests (más Caducidades). **Hecha.**
 3. Cámara y reconocimiento: fotos de referencia, retirada con foto y modo diagnóstico.
 4. A pedir, avisos, compartir lista y copia de seguridad.
 5. Pulido visual, accesibilidad y prueba en móvil real.

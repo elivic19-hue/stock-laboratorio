@@ -8,7 +8,7 @@ import { nuevoId } from './uuid'
 /**
  * Datos de ejemplo: los productos que aparecen en las maquetas de diseno/, con un historial
  * coherente con lo que se ve en ellas (4 a pedir, 2 pedidos en curso, 1 caducidad en menos de
- * 30 días, «últ. mov. hoy 08:12»…). Las fechas son relativas al momento de cargarlos.
+ * 30 días, 1 lote ya caducado, «últ. mov. hoy 08:12»…). Las fechas son relativas al momento de cargarlos.
  * No llevan fotos de referencia: el reconocimiento se prueba con vuestros productos reales.
  */
 
@@ -22,10 +22,11 @@ interface MovimientoDeEjemplo {
   usuario: string
   lote?: string
   /**
-   * Caducidad por mes/año, guardada como el último día del mes: fecha fija (AAAA-MM-DD) o
-   * «fin de este mes» (siempre a menos de 30 días, para la celda «Caducan <30 d»).
+   * Caducidad por mes/año, guardada como el último día del mes: fecha fija (AAAA-MM-DD),
+   * «fin de este mes» (siempre a menos de 30 días: cuenta en «Caducan <30 d») o «fin del mes
+   * pasado» (un lote ya caducado, para la pantalla Caducidades).
    */
-  caducidad?: string | 'fin-de-este-mes'
+  caducidad?: string | 'fin-de-este-mes' | 'fin-del-mes-pasado'
   nota?: string
   confianza?: number
 }
@@ -97,7 +98,7 @@ const CATALOGO: ProductoDeEjemplo[] = [
     stockMinimo: 2,
     cantidadPedidoSugerida: 4,
     movimientos: [
-      { hace: 35, hora: '10:00', tipo: 'entrada', cantidad: 4, usuario: 'LP', lote: 'A0907-23' },
+      { hace: 35, hora: '10:00', tipo: 'entrada', cantidad: 4, usuario: 'LP', lote: 'A0907-23', caducidad: 'fin-del-mes-pasado' },
       { hace: 12, hora: '13:15', tipo: 'retirada_foto', cantidad: -1, usuario: 'MG', confianza: 0.88 },
       { hace: 3, hora: '09:05', tipo: 'retirada_foto', cantidad: -1, usuario: 'AR', confianza: 0.9 },
     ],
@@ -215,8 +216,9 @@ function momento(ahora: Date, hace: number, hora: string): string {
 }
 
 function caducidadDe(valor: MovimientoDeEjemplo['caducidad'], ahora: Date): string | undefined {
-  if (valor !== 'fin-de-este-mes') return valor
-  return fechaSinHora(ultimoDiaDelMes(ahora.getFullYear(), ahora.getMonth() + 1))
+  if (valor === 'fin-de-este-mes') return fechaSinHora(ultimoDiaDelMes(ahora.getFullYear(), ahora.getMonth() + 1))
+  if (valor === 'fin-del-mes-pasado') return fechaSinHora(ultimoDiaDelMes(ahora.getFullYear(), ahora.getMonth()))
+  return valor
 }
 
 export function crearDatosEjemplo(ahora: Date = new Date()): VolcadoDatos {

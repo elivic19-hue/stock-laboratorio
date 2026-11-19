@@ -72,6 +72,13 @@
   color: var(--tinta-2);
 }
 
+.fila-producto__linea .insignia-caducado {
+  margin-right: 6px;
+  padding: 1px 5px;
+  font-size: 9px;
+  vertical-align: 1px;
+}
+
 .fila-producto__derecha {
   flex-shrink: 0;
   display: flex;

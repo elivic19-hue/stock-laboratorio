@@ -2,11 +2,13 @@ import Dexie from 'dexie'
 import { normalizarCodigo, siguienteCodigo as calcularSiguienteCodigo } from '../dominio/codigos'
 import { ErrorStock } from '../dominio/errores'
 import { aplicarCambiosProducto, limpiarDatosProducto } from '../dominio/producto'
+import { formatearMesAnio } from '../dominio/formato'
 import { calcularStockResultante, validarCantidad } from '../dominio/stock'
 import type { BaseDatosStock } from './db'
 import {
   MAX_FOTOS_POR_PRODUCTO,
   type CambioStock,
+  type CierreLote,
   type CambiosProducto,
   type DatosProductoNuevo,
   type FiltroMovimientos,
@@ -144,89 +146,149 @@ export class LocalRepository implements StockRepository {
   // ─── Movimientos ──────────────────────────────────────────────────────────
 
   async registrarMovimiento(cambio: CambioStock): Promise<{ movimiento: Movimiento; producto: Producto }> {
-    validarCantidad(cambio.tipo, cambio.cantidad)
-    const usuario = exigirUsuario(cambio.usuario)
-    const caducidad = textoOpcional(cambio.caducidad)
-    if (caducidad !== undefined && !FECHA_SIN_HORA.test(caducidad)) {
-      throw new ErrorStock('datos-no-validos', 'La caducidad tiene que ser una fecha (AAAA-MM-DD).')
-    }
-    const confianza = cambio.tipo === 'retirada_foto' ? cambio.confianza : undefined
-    if (confianza !== undefined && !(confianza >= 0 && confianza <= 1)) {
-      throw new ErrorStock('datos-no-validos', 'La confianza tiene que estar entre 0 y 1.')
-    }
+    const revisado = revisarCambio(cambio)
     const db = this.#db
-
-    const resultado = await db.transaction('rw', db.productos, db.movimientos, db.pedidos, async () => {
-      const producto = await db.productos.get(cambio.productoId)
-      if (!producto) throw productoNoEncontrado()
-      const stockResultante = calcularStockResultante(producto, cambio.cantidad)
-      const fecha = await this.#fechaParaMovimiento(producto.id)
-      const movimiento = sinIndefinidos<Movimiento>({
-        id: nuevoId(),
-        productoId: producto.id,
-        tipo: cambio.tipo,
-        cantidad: cambio.cantidad,
-        stockResultante,
-        lote: textoOpcional(cambio.lote),
-        caducidad,
-        nota: textoOpcional(cambio.nota),
-        confianza,
-        usuario,
-        fecha,
-      })
-      const actualizado: Producto = { ...producto, stockActual: stockResultante, actualizadoEn: fecha }
-      await db.productos.put(actualizado)
-      await db.movimientos.add(movimiento)
-      if (cambio.tipo === 'entrada') {
-        // El pedido en curso pasa a recibido, con la fecha de esta entrada (así se puede deshacer).
-        await db.pedidos
-          .where('[productoId+estado]')
-          .equals([producto.id, 'pedido'])
-          .modify({ estado: 'recibido', fechaRecepcion: fecha })
-      }
-      return { movimiento, producto: actualizado }
-    })
-
+    const resultado = await db.transaction('rw', db.productos, db.movimientos, db.pedidos, () =>
+      this.#aplicarMovimiento(revisado),
+    )
     this.#avisar()
     return resultado
+  }
+
+  /** Aplica un cambio ya revisado. Se llama dentro de una transacción con productos, movimientos y pedidos. */
+  async #aplicarMovimiento(cambio: CambioRevisado): Promise<{ movimiento: Movimiento; producto: Producto }> {
+    const db = this.#db
+    const { usuario, caducidad, confianza } = cambio
+    const producto = await db.productos.get(cambio.productoId)
+    if (!producto) throw productoNoEncontrado()
+    const stockResultante = calcularStockResultante(producto, cambio.cantidad)
+    const fecha = await this.#fechaParaMovimiento(producto.id)
+    const movimiento = sinIndefinidos<Movimiento>({
+      id: nuevoId(),
+      productoId: producto.id,
+      tipo: cambio.tipo,
+      cantidad: cambio.cantidad,
+      stockResultante,
+      lote: textoOpcional(cambio.lote),
+      caducidad,
+      nota: textoOpcional(cambio.nota),
+      confianza,
+      usuario,
+      fecha,
+    })
+    const actualizado: Producto = { ...producto, stockActual: stockResultante, actualizadoEn: fecha }
+    await db.productos.put(actualizado)
+    await db.movimientos.add(movimiento)
+    if (cambio.tipo === 'entrada') {
+      // El pedido en curso pasa a recibido, con la fecha de esta entrada (así se puede deshacer).
+      await db.pedidos
+        .where('[productoId+estado]')
+        .equals([producto.id, 'pedido'])
+        .modify({ estado: 'recibido', fechaRecepcion: fecha })
+    }
+    return { movimiento, producto: actualizado }
   }
 
   async deshacerMovimiento(movimientoId: string): Promise<Producto> {
     const ahora = this.#ahora()
     const db = this.#db
 
-    const producto = await db.transaction('rw', db.productos, db.movimientos, db.pedidos, async () => {
-      const movimiento = await db.movimientos.get(movimientoId)
-      if (!movimiento) throw new ErrorStock('movimiento-no-encontrado', 'Ese movimiento ya no existe.')
-      const ultimo = await this.#ultimoMovimiento(movimiento.productoId)
-      if (ultimo?.id !== movimiento.id) {
-        throw new ErrorStock(
-          'no-es-el-ultimo-movimiento',
-          'Solo se puede deshacer el último movimiento del producto.',
+    const producto = await db.transaction('rw', db.productos, db.movimientos, db.pedidos, () =>
+      this.#deshacerEnTransaccion(movimientoId, ahora),
+    )
+    this.#avisar()
+    return producto
+  }
+
+  /** Deshace el último movimiento de un producto. Se llama dentro de una transacción. */
+  async #deshacerEnTransaccion(movimientoId: string, ahora: string): Promise<Producto> {
+    const db = this.#db
+    const movimiento = await db.movimientos.get(movimientoId)
+    if (!movimiento) throw new ErrorStock('movimiento-no-encontrado', 'Ese movimiento ya no existe.')
+    const ultimo = await this.#ultimoMovimiento(movimiento.productoId)
+    if (ultimo?.id !== movimiento.id) {
+      throw new ErrorStock(
+        'no-es-el-ultimo-movimiento',
+        'Solo se puede deshacer el último movimiento del producto.',
+      )
+    }
+    const actual = await db.productos.get(movimiento.productoId)
+    if (!actual) throw productoNoEncontrado()
+    const stockActual = calcularStockResultante(actual, -movimiento.cantidad)
+    const actualizado: Producto = { ...actual, stockActual, actualizadoEn: ahora }
+    await db.productos.put(actualizado)
+    await db.movimientos.delete(movimiento.id)
+    if (movimiento.tipo === 'entrada') {
+      // Reabre el pedido que cerró esa entrada (se cerró con su misma fecha).
+      await db.pedidos
+        .where('[productoId+estado]')
+        .equals([movimiento.productoId, 'recibido'])
+        .filter((p) => p.fechaRecepcion === movimiento.fecha)
+        .modify((p) => {
+          p.estado = 'pedido'
+          delete p.fechaRecepcion
+        })
+    }
+    return actualizado
+  }
+
+  // ─── Lotes caducados ──────────────────────────────────────────────────────
+
+  async cerrarLote(entradaId: string, cierre: CierreLote): Promise<Movimiento> {
+    const usuario = exigirUsuario(cierre.usuario)
+    if (cierre.como === 'desechado' && !(Number.isFinite(cierre.cantidad) && (cierre.cantidad ?? 0) > 0)) {
+      throw new ErrorStock('cantidad-no-valida', 'Indica cuántas unidades se desechan (más de cero).')
+    }
+    const db = this.#db
+
+    const entrada = await db.transaction('rw', db.productos, db.movimientos, db.pedidos, async () => {
+      const actual = await db.movimientos.get(entradaId)
+      if (!actual) throw new ErrorStock('movimiento-no-encontrado', 'Esa entrada ya no existe.')
+      if (actual.tipo !== 'entrada' || !actual.caducidad) {
+        throw new ErrorStock('datos-no-validos', 'Solo se pueden cerrar los lotes de entradas con caducidad.')
+      }
+      if (actual.loteCerrado) throw new ErrorStock('datos-no-validos', 'Ese lote ya está cerrado.')
+
+      let ajusteId: string | undefined
+      if (cierre.como === 'desechado') {
+        const etiqueta = actual.lote ? `lote ${actual.lote}` : `cad. ${formatearMesAnio(actual.caducidad)}`
+        const { movimiento } = await this.#aplicarMovimiento(
+          revisarCambio({
+            productoId: actual.productoId,
+            tipo: 'ajuste',
+            cantidad: -(cierre.cantidad ?? 0),
+            usuario,
+            nota: `Caducado · ${etiqueta}`,
+          }),
         )
+        ajusteId = movimiento.id
       }
-      const actual = await db.productos.get(movimiento.productoId)
-      if (!actual) throw productoNoEncontrado()
-      const stockActual = calcularStockResultante(actual, -movimiento.cantidad)
-      const actualizado: Producto = { ...actual, stockActual, actualizadoEn: ahora }
-      await db.productos.put(actualizado)
-      await db.movimientos.delete(movimiento.id)
-      if (movimiento.tipo === 'entrada') {
-        // Reabre el pedido que cerró esa entrada (se cerró con su misma fecha).
-        await db.pedidos
-          .where('[productoId+estado]')
-          .equals([movimiento.productoId, 'recibido'])
-          .filter((p) => p.fechaRecepcion === movimiento.fecha)
-          .modify((p) => {
-            p.estado = 'pedido'
-            delete p.fechaRecepcion
-          })
+      const cerrada: Movimiento = {
+        ...actual,
+        loteCerrado: sinIndefinidos({ como: cierre.como, usuario, fecha: this.#ahora(), ajusteId }),
       }
-      return actualizado
+      await db.movimientos.put(cerrada)
+      return cerrada
     })
 
     this.#avisar()
-    return producto
+    return entrada
+  }
+
+  async reabrirLote(entradaId: string): Promise<void> {
+    const ahora = this.#ahora()
+    const db = this.#db
+    await db.transaction('rw', db.productos, db.movimientos, db.pedidos, async () => {
+      const actual = await db.movimientos.get(entradaId)
+      if (!actual?.loteCerrado) throw new ErrorStock('datos-no-validos', 'Ese lote no está cerrado.')
+      if (actual.loteCerrado.ajusteId && (await db.movimientos.get(actual.loteCerrado.ajusteId))) {
+        await this.#deshacerEnTransaccion(actual.loteCerrado.ajusteId, ahora)
+      }
+      const reabierta: Movimiento = { ...actual }
+      delete reabierta.loteCerrado
+      await db.movimientos.put(reabierta)
+    })
+    this.#avisar()
   }
 
   async listarMovimientos({ productoId, tipo, limite }: FiltroMovimientos = {}): Promise<Movimiento[]> {
@@ -452,6 +514,26 @@ export class LocalRepository implements StockRepository {
     const despuesDelUltimo = ultimo ? Date.parse(ultimo.fecha) + 1 : -Infinity
     return new Date(Math.max(ahora, despuesDelUltimo)).toISOString()
   }
+}
+
+interface CambioRevisado extends CambioStock {
+  caducidad: string | undefined
+  confianza: number | undefined
+}
+
+/** Comprueba cantidad, usuario, caducidad y confianza antes de abrir la transacción. */
+function revisarCambio(cambio: CambioStock): CambioRevisado {
+  validarCantidad(cambio.tipo, cambio.cantidad)
+  const usuario = exigirUsuario(cambio.usuario)
+  const caducidad = textoOpcional(cambio.caducidad)
+  if (caducidad !== undefined && !FECHA_SIN_HORA.test(caducidad)) {
+    throw new ErrorStock('datos-no-validos', 'La caducidad tiene que ser una fecha (AAAA-MM-DD).')
+  }
+  const confianza = cambio.tipo === 'retirada_foto' ? cambio.confianza : undefined
+  if (confianza !== undefined && !(confianza >= 0 && confianza <= 1)) {
+    throw new ErrorStock('datos-no-validos', 'La confianza tiene que estar entre 0 y 1.')
+  }
+  return { ...cambio, usuario, caducidad, confianza }
 }
 
 function productoNoEncontrado(): ErrorStock {

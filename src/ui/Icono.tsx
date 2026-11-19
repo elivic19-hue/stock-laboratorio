@@ -17,6 +17,7 @@ const TRAZOS = {
   volver: { grosor: 1.8, contenido: <path d="M15 5l-7 7 7 7" /> },
   siguiente: { grosor: 2, contenido: <path d="M9 6l6 6-6 6" /> },
   desplegar: { grosor: 1.8, contenido: <path d="M6 9l6 6 6-6" /> },
+  alerta: { grosor: 1.8, contenido: <><path d="M12 4L3 19.5h18z" /><path d="M12 10v4.5M12 17v.5" /></> },
   info: { grosor: 1.8, contenido: <><circle cx="12" cy="12" r="9" /><path d="M12 11v6M12 7.5v.5" /></> },
 } as const
 

@@ -12,7 +12,7 @@ export function FilaProducto({
   children,
 }: {
   producto: Producto
-  linea: string
+  linea: ReactNode
   children?: ReactNode
 }) {
   return (
