@@ -31,11 +31,19 @@ export interface StockRepository {
   crearProducto(datos: DatosProductoNuevo, usuario: string): Promise<Producto>
   /** Para editar o archivar. El stock no se cambia aquí, solo con movimientos. */
   actualizarProducto(id: string, cambios: CambiosProducto): Promise<Producto>
+  /**
+   * Borra el producto y todo lo suyo (movimientos, fotos y pedidos). Es para deshacer un alta hecha
+   * por error; lo que ya no se usa se archiva.
+   */
+  eliminarProducto(id: string): Promise<void>
   siguienteCodigo(categoria: Categoria): Promise<string>
 
   // Movimientos
   registrarMovimiento(cambio: CambioStock): Promise<{ movimiento: Movimiento; producto: Producto }>
-  /** Deshace el último movimiento de un producto (el aviso «Deshacer» tras una retirada). */
+  /**
+   * Deshace el último movimiento de un producto (el aviso «Deshacer» tras una retirada, o «Anular»
+   * en la ficha). Si era el ajuste con que se desechó un lote caducado, el lote vuelve a abrirse.
+   */
   deshacerMovimiento(movimientoId: string): Promise<Producto>
   /** Del más reciente al más antiguo. */
   listarMovimientos(filtro?: FiltroMovimientos): Promise<Movimiento[]>

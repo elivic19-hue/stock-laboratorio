@@ -12,6 +12,8 @@ import { CabeceraVolver } from '../ui/CabeceraVolver'
 import { Dialogo } from '../ui/Dialogo'
 import { PantallaCompleta } from '../ui/Pantalla'
 import { SeccionAvisos } from './AjustesAvisos'
+import { SeccionCompartir } from './AjustesCompartir'
+import { desconectar, useEstadoSincronizacion } from '../datos/sincronizacion/servicio'
 import { SeccionCopia } from './AjustesCopia'
 import './Ajustes.css'
 
@@ -22,6 +24,7 @@ export function Ajustes() {
   const recuento = useConsulta((r) => r.contar(), []).datos
   const [almacenamiento, setAlmacenamiento] = useState<EstadoAlmacenamiento>()
   const [borrarAbierto, setBorrarAbierto] = useState(false)
+  const sincronizacion = useEstadoSincronizacion()
 
   useEffect(() => {
     let vigente = true
@@ -34,6 +37,8 @@ export function Ajustes() {
   }, [recuento])
 
   async function borrarTodo() {
+    // Borrar solo afecta a este móvil: antes se desconecta para que no se borre en la nube.
+    await desconectar()
     await repo.borrarTodo()
     navegar({ pantalla: 'stock' }, { reemplazar: true })
     // Sin usuario, la app vuelve al primer arranque.
@@ -52,6 +57,8 @@ export function Ajustes() {
       <CabeceraVolver volverA={{ pantalla: 'stock' }} titulo="Ajustes" />
       <main className="contenido ajustes">
         {ajustes && <FormularioPerfil ajustes={ajustes} alGuardar={(cambios) => almacen.guardar(cambios)} />}
+
+        <SeccionCompartir />
 
         {ajustes && <SeccionAvisos ajustes={ajustes} alGuardar={(cambios) => almacen.guardar(cambios)} />}
 
@@ -82,7 +89,7 @@ export function Ajustes() {
         </p>
       </main>
 
-      <DialogoBorrar abierto={borrarAbierto} alCerrar={() => setBorrarAbierto(false)} alBorrar={borrarTodo} />
+      <DialogoBorrar conectado={sincronizacion.modo !== 'local'} abierto={borrarAbierto} alCerrar={() => setBorrarAbierto(false)} alBorrar={borrarTodo} />
     </PantallaCompleta>
   )
 }
@@ -186,10 +193,12 @@ function FormularioPerfil({
 }
 
 function DialogoBorrar({
+  conectado,
   abierto,
   alCerrar,
   alBorrar,
 }: {
+  conectado: boolean
   abierto: boolean
   alCerrar: () => void
   alBorrar: () => Promise<void>
@@ -223,6 +232,7 @@ function DialogoBorrar({
         <p className="texto-secundario">
           Se borrarán de este móvil todos los productos, movimientos, fotos de referencia y pedidos, y la app
           volverá al primer arranque. No se puede deshacer.
+          {conectado ? ' El móvil se desconecta antes: los datos del laboratorio en la nube no se tocan.' : ''}
         </p>
         <label className="campo">
           <span className="dialogo-borrar__instruccion">
@@ -372,13 +382,14 @@ function FormularioReconocimiento({
       <label className="opcion">
         <input
           type="checkbox"
-          checked={ajustes.guardarFotoAlConfirmar}
-          onChange={(e) => void alGuardar({ guardarFotoAlConfirmar: e.target.checked })}
+          checked={ajustes.aprenderDeRetiradas}
+          onChange={(e) => void alGuardar({ aprenderDeRetiradas: e.target.checked })}
         />
         <span className="opcion__texto">
           <span className="opcion__titulo">Aprender de las retiradas</span>
           <span className="opcion__detalle">
-            Al confirmar una retirada con foto, se propone guardarla como referencia del producto confirmado.
+            Desactivado: las fotos de las retiradas no se guardan. Si lo activas, al confirmar una retirada se
+            ofrece guardar su foto como referencia del producto (ayuda a reconocerlo, pero llena la galería).
           </span>
         </span>
       </label>

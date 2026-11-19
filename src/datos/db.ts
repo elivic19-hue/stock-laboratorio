@@ -4,9 +4,10 @@ import type { FotoReferencia, Movimiento, Pedido, Producto } from './tipos'
 
 export const NOMBRE_BASE_DATOS = 'stock-laboratorio'
 
+/** Ajustes del móvil («dispositivo») y conexión con la nube («sincronizacion»). */
 export interface RegistroAjustes {
   clave: string
-  valor: Partial<AjustesDispositivo>
+  valor: Partial<AjustesDispositivo> | object
 }
 
 /**

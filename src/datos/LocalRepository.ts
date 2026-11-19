@@ -143,6 +143,18 @@ export class LocalRepository implements StockRepository {
     return actualizado
   }
 
+  async eliminarProducto(id: string): Promise<void> {
+    const db = this.#db
+    await db.transaction('rw', db.productos, db.movimientos, db.fotos, db.pedidos, async () => {
+      if (!(await db.productos.get(id))) throw productoNoEncontrado()
+      await db.movimientos.where('productoId').equals(id).delete()
+      await db.fotos.where('productoId').equals(id).delete()
+      await db.pedidos.where('productoId').equals(id).delete()
+      await db.productos.delete(id)
+    })
+    this.#avisar()
+  }
+
   // ─── Movimientos ──────────────────────────────────────────────────────────
 
   async registrarMovimiento(cambio: CambioStock): Promise<{ movimiento: Movimiento; producto: Producto }> {
@@ -218,6 +230,16 @@ export class LocalRepository implements StockRepository {
     const actualizado: Producto = { ...actual, stockActual, actualizadoEn: ahora }
     await db.productos.put(actualizado)
     await db.movimientos.delete(movimiento.id)
+    if (movimiento.tipo === 'ajuste') {
+      // Si era el ajuste con que se desechó un lote caducado, el lote vuelve a estar abierto.
+      await db.movimientos
+        .where('productoId')
+        .equals(movimiento.productoId)
+        .filter((m) => m.loteCerrado?.ajusteId === movimiento.id)
+        .modify((m) => {
+          delete m.loteCerrado
+        })
+    }
     if (movimiento.tipo === 'entrada') {
       // Reabre el pedido que cerró esa entrada (se cerró con su misma fecha).
       await db.pedidos
@@ -461,6 +483,11 @@ export class LocalRepository implements StockRepository {
   }
 
   // ─── Avisos de cambios ────────────────────────────────────────────────────
+
+  /** Han cambiado los datos por otra vía (llegan de otro móvil): avisa a las pantallas. */
+  avisarCambioExterno(): void {
+    this.#avisar()
+  }
 
   suscribir(alCambiar: () => void): () => void {
     this.#oyentes.add(alCambiar)

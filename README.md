@@ -7,7 +7,8 @@ cuando un producto llega a su mínimo. Funciona sin conexión y no tiene ningún
 La especificación completa está en [CLAUDE.md](CLAUDE.md); las maquetas, en [diseno/](diseno/), y las
 decisiones tomadas por el camino, en [docs/decisiones.md](docs/decisiones.md).
 
-**Estado:** etapa 4 de 5 (A pedir, avisos, compartir lista y copia de seguridad). Fase 1: todos los datos se guardan solo en el móvil.
+**Estado:** etapa 4 de 5 (A pedir, avisos, compartir lista y copia de seguridad). Los datos se guardan en el móvil y, si se conecta al laboratorio
+(fase 2, con Firebase), se comparten con los demás móviles y el ordenador.
 
 ## Requisitos
 
@@ -95,9 +96,9 @@ foto en un vector y se compara con las fotos de referencia de cada producto.
 2. **Retirar.** Botón azul de la cámara → encuadra el producto en el marco → foto. Si la app está
    segura, propone el producto y basta con «Confirmar retirada». Si no, dice «No estoy seguro» y
    enseña las alternativas; también se puede buscar a mano.
-3. **Aprende.** Al confirmar una retirada guarda esa foto como referencia del producto confirmado,
-   también cuando se ha corregido con «¿No es este?» o a mano (se puede desmarcar cada vez o
-   desactivar en Ajustes). Máximo 20 fotos por producto.
+3. **Aprender de las retiradas** (desactivado por defecto, en Ajustes → Reconocimiento). Si se
+   activa, al confirmar una retirada se ofrece guardar su foto como referencia del producto. En la
+   galería de la ficha esas fotos salen marcadas «Retirada» y se pueden borrar de golpe.
 4. **Calibrar.** En Ajustes → Reconocimiento, activa el *modo diagnóstico*: tras cada foto se ven las
    puntuaciones de los 5 mejores productos. Si confunde productos, sube el umbral; si duda con
    productos que acierta, bájalo.
@@ -119,6 +120,77 @@ conexión desde la primera vez. Para volver a descargarlos: `npm run modelo`.
     posterior) y el aviso diario no está disponible: los caducados se ven al abrir la app.
 - **Icono:** con la app instalada, el número de productos a pedir aparece en el icono (si el móvil lo
   permite).
+
+## Corregir errores
+
+- **Un movimiento mal apuntado** (una entrada con la cantidad equivocada…): en la ficha del producto,
+  «Anular» en el último movimiento. Se borra y el stock vuelve a como estaba. Solo el último, porque
+  el stock de los siguientes depende de él; para lo demás, «Ajustar stock».
+- **Un producto dado de alta por error:** en su ficha, «Eliminar producto». Se borra con todo lo suyo
+  (movimientos, fotos y pedidos) y no se puede deshacer. Si el producto existió y ya no se usa, mejor
+  «Archivar producto», que conserva su historial.
+- **Una foto de referencia mala:** tócala en la galería de la ficha y «Borrar foto».
+
+## Compartir el stock entre móviles
+
+Sin conectar, cada móvil tiene sus propios datos. Conectando todos los móviles (y el navegador del
+ordenador) a la misma **cuenta del laboratorio**, todos ven el mismo stock. Se usa
+[Firebase](https://firebase.google.com) de Google, en su plan gratuito (Spark): no pide tarjeta y da
+de sobra para un laboratorio (50.000 lecturas y 20.000 escrituras al día, 1 GB).
+
+Cómo funciona:
+
+- Cada móvil sigue guardando todo en él: la app funciona igual **sin conexión**. Los cambios hechos
+  sin red se mandan solos al volver, y los de los demás llegan al momento.
+- El stock de cada producto es la suma de sus movimientos. Si dos personas retiran a la vez desde
+  dos móviles (incluso sin conexión), al sincronizar se restan las dos.
+- La cabecera de Stock dice «Sincronizado 10:42», «Sin conexión · 3 por enviar»… y Ajustes da más
+  detalle.
+- Restaurar una copia de seguridad en un móvil conectado sustituye los datos de **todo** el
+  laboratorio. «Borrar todos los datos» desconecta antes el móvil y solo borra lo suyo.
+
+### Preparar el proyecto (una vez, unos 10 minutos)
+
+Hace falta una cuenta de Google (mejor una del laboratorio que una personal).
+
+1. Entra en <https://console.firebase.google.com> → **Crear un proyecto** → nombre, por ejemplo,
+   `stock-laboratorio`. Google Analytics no hace falta.
+2. **Firestore Database** (en *Compilación*) → **Crear base de datos** → ubicación en Europa
+   (`europe-southwest1`, Madrid, o `eur3`) → **modo de producción**.
+3. En Firestore, pestaña **Reglas**, sustituye lo que hay por esto y pulsa **Publicar**:
+
+   ```
+   rules_version = '2';
+   service cloud.firestore {
+     match /databases/{database}/documents {
+       // Cada laboratorio solo puede leer y escribir lo suyo.
+       match /laboratorios/{laboratorio}/{documento=**} {
+         allow read, write: if request.auth != null && request.auth.uid == laboratorio;
+       }
+     }
+   }
+   ```
+4. **Authentication** → **Comenzar** → **Correo electrónico/contraseña** → habilítalo (solo la primera
+   opción) → **Guardar**.
+5. En Authentication → **Usuarios** → **Agregar usuario**: el correo y la contraseña que usarán todos
+   los móviles del laboratorio (el correo no tiene que existir de verdad, p. ej.
+   `stock@lab-caracterizacion.es`; la contraseña, larga).
+6. En Authentication → **Configuración** → **Acciones del usuario**, desmarca **Habilitar la creación
+   de cuentas**, para que nadie más pueda crearse cuentas en el proyecto.
+7. **Configuración del proyecto** (la rueda) → **Tus apps** → icono web `</>` → un nombre (sin
+   Hosting) → copia el bloque `const firebaseConfig = { … }`. No es secreto: lo que protege los datos
+   son las reglas y la contraseña.
+
+### Conectar los móviles
+
+- En cada móvil: Ajustes → **Compartir con el laboratorio** → pega la configuración, escribe el correo
+  y la contraseña → **Conectar**.
+- El **primer** móvil que se conecta sube sus datos al laboratorio. Los siguientes se quedan con los
+  del laboratorio (si tenían datos propios, la app avisa antes de sustituirlos).
+- Si se pone la configuración en `src/datos/sincronizacion/configuracion.ts` y se publica la app, los
+  móviles solo tienen que escribir el correo y la contraseña.
+- Para dejar de compartir en un móvil: Ajustes → **Desconectar este móvil** (sus datos se quedan en él
+  como copia).
 
 ## Copias de seguridad
 
@@ -152,7 +224,8 @@ datos del navegador o si se desinstala la app.
 
 ```
 src/
-  datos/      modelo de datos, StockRepository y LocalRepository (Dexie), ajustes del móvil, datos de ejemplo
+  datos/      modelo de datos, StockRepository y LocalRepository (Dexie), ajustes del móvil, datos de ejemplo,
+              copia de seguridad y sincronizacion/ (Firebase: motor, conexión y configuración)
   dominio/    reglas de stock, códigos, formatos de España, caducidad, búsqueda, listas y formularios
               (funciones puras, con tests)
   app/        arranque, navegación por #/rutas, hooks, avisos («Deshacer», notificaciones, icono) y compartir
@@ -166,8 +239,10 @@ diseno/       maquetas de referencia
 docs/         decisiones tomadas durante el desarrollo
 ```
 
-Las pantallas solo usan la interfaz `StockRepository`. En la fase 2 (base de datos compartida) se
-añadirá otra implementación sin tocarlas.
+Las pantallas solo usan la interfaz `StockRepository`, que siempre lee y escribe en el móvil. La fase 2
+(compartir entre móviles) se ha hecho por debajo, sincronizando la base de datos del móvil con
+Firestore, sin tocar las pantallas. Para pasar después a la nube de la empresa basta con otra
+implementación de `AlmacenRemoto` (`src/datos/sincronizacion/remoto.ts`).
 
 ## Etapas
 

@@ -13,8 +13,12 @@ export interface AjustesDispositivo {
   /** Temperatura del softmax que da el % de confianza. Se calibra en la etapa 3. */
   temperatura: number
   modoDiagnostico: boolean
-  /** Proponer guardar la foto como referencia al confirmar una retirada (docs/decisiones.md, duda 11). */
-  guardarFotoAlConfirmar: boolean
+  /**
+   * Proponer guardar la foto de una retirada como referencia del producto (CLAUDE.md §5.6). Desactivado
+   * por defecto a petición del usuario (docs/decisiones.md, «Cambios tras la etapa 4»). Sustituye a
+   * «guardarFotoAlConfirmar», que estaba activado y se ignora.
+   */
+  aprenderDeRetiradas: boolean
   /** Notificaciones del móvil (bajo mínimo al retirar y aviso diario de lotes caducados). */
   avisosEnElMovil: boolean
   /** ISO de la última copia de seguridad guardada desde este móvil; vacío si nunca. */
@@ -32,7 +36,7 @@ export const AJUSTES_INICIALES: AjustesDispositivo = {
   umbral: 0.6,
   temperatura: 0.05,
   modoDiagnostico: false,
-  guardarFotoAlConfirmar: true,
+  aprenderDeRetiradas: false,
   avisosEnElMovil: false,
   ultimaCopia: '',
   ultimoAvisoCaducados: '',
@@ -59,7 +63,7 @@ export class AlmacenAjustesLocal implements AlmacenAjustes {
 
   async leer(): Promise<AjustesDispositivo> {
     const registro = await this.#db.ajustes.get(CLAVE_AJUSTES)
-    return { ...AJUSTES_INICIALES, ...registro?.valor }
+    return { ...AJUSTES_INICIALES, ...(registro?.valor as Partial<AjustesDispositivo> | undefined) }
   }
 
   async guardar(cambios: Partial<AjustesDispositivo>): Promise<AjustesDispositivo> {
@@ -80,7 +84,7 @@ export class AlmacenAjustesLocal implements AlmacenAjustes {
   }
 
   async borrar(): Promise<void> {
-    await this.#db.ajustes.clear()
+    await this.#db.ajustes.delete(CLAVE_AJUSTES)
     this.#avisar()
   }
 

@@ -106,6 +106,23 @@ describe('productos', () => {
   })
 })
 
+describe('eliminar producto', () => {
+  it('borra el producto con sus movimientos, fotos y pedidos, y nada más', async () => {
+    const malo = await repo.crearProducto({ ...etanol, nombre: 'Creado por error', stockInicial: 4 }, 'JA')
+    const bueno = await repo.crearProducto({ ...etanol, stockInicial: 2 }, 'JA')
+    await repo.marcarPedido(malo.id)
+    await repo.guardarFoto({ productoId: malo.id, embedding: [1, 0], miniatura: new Blob(['x']), origen: 'alta' })
+    await repo.eliminarProducto(malo.id)
+    expect(await repo.obtenerProducto(malo.id)).toBeUndefined()
+    expect(await repo.listarMovimientos({ productoId: malo.id })).toEqual([])
+    expect(await repo.listarFotos(malo.id)).toEqual([])
+    expect(await repo.listarPedidos()).toEqual([])
+    expect(await repo.contar()).toEqual({ productos: 1, movimientos: 1, fotos: 0, pedidos: 0 })
+    expect((await repo.obtenerProducto(bueno.id))?.stockActual).toBe(2)
+    await expect(repo.eliminarProducto(malo.id)).rejects.toMatchObject({ codigo: 'producto-no-encontrado' })
+  })
+})
+
 describe('movimientos', () => {
   it('actualiza el stock y crea el movimiento a la vez', async () => {
     const p = await repo.crearProducto({ ...etanol, stockInicial: 5 }, 'JA')
@@ -250,6 +267,16 @@ describe('lotes caducados', () => {
     const historial = await repo.listarMovimientos({ productoId: p.id })
     expect(historial).toHaveLength(1)
     expect(historial[0]?.loteCerrado).toBeUndefined()
+  })
+
+  it('anular el ajuste de un lote desechado vuelve a abrir el lote', async () => {
+    const { p, entrada } = await conLote()
+    const cerrada = await repo.cerrarLote(entrada.id, { como: 'desechado', cantidad: 4, usuario: 'MG' })
+    await repo.deshacerMovimiento(cerrada.loteCerrado?.ajusteId ?? '')
+    expect((await repo.obtenerProducto(p.id))?.stockActual).toBe(6)
+    const [entradaOtraVez] = await repo.listarMovimientos({ productoId: p.id })
+    expect(entradaOtraVez?.id).toBe(entrada.id)
+    expect(entradaOtraVez?.loteCerrado).toBeUndefined()
   })
 
   it('si falla el ajuste no se cierra nada', async () => {

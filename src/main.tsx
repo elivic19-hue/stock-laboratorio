@@ -17,15 +17,19 @@ import { ProveedorServicios } from './app/ProveedorServicios'
 import { AlmacenAjustesLocal } from './datos/ajustes'
 import { BaseDatosStock } from './datos/db'
 import { LocalRepository } from './datos/LocalRepository'
+import { prepararSincronizacion } from './datos/sincronizacion/servicio'
 import { precargarModelo } from './reconocimiento/modelo'
 import { escucharServiceWorker } from './app/avisosMovil'
 
-// Fase 1: todo en IndexedDB, en este móvil. En la fase 2 solo cambiará esta línea del repositorio.
+// Los datos se leen y escriben siempre en este móvil (IndexedDB), así todo funciona sin conexión.
+// Si el móvil está conectado al laboratorio (fase 2), la sincronización los comparte con los demás.
 const baseDatos = new BaseDatosStock()
+const repo = new LocalRepository(baseDatos)
 const servicios: Servicios = {
-  repo: new LocalRepository(baseDatos),
+  repo,
   ajustes: new AlmacenAjustesLocal(baseDatos),
 }
+void prepararSincronizacion(baseDatos, repo)
 
 const raiz = document.getElementById('root')
 if (!raiz) throw new Error('Falta el elemento #root en index.html')

@@ -3,7 +3,8 @@ import { mostrarAviso } from '../app/avisos'
 import { useServicios } from '../app/contexto'
 import { Enlace } from '../app/Enlace'
 import { useAjustes, useConsulta } from '../app/hooks'
-import type { FotoReferencia, Producto } from '../datos/tipos'
+import { navegar } from '../app/navegacion'
+import type { FotoReferencia, Movimiento, Producto } from '../datos/tipos'
 import { mensajeDeError } from '../dominio/errores'
 import {
   conPunto,
@@ -38,6 +39,8 @@ export function FichaProducto({ id }: { id: string }) {
   const [ajusteAbierto, setAjusteAbierto] = useState(false)
   const [aperturasAjuste, setAperturasAjuste] = useState(0)
   const [archivarAbierto, setArchivarAbierto] = useState(false)
+  const [eliminarAbierto, setEliminarAbierto] = useState(false)
+  const [anulando, setAnulando] = useState<Movimiento | null>(null)
 
   const { datos, cargando } = useConsulta(async (r) => {
     const [producto, movimientos, fotos, pedidos] = await Promise.all([
@@ -69,6 +72,27 @@ export function FichaProducto({ id }: { id: string }) {
           await repo.actualizarProducto(id, { archivado: !archivado })
         },
       })
+    } catch (error) {
+      mostrarAviso({ texto: mensajeDeError(error) })
+    }
+  }
+
+  async function eliminar(producto: Producto) {
+    try {
+      await repo.eliminarProducto(producto.id)
+      setEliminarAbierto(false)
+      navegar({ pantalla: 'catalogo' }, { reemplazar: true })
+      mostrarAviso({ texto: `Producto eliminado: ${producto.codigo} ${producto.nombre}.` })
+    } catch (error) {
+      mostrarAviso({ texto: mensajeDeError(error) })
+    }
+  }
+
+  async function anular(movimiento: Movimiento) {
+    try {
+      await repo.deshacerMovimiento(movimiento.id)
+      setAnulando(null)
+      mostrarAviso({ texto: 'Movimiento anulado.' })
     } catch (error) {
       mostrarAviso({ texto: mensajeDeError(error) })
     }
@@ -163,8 +187,11 @@ export function FichaProducto({ id }: { id: string }) {
               </h2>
               {datos.movimientos.length === 0 && <p className="texto-secundario ficha-movimientos__vacio">Sin movimientos todavía.</p>}
               <ul className="ficha-movimientos__lista">
-                {(verTodos ? datos.movimientos : datos.movimientos.slice(0, MOVIMIENTOS_INICIALES)).map((m) => {
+                {(verTodos ? datos.movimientos : datos.movimientos.slice(0, MOVIMIENTOS_INICIALES)).map((m, i) => {
                   const { titulo, detalle } = describirMovimiento(m, datos.pedidos)
+                  // Solo se puede anular el último (el primero de la lista): el stock de los
+                  // siguientes depende de él.
+                  const anulable = i === 0
                   return (
                     <li key={m.id} className="movimiento">
                       <span className={m.cantidad > 0 ? 'movimiento__cantidad movimiento__cantidad--entra' : 'movimiento__cantidad'}>
@@ -179,6 +206,11 @@ export function FichaProducto({ id }: { id: string }) {
                         <span className="movimiento__resultante">
                           Quedan {formatearNumero(m.stockResultante)}
                         </span>
+                        {anulable && (
+                          <button type="button" className="enlace-boton movimiento__anular" onClick={() => setAnulando(m)}>
+                            Anular
+                          </button>
+                        )}
                       </span>
                     </li>
                   )
@@ -191,11 +223,16 @@ export function FichaProducto({ id }: { id: string }) {
               )}
             </section>
 
-            {!producto.archivado && (
-              <button type="button" className="boton boton--contorno" onClick={() => setArchivarAbierto(true)}>
-                Archivar producto
+            <div className="ficha-producto__final">
+              {!producto.archivado && (
+                <button type="button" className="boton boton--contorno" onClick={() => setArchivarAbierto(true)}>
+                  Archivar producto
+                </button>
+              )}
+              <button type="button" className="boton" onClick={() => setEliminarAbierto(true)}>
+                Eliminar producto
               </button>
-            )}
+            </div>
 
             <DialogoAjuste key={aperturasAjuste} producto={producto} abierto={ajusteAbierto} alCerrar={() => setAjusteAbierto(false)} />
             <Dialogo abierto={archivarAbierto} alCerrar={() => setArchivarAbierto(false)} titulo="Archivar producto">
@@ -211,6 +248,48 @@ export function FichaProducto({ id }: { id: string }) {
                   Archivar
                 </button>
               </div>
+            </Dialogo>
+            <Dialogo abierto={eliminarAbierto} alCerrar={() => setEliminarAbierto(false)} titulo="Eliminar producto">
+              <p className="texto-secundario">
+                Se borra {producto.nombre} ({producto.codigo}) con sus {datos.movimientos.length} movimientos y{' '}
+                {datos.fotos.length} fotos, como si nunca se hubiera dado de alta. No se puede deshacer.
+              </p>
+              <p className="texto-secundario">
+                Es para corregir un alta hecha por error. Si el producto existió y ya no se usa, mejor archívalo: así
+                se conserva su historial.
+              </p>
+              <div className="hoja__acciones">
+                <button type="button" className="boton" onClick={() => setEliminarAbierto(false)}>
+                  Cancelar
+                </button>
+                <button type="button" className="boton boton--oscuro" onClick={() => void eliminar(producto)}>
+                  Eliminar
+                </button>
+              </div>
+            </Dialogo>
+            <Dialogo abierto={anulando !== null} alCerrar={() => setAnulando(null)} titulo="Anular movimiento">
+              {anulando && (
+                <>
+                  <p className="texto-secundario">
+                    {describirMovimiento(anulando, datos.pedidos).titulo} de{' '}
+                    <span className="mono">{formatearCantidadConSigno(anulando.cantidad)}</span>, del{' '}
+                    <span className="mono">{formatearFechaHora(anulando.fecha)}</span>. Se borra del historial y el stock
+                    vuelve a como estaba.
+                  </p>
+                  <CambioStock
+                    producto={producto}
+                    despues={Math.max(0, producto.stockActual - anulando.cantidad)}
+                  />
+                  <div className="hoja__acciones">
+                    <button type="button" className="boton" onClick={() => setAnulando(null)}>
+                      Cancelar
+                    </button>
+                    <button type="button" className="boton boton--oscuro" onClick={() => void anular(anulando)}>
+                      Anular
+                    </button>
+                  </div>
+                </>
+              )}
             </Dialogo>
           </>
         )}
@@ -285,6 +364,19 @@ function GaleriaFotos({ productoId, fotos }: { productoId: string; fotos: FotoRe
   // Ordenadas de la más antigua a la más reciente, como se hicieron.
   const ordenadas = [...fotos].sort((a, b) => a.creadoEn.localeCompare(b.creadoEn))
 
+  const deRetiradas = fotos.filter((f) => f.origen === 'confirmacion')
+
+  async function borrarDeRetiradas() {
+    try {
+      for (const foto of deRetiradas) await repo.borrarFoto(foto.id)
+      mostrarAviso({
+        texto: deRetiradas.length === 1 ? 'Foto de retirada borrada.' : `${deRetiradas.length} fotos de retiradas borradas.`,
+      })
+    } catch (error) {
+      mostrarAviso({ texto: mensajeDeError(error) })
+    }
+  }
+
   async function borrar(foto: FotoReferencia) {
     setVista(null)
     try {
@@ -311,10 +403,15 @@ function GaleriaFotos({ productoId, fotos }: { productoId: string; fotos: FotoRe
             key={foto.id}
             type="button"
             className="galeria__foto"
-            aria-label={`Ver la foto ${i + 1}`}
+            aria-label={`Ver la foto ${i + 1}${foto.origen === 'confirmacion' ? ', guardada al retirar' : ''}`}
             onClick={() => setVista(foto)}
           >
             <ImagenBlob blob={foto.miniatura} alt="" />
+            {foto.origen === 'confirmacion' && (
+              <span className="galeria__marca" aria-hidden="true">
+                Retirada
+              </span>
+            )}
           </button>
         ))}
         {fotos.length < MAX_FOTOS_POR_PRODUCTO && (
@@ -331,6 +428,13 @@ function GaleriaFotos({ productoId, fotos }: { productoId: string; fotos: FotoRe
           ? `Haz al menos ${FOTOS_MINIMAS} fotos, mejor ${FOTOS_RECOMENDADAS}, desde distintos ángulos y con distinta luz.`
           : 'Distintos ángulos y luces mejoran el reconocimiento.'}
       </p>
+      {deRetiradas.length > 0 && (
+        <button type="button" className="boton galeria__borrar-retiradas" onClick={() => void borrarDeRetiradas()}>
+          {deRetiradas.length === 1
+            ? 'Borrar la foto guardada al retirar'
+            : `Borrar las ${deRetiradas.length} fotos guardadas al retirar`}
+        </button>
+      )}
 
       <Dialogo abierto={vista !== null} alCerrar={() => setVista(null)} titulo="Foto de reconocimiento">
         {vista && (

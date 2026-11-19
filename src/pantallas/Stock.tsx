@@ -1,7 +1,8 @@
 import { useId, useMemo, useState } from 'react'
 import { Enlace } from '../app/Enlace'
+import { useEstadoSincronizacion } from '../datos/sincronizacion/servicio'
 import { useAjustes, useConsulta, useEstadoRecordado, useResumenStock } from '../app/hooks'
-import { formatearNumero } from '../dominio/formato'
+import { formatearHora, formatearNumero } from '../dominio/formato'
 import {
   OPCIONES_LISTA_INICIALES,
   agruparPorArmario,
@@ -70,11 +71,7 @@ export function Stock() {
             <span className="stock-cabecera__laboratorio">{ajustes?.laboratorio}</span>
             <div className="stock-cabecera__linea">
               <h1 className="stock-cabecera__titulo">Stock</h1>
-              {/* Fase 1: los datos solo están en este móvil. En la fase 2, la hora de sincronización. */}
-              <span className="estado-guardado">
-                <span className="estado-guardado__punto" aria-hidden="true" />
-                Guardado en este móvil
-              </span>
+              <EstadoGuardado />
             </div>
           </div>
           <Enlace ruta={{ pantalla: 'ajustes' }} className="boton-perfil" aria-label="Perfil y ajustes">
@@ -305,5 +302,56 @@ function DialogoFiltros({
         Ver productos
       </button>
     </Dialogo>
+  )
+}
+
+/** Sin conectar: «Guardado en este móvil». Conectado al laboratorio: la hora de sincronización (§7.1). */
+function EstadoGuardado() {
+  const estado = useEstadoSincronizacion()
+  let texto: string
+  let aviso = false
+  switch (estado.modo) {
+    case 'local':
+      texto = 'Guardado en este móvil'
+      break
+    case 'iniciando':
+      texto = 'Conectando…'
+      break
+    case 'error':
+      texto = 'Sin sincronizar'
+      aviso = true
+      break
+    case 'conectado':
+      if (estado.error) {
+        texto = 'Error al sincronizar'
+        aviso = true
+      } else if (!estado.conServidor) {
+        texto = estado.enviosPendientes > 0 ? `Sin conexión · ${estado.enviosPendientes} por enviar` : 'Sin conexión'
+        aviso = estado.enviosPendientes > 0
+      } else if (estado.enviosPendientes > 0) {
+        texto = 'Enviando…'
+      } else {
+        texto = estado.ultimaSincronizacion
+          ? `Sincronizado ${formatearHora(estado.ultimaSincronizacion)}`
+          : 'Sincronizado'
+      }
+  }
+  const contenido = (
+    <>
+      <span
+        className={aviso ? 'estado-guardado__punto estado-guardado__punto--aviso' : 'estado-guardado__punto'}
+        aria-hidden="true"
+      />
+      {texto}
+    </>
+  )
+  return aviso ? (
+    <Enlace ruta={{ pantalla: 'ajustes' }} className="estado-guardado estado-guardado--enlace">
+      {contenido}
+    </Enlace>
+  ) : (
+    <span className="estado-guardado" role="status">
+      {contenido}
+    </span>
   )
 }

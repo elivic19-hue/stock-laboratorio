@@ -242,3 +242,53 @@ El usuario lo dejó a mi criterio («haz lo que creas que es mejor»).
   sea de un producto que está, que no haya repetidos) y dice qué falla. Antes de sustituir enseña
   qué trae la copia y qué hay ahora en el móvil.
 - Propuesta para la etapa 5: recordar en Stock que hace tiempo que no se guarda una copia.
+
+## Cambios tras la etapa 4 (19/11/2026)
+
+Pedidos por el usuario al probar la etapa 4 («con las dudas haz lo que creas conveniente»).
+
+### Fotos de las retiradas
+
+- «Al hacer una foto para retirar se añade a las de alta; no quiero eso». Se sustituye el ajuste
+  `guardarFotoAlConfirmar` (activado) por `aprenderDeRetiradas`, **desactivado por defecto**: no
+  se guarda ninguna foto al retirar, ni se ofrece. Esto cambia §5.6 de CLAUDE.md (que decía
+  «activada por defecto»). Si alguien lo activa en Ajustes, funciona como antes (duda 11).
+- Las fotos ya guardadas al retirar salen marcadas «Retirada» en la galería, con un botón para
+  borrarlas todas de golpe.
+
+### Eliminar lo creado por error
+
+- «Eliminar producto» en la ficha: borra el producto con sus movimientos, fotos y pedidos, con
+  confirmación y sin «Deshacer». El diálogo recuerda que, si el producto existió, es mejor archivarlo.
+- «Anular» en el último movimiento de la ficha (usa `deshacerMovimiento`). Solo el último: el stock
+  resultante de los siguientes depende de él. Si era el ajuste con que se desechó un lote caducado,
+  el lote vuelve a quedar abierto.
+
+### Fase 2: compartir el stock (adelantada)
+
+- El usuario quiere que lo que se hace en un móvil se vea en los demás y en la web. CLAUDE.md decía
+  «Fase 2: no construir todavía»; se preguntó y eligió **Firebase** (nueva dependencia `firebase`,
+  aprobada). Supabase se descartó porque el plan gratuito se pausa tras una semana sin uso y el
+  trabajo sin conexión habría que programarlo aparte.
+- Diseño: las pantallas y `LocalRepository` no cambian; la base de datos del móvil sigue siendo la
+  que se usa. Un `Sincronizador` manda cada fila cambiada a Firestore (detectada con los hooks de
+  Dexie; los borrados, como lápidas) y aplica en el móvil lo que llega de los demás, sin reenviarlo.
+  Firestore guarda en cola lo hecho sin conexión. Solo se piden los documentos cambiados desde la
+  última vez (marca `modificadoEn` del servidor), para gastar pocas lecturas.
+- **Stock = suma de los movimientos**: al recibir movimientos se recalcula el stock del producto.
+  Así, dos retiradas a la vez en dos móviles se restan las dos. Lo demás (editar un producto),
+  gana el último cambio. El «quedan» de cada movimiento es el que vio quien lo hizo. Dos móviles sin
+  conexión podrían retirar más de lo que hay (el stock quedaría negativo hasta corregirlo): se
+  acepta, es raro.
+- Una cuenta (correo y contraseña) por laboratorio, creada en Firebase; sus datos van en
+  `laboratorios/{uid}` y las reglas solo dejan entrar a esa cuenta. La configuración del proyecto se
+  pega en Ajustes o se pone en `configuracion.ts`. Firebase solo se descarga si el móvil se conecta.
+- Al conectar: si la nube está vacía, el móvil sube lo suyo; si tiene datos, el móvil se queda con
+  los del laboratorio (preguntando antes si tenía datos propios). Restaurar una copia con el móvil
+  conectado sustituye los datos de todo el laboratorio (se avisa); «Borrar todos los datos»
+  desconecta antes el móvil.
+- Los ajustes (usuario, umbral, avisos…) siguen siendo de cada móvil.
+- Probado con tests (dos móviles simulados con una nube en memoria: altas, retiradas simultáneas sin
+  conexión, borrados, restaurar). Falta probarlo con el proyecto de Firebase real, que tiene que
+  crear el usuario (README, «Compartir el stock entre móviles»).
+

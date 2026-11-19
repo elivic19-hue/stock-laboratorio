@@ -8,6 +8,7 @@ import { crearCopia, leerCopia, nombreArchivoCopia, type CopiaLeida } from '../d
 import type { Recuento } from '../datos/StockRepository'
 import { mensajeDeError } from '../dominio/errores'
 import { formatearFechaHora, formatearNumero, formatearTamano } from '../dominio/formato'
+import { conTodoSincronizado, useEstadoSincronizacion } from '../datos/sincronizacion/servicio'
 import { Dialogo } from '../ui/Dialogo'
 import { Icono } from '../ui/Icono'
 
@@ -65,7 +66,8 @@ export function SeccionCopia({
   }
 
   async function restaurar(copia: CopiaLeida) {
-    await repo.reemplazarTodo(copia.datos)
+    // Si el móvil está conectado, la copia sustituye los datos de todo el laboratorio.
+    await conTodoSincronizado(() => repo.reemplazarTodo(copia.datos))
     await almacen.guardar(copia.ajustes)
     setCopiaLeida(null)
     navegar({ pantalla: 'stock' }, { reemplazar: true })
@@ -162,6 +164,7 @@ function DialogoRestaurar({
   alRestaurar: () => Promise<void>
 }) {
   const [restaurando, setRestaurando] = useState(false)
+  const conectado = useEstadoSincronizacion().modo !== 'local'
   const [error, setError] = useState<string | null>(null)
   const hayDatos = actual !== undefined && actual.productos + actual.movimientos + actual.fotos + actual.pedidos > 0
 
@@ -188,7 +191,15 @@ function DialogoRestaurar({
         </div>
       </dl>
       <p className="texto-secundario">Contiene {describirRecuento(copia.recuento)}.</p>
-      {hayDatos && (
+      {conectado && (
+        <p className="nota-grave">
+          <Icono nombre="alerta" tamano={18} />
+          <span>
+            Este móvil está conectado al laboratorio: la copia sustituye los datos de <strong>todos</strong> los móviles.
+          </span>
+        </p>
+      )}
+      {hayDatos && !conectado && (
         <p className="nota-grave">
           <Icono nombre="alerta" tamano={18} />
           <span>

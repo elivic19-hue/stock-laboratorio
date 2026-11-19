@@ -200,3 +200,15 @@
 .stock-contenido > .lista-vacia {
   margin-top: 16px;
 }
+
+/* Problema de sincronización: punto hueco de tinta (no naranja, que es solo «bajo mínimo») */
+.estado-guardado__punto--aviso {
+  border: 1.5px solid var(--tinta);
+  background: transparent;
+}
+
+.estado-guardado--enlace {
+  color: var(--tinta);
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}

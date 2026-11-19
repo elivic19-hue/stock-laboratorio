@@ -227,10 +227,9 @@ function HojaResultado({
             captura={captura}
             via={eleccion?.via ?? 'manual'}
             confianza={eleccion?.via === 'foto' ? puntuacionElegido?.confianza : undefined}
-            // Se ofrece guardar la foto siempre que la haya: si el reconocimiento acertó (§5) y también
-            // si la persona lo corrigió con «¿No es este?» o a mano, que son las fotos que más enseñan.
-            puedeGuardarFoto={conFoto}
-            guardarFotoPorDefecto={ajustes.guardarFotoAlConfirmar}
+            // Solo si se ha activado «Aprender de las retiradas» en Ajustes (desactivado por defecto).
+            // Entonces se ofrece también al corregir con «¿No es este?» o a mano (duda 11).
+            puedeGuardarFoto={conFoto && ajustes.aprenderDeRetiradas}
           />
         </>
       ) : (
@@ -291,19 +290,17 @@ function FormularioRetirada({
   via,
   confianza,
   puedeGuardarFoto,
-  guardarFotoPorDefecto,
 }: {
   producto: Producto
   captura: Captura
   via: 'foto' | 'manual'
   confianza: number | undefined
   puedeGuardarFoto: boolean
-  guardarFotoPorDefecto: boolean
 }) {
   const { repo } = useServicios()
   const ajustes = useAjustes()
   const [cantidadTexto, setCantidadTexto] = useState('1')
-  const [guardarFoto, setGuardarFoto] = useState(guardarFotoPorDefecto)
+  const [guardarFoto, setGuardarFoto] = useState(true)
   const [guardando, setGuardando] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const idCantidad = useId()
