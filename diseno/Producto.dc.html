@@ -1,0 +1,102 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<title>Ficha de producto</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&amp;family=IBM+Plex+Sans:wght@400;500;600;700&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0}
+a{color:#2340B8}a:hover{color:#182F8A}
+</style>
+</helmet>
+<div style="width: 390px; height: 844px; box-sizing: border-box; display: flex; flex-direction: column; background: #F3F4F1; font-family: 'IBM Plex Sans', system-ui, sans-serif; color: #15181B; overflow: hidden">
+
+  <header style="padding: 24px 20px 8px; display: flex; justify-content: space-between; align-items: center">
+    <a href="Main.dc.html" aria-label="Volver" style="width: 44px; height: 44px; border: 1px solid #D9DCD6; border-radius: 10px; background: #FFFFFF; display: flex; align-items: center; justify-content: center">
+      <svg aria-hidden="true" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#15181B" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M15 5l-7 7 7 7"/></svg>
+    </a>
+    <button style="height: 44px; padding: 0 16px; border: 1px solid #D9DCD6; border-radius: 10px; background: #FFFFFF; font: inherit; font-size: 14px; font-weight: 500; color: #15181B">Editar</button>
+  </header>
+
+  <div style="flex: 1; min-height: 0; overflow: hidden; padding: 8px 20px 24px; display: flex; flex-direction: column; gap: 18px">
+    <div style="display: flex; flex-direction: column; gap: 6px">
+      <span style="align-self: flex-start; padding: 3px 8px; border: 1px solid #15181B; border-radius: 4px; font-family: 'IBM Plex Mono', monospace; font-size: 10px; letter-spacing: 0.08em">FUNGIBLE</span>
+      <h1 style="margin: 0; font-size: 24px; font-weight: 600; letter-spacing: -0.01em">Puntas de pipeta 1000 µL</h1>
+    </div>
+
+    <div style="display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); border: 1px solid #D9DCD6; border-radius: 10px; background: #FFFFFF">
+      <div style="padding: 10px 12px; display: flex; flex-direction: column; gap: 2px; border-right: 1px solid #D9DCD6; border-bottom: 1px solid #D9DCD6">
+        <span style="font-family: 'IBM Plex Mono', monospace; font-size: 10px; letter-spacing: 0.06em; color: #5B636B">STOCK</span>
+        <span style="font-family: 'IBM Plex Mono', monospace; font-size: 20px; font-weight: 600">11 <span style="font-size: 12px; font-weight: 400; color: #5B636B">racks</span></span>
+      </div>
+      <div style="padding: 10px 12px; display: flex; flex-direction: column; gap: 2px; border-bottom: 1px solid #D9DCD6">
+        <span style="font-family: 'IBM Plex Mono', monospace; font-size: 10px; letter-spacing: 0.06em; color: #5B636B">AVISAR CON</span>
+        <span style="font-family: 'IBM Plex Mono', monospace; font-size: 20px; font-weight: 500">≤ 5</span>
+      </div>
+      <div style="padding: 10px 12px; display: flex; flex-direction: column; gap: 2px; border-right: 1px solid #D9DCD6">
+        <span style="font-family: 'IBM Plex Mono', monospace; font-size: 10px; letter-spacing: 0.06em; color: #5B636B">UNIDAD</span>
+        <span style="font-size: 14px">Rack de 96 puntas</span>
+      </div>
+      <div style="padding: 10px 12px; display: flex; flex-direction: column; gap: 2px">
+        <span style="font-family: 'IBM Plex Mono', monospace; font-size: 10px; letter-spacing: 0.06em; color: #5B636B">UBICACIÓN</span>
+        <span style="font-size: 14px">Armario 2 · Balda 3</span>
+      </div>
+    </div>
+
+    <section style="display: flex; flex-direction: column; gap: 10px">
+      <div style="display: flex; justify-content: space-between; align-items: baseline">
+        <h2 style="margin: 0; font-family: 'IBM Plex Mono', monospace; font-size: 11px; font-weight: 500; letter-spacing: 0.06em; color: #5B636B">FOTOS DE RECONOCIMIENTO</h2>
+        <span style="font-family: 'IBM Plex Mono', monospace; font-size: 12px; font-weight: 600">6 / 10</span>
+      </div>
+      <div style="display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 8px">
+        <sc-for list="{{shots}}" as="s" hint-placeholder-count="6">
+          <div style="aspect-ratio: 1; border-radius: 8px; background-color: #2B3138; background-image: radial-gradient(#6A747E 1.4px, transparent 1.6px); background-size: 8px 8px; background-position: 4px 4px; border: 1px solid #15181B"></div>
+        </sc-for>
+        <button aria-label="Añadir foto" style="aspect-ratio: 1; border-radius: 8px; border: 1.5px dashed #2340B8; background: #FFFFFF; display: flex; align-items: center; justify-content: center">
+          <svg aria-hidden="true" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#2340B8" stroke-width="2" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg>
+        </button>
+        <div style="aspect-ratio: 1; border-radius: 8px; border: 1.5px dashed #C9CDC6"></div>
+        <div style="aspect-ratio: 1; border-radius: 8px; border: 1.5px dashed #C9CDC6"></div>
+        <div style="aspect-ratio: 1; border-radius: 8px; border: 1.5px dashed #C9CDC6"></div>
+      </div>
+      <p style="margin: 0; font-size: 13px; line-height: 1.45; color: #5B636B">Distintos ángulos y luces mejoran el reconocimiento. Las fotos que haga cualquier compañero sirven para todos.</p>
+    </section>
+
+    <section style="display: flex; flex-direction: column">
+      <h2 style="margin: 0 0 4px; padding-bottom: 8px; border-bottom: 1px solid #D9DCD6; font-family: 'IBM Plex Mono', monospace; font-size: 11px; font-weight: 500; letter-spacing: 0.06em; color: #5B636B">MOVIMIENTOS</h2>
+      <sc-for list="{{moves}}" as="m" hint-placeholder-count="4">
+        <div style="display: grid; grid-template-columns: 52px 1fr auto; align-items: center; gap: 10px; padding: 9px 0; border-bottom: 1px solid #E4E6E1">
+          <span style="{{m.qtyStyle}}">{{m.qty}}</span>
+          <span style="font-size: 14px">{{m.what}}</span>
+          <span style="font-family: 'IBM Plex Mono', monospace; font-size: 11px; color: #5B636B">{{m.when}}</span>
+        </div>
+      </sc-for>
+    </section>
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":390,"height":844}}'>
+class Component extends DCLogic {
+  renderVals() {
+    var moves = [
+      { qty: '−1', what: 'Retirada · foto', when: 'HOY 08:12', out: true },
+      { qty: '−1', what: 'Retirada · foto', when: 'AYER 16:40', out: true },
+      { qty: '+10', what: 'Entrada · pedido', when: '12 NOV', out: false },
+      { qty: '−2', what: 'Retirada · manual', when: '11 NOV', out: true }
+    ].map(function (m) {
+      return Object.assign({}, m, {
+        qtyStyle: "font-family: 'IBM Plex Mono', monospace; font-size: 15px; font-weight: 600; color: " + (m.out ? '#15181B' : '#1B33A0')
+      });
+    });
+    return { shots: [1, 2, 3, 4, 5, 6], moves: moves };
+  }
+}
+</script>
+</body>
+</html>

@@ -1,0 +1,107 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<title>Retirar con foto</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&amp;family=IBM+Plex+Sans:wght@400;500;600;700&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0}
+a{color:#2340B8}a:hover{color:#182F8A}
+</style>
+</helmet>
+<div style="width: 390px; height: 844px; box-sizing: border-box; display: flex; flex-direction: column; background: #0E1114; font-family: 'IBM Plex Sans', system-ui, sans-serif; color: #15181B; overflow: hidden">
+
+  <div style="position: relative; height: 410px; flex-shrink: 0; background: #14181C; background-image: linear-gradient(#1B2026 1px, transparent 1px), linear-gradient(90deg, #1B2026 1px, transparent 1px); background-size: 26px 26px">
+    <div style="position: absolute; top: 24px; left: 16px; right: 16px; display: flex; justify-content: space-between; align-items: center">
+      <a href="Main.dc.html" aria-label="Cerrar" style="width: 44px; height: 44px; border-radius: 22px; background: rgba(255,255,255,0.12); display: flex; align-items: center; justify-content: center">
+        <svg aria-hidden="true" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#FFFFFF" stroke-width="1.8" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"/></svg>
+      </a>
+      <span style="color: #FFFFFF; font-size: 15px; font-weight: 500">Retirar del stock</span>
+      <button aria-label="Linterna" style="width: 44px; height: 44px; border-radius: 22px; border: none; background: rgba(255,255,255,0.12); display: flex; align-items: center; justify-content: center">
+        <svg aria-hidden="true" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#FFFFFF" stroke-width="1.7" stroke-linejoin="round"><path d="M13 3L5 14h6l-1 7 8-11h-6z"/></svg>
+      </button>
+    </div>
+
+    <div style="position: absolute; left: 75px; top: 112px; width: 240px; height: 190px">
+      <svg role="img" aria-label="Caja de puntas de pipeta en el visor" width="240" height="190" viewBox="0 0 240 190">
+        <rect x="22" y="40" width="196" height="120" rx="6" fill="#2B3138" stroke="#4A535C"/>
+        <rect x="30" y="48" width="180" height="78" rx="3" fill="#353C44"/>
+        <g fill="#6A747E">
+          <circle cx="42" cy="58" r="3"/><circle cx="56" cy="58" r="3"/><circle cx="70" cy="58" r="3"/><circle cx="84" cy="58" r="3"/><circle cx="98" cy="58" r="3"/><circle cx="112" cy="58" r="3"/><circle cx="126" cy="58" r="3"/><circle cx="140" cy="58" r="3"/><circle cx="154" cy="58" r="3"/><circle cx="168" cy="58" r="3"/><circle cx="182" cy="58" r="3"/><circle cx="196" cy="58" r="3"/>
+          <circle cx="42" cy="72" r="3"/><circle cx="56" cy="72" r="3"/><circle cx="70" cy="72" r="3"/><circle cx="84" cy="72" r="3"/><circle cx="98" cy="72" r="3"/><circle cx="112" cy="72" r="3"/><circle cx="126" cy="72" r="3"/><circle cx="140" cy="72" r="3"/><circle cx="154" cy="72" r="3"/><circle cx="168" cy="72" r="3"/><circle cx="182" cy="72" r="3"/><circle cx="196" cy="72" r="3"/>
+          <circle cx="42" cy="86" r="3"/><circle cx="56" cy="86" r="3"/><circle cx="70" cy="86" r="3"/><circle cx="84" cy="86" r="3"/><circle cx="98" cy="86" r="3"/><circle cx="112" cy="86" r="3"/><circle cx="126" cy="86" r="3"/><circle cx="140" cy="86" r="3"/><circle cx="154" cy="86" r="3"/><circle cx="168" cy="86" r="3"/><circle cx="182" cy="86" r="3"/><circle cx="196" cy="86" r="3"/>
+          <circle cx="42" cy="100" r="3"/><circle cx="56" cy="100" r="3"/><circle cx="70" cy="100" r="3"/><circle cx="84" cy="100" r="3"/><circle cx="98" cy="100" r="3"/><circle cx="112" cy="100" r="3"/><circle cx="126" cy="100" r="3"/><circle cx="140" cy="100" r="3"/><circle cx="154" cy="100" r="3"/><circle cx="168" cy="100" r="3"/><circle cx="182" cy="100" r="3"/><circle cx="196" cy="100" r="3"/>
+          <circle cx="42" cy="114" r="3"/><circle cx="56" cy="114" r="3"/><circle cx="70" cy="114" r="3"/><circle cx="84" cy="114" r="3"/><circle cx="98" cy="114" r="3"/><circle cx="112" cy="114" r="3"/><circle cx="126" cy="114" r="3"/><circle cx="140" cy="114" r="3"/><circle cx="154" cy="114" r="3"/><circle cx="168" cy="114" r="3"/><circle cx="182" cy="114" r="3"/><circle cx="196" cy="114" r="3"/>
+        </g>
+        <rect x="30" y="134" width="96" height="18" rx="2" fill="#D9DCD6"/>
+        <rect x="36" y="140" width="52" height="3" fill="#5B636B"/>
+        <rect x="36" y="146" width="34" height="2" fill="#8C949B"/>
+        <path d="M2 22V2h22M238 22V2h-22M2 168v20h22M238 168v20h-22" fill="none" stroke="#FFFFFF" stroke-width="3"/>
+      </svg>
+    </div>
+
+    <div style="position: absolute; left: 0; right: 0; bottom: 36px; display: flex; justify-content: center">
+      <span style="display: flex; align-items: center; gap: 8px; padding: 8px 12px; border-radius: 16px; background: rgba(255,255,255,0.12); color: #FFFFFF; font-family: 'IBM Plex Mono', monospace; font-size: 11px; letter-spacing: 0.04em">
+        <span style="width: 7px; height: 7px; border-radius: 4px; background: #7FA0FF"></span>
+        RECONOCIDO EN EL MÓVIL · 0,3 s
+      </span>
+    </div>
+  </div>
+
+  <section aria-label="Resultado" style="flex: 1; margin-top: -20px; border-radius: 20px 20px 0 0; background: #FFFFFF; padding: 20px 20px 24px; display: flex; flex-direction: column; gap: 14px">
+    <div style="display: flex; justify-content: space-between; align-items: center">
+      <span style="font-family: 'IBM Plex Mono', monospace; font-size: 11px; letter-spacing: 0.06em; color: #5B636B">COINCIDENCIA</span>
+      <span style="padding: 3px 8px; border-radius: 6px; background: #E6EAFB; color: #1B33A0; font-family: 'IBM Plex Mono', monospace; font-size: 13px; font-weight: 600">94 %</span>
+    </div>
+    <div style="display: flex; flex-direction: column; gap: 4px">
+      <h1 style="margin: 0; font-size: 22px; font-weight: 600; letter-spacing: -0.01em">Puntas de pipeta 1000 µL</h1>
+      <span style="font-family: 'IBM Plex Mono', monospace; font-size: 12px; color: #5B636B">RACK 96 UDS · ARM. 2 · BALDA 3</span>
+    </div>
+
+    <div style="display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); border: 1px solid #D9DCD6; border-radius: 10px">
+      <div style="padding: 10px 12px; display: flex; flex-direction: column; gap: 2px; border-right: 1px solid #D9DCD6">
+        <span style="font-family: 'IBM Plex Mono', monospace; font-size: 10px; letter-spacing: 0.06em; color: #5B636B">STOCK ACTUAL</span>
+        <span style="font-family: 'IBM Plex Mono', monospace; font-size: 22px; font-weight: 500">12 <span style="font-size: 12px; color: #5B636B">racks</span></span>
+      </div>
+      <div style="padding: 10px 12px; display: flex; flex-direction: column; gap: 2px; background: #F3F4F1; border-radius: 0 10px 10px 0">
+        <span style="font-family: 'IBM Plex Mono', monospace; font-size: 10px; letter-spacing: 0.06em; color: #5B636B">TRAS RETIRAR</span>
+        <span style="font-family: 'IBM Plex Mono', monospace; font-size: 22px; font-weight: 600">11 <span style="font-size: 12px; color: #5B636B; font-weight: 400">racks</span></span>
+      </div>
+    </div>
+
+    <div style="display: flex; justify-content: space-between; align-items: center">
+      <span style="font-size: 15px; font-weight: 500">Cantidad</span>
+      <div style="display: flex; align-items: center; border: 1px solid #D9DCD6; border-radius: 10px">
+        <button aria-label="Restar uno" style="width: 48px; height: 46px; border: none; background: transparent; font: inherit; font-size: 22px; color: #15181B">−</button>
+        <span style="width: 44px; text-align: center; font-family: 'IBM Plex Mono', monospace; font-size: 18px; font-weight: 600; border-left: 1px solid #D9DCD6; border-right: 1px solid #D9DCD6; line-height: 46px">1</span>
+        <button aria-label="Sumar uno" style="width: 48px; height: 46px; border: none; background: transparent; font: inherit; font-size: 22px; color: #15181B">+</button>
+      </div>
+    </div>
+
+    <button style="height: 52px; border: none; border-radius: 12px; background: #2340B8; color: #FFFFFF; font: inherit; font-size: 16px; font-weight: 600">Confirmar retirada</button>
+
+    <div style="display: flex; flex-direction: column; gap: 8px">
+      <span style="font-family: 'IBM Plex Mono', monospace; font-size: 11px; letter-spacing: 0.06em; color: #5B636B">¿NO ES ESTE?</span>
+      <div style="display: flex; gap: 8px">
+        <button style="flex: 1; height: 44px; border: 1px solid #D9DCD6; border-radius: 10px; background: #FFFFFF; font: inherit; font-size: 13px; color: #15181B; display: flex; align-items: center; justify-content: space-between; padding: 0 12px">Puntas 200 µL <span style="font-family: 'IBM Plex Mono', monospace; color: #5B636B">71 %</span></button>
+        <button style="flex: 1; height: 44px; border: 1px solid #D9DCD6; border-radius: 10px; background: #FFFFFF; font: inherit; font-size: 13px; color: #15181B; display: flex; align-items: center; justify-content: space-between; padding: 0 12px">Puntas 10 µL <span style="font-family: 'IBM Plex Mono', monospace; color: #5B636B">38 %</span></button>
+      </div>
+    </div>
+  </section>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":390,"height":844}}'>
+class Component extends DCLogic {
+  renderVals() {
+    return {};
+  }
+}
+</script>
+</body>
+</html>

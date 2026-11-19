@@ -1,0 +1,20 @@
+/* Maqueta diseno/Producto.dc.html */
+
+.ficha-producto__titulo {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.ficha-producto__insignias {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.ficha-producto__nombre {
+  font-size: 24px;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+  line-height: 1.25;
+}

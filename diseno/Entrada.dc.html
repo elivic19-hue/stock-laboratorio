@@ -1,0 +1,90 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<title>Registrar entrada</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&amp;family=IBM+Plex+Sans:wght@400;500;600;700&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0}
+a{color:#2340B8}a:hover{color:#182F8A}
+</style>
+</helmet>
+<div style="width: 390px; height: 844px; box-sizing: border-box; display: flex; flex-direction: column; background: #F3F4F1; font-family: 'IBM Plex Sans', system-ui, sans-serif; color: #15181B; overflow: hidden">
+
+  <header style="padding: 24px 20px 12px; display: flex; align-items: center; gap: 12px">
+    <a href="Main.dc.html" aria-label="Volver" style="width: 44px; height: 44px; border: 1px solid #D9DCD6; border-radius: 10px; background: #FFFFFF; display: flex; align-items: center; justify-content: center">
+      <svg aria-hidden="true" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#15181B" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M15 5l-7 7 7 7"/></svg>
+    </a>
+    <h1 style="margin: 0; font-size: 22px; font-weight: 600; letter-spacing: -0.01em">Registrar entrada</h1>
+  </header>
+
+  <div style="flex: 1; min-height: 0; padding: 8px 20px 0; display: flex; flex-direction: column; gap: 16px">
+    <div style="display: flex; flex-direction: column; gap: 6px">
+      <span style="font-family: 'IBM Plex Mono', monospace; font-size: 11px; letter-spacing: 0.06em; color: #5B636B">PRODUCTO</span>
+      <button style="display: flex; justify-content: space-between; align-items: center; min-height: 60px; padding: 10px 14px; border: 1px solid #D9DCD6; border-radius: 10px; background: #FFFFFF; font: inherit; color: #15181B; text-align: left">
+        <span style="display: flex; flex-direction: column; gap: 2px">
+          <span style="font-size: 16px; font-weight: 500">Etanol absoluto 1 L</span>
+          <span style="font-family: 'IBM Plex Mono', monospace; font-size: 11px; color: #5B636B">ARM. INFLAMABLES · B2</span>
+        </span>
+        <svg aria-hidden="true" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#5B636B" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9l6 6 6-6"/></svg>
+      </button>
+    </div>
+
+    <div style="background: #FFFFFF; border: 1px solid #D9DCD6; border-radius: 12px; padding: 16px; display: flex; flex-direction: column; gap: 14px">
+      <span style="font-family: 'IBM Plex Mono', monospace; font-size: 11px; letter-spacing: 0.06em; color: #5B636B">UNIDADES RECIBIDAS</span>
+      <div style="display: flex; justify-content: space-between; align-items: center">
+        <button aria-label="Restar uno" style="width: 56px; height: 56px; border: 1px solid #D9DCD6; border-radius: 12px; background: #F3F4F1; font: inherit; font-size: 26px; color: #15181B">−</button>
+        <span style="font-family: 'IBM Plex Mono', monospace; font-size: 48px; font-weight: 500; letter-spacing: -0.02em">+6</span>
+        <button aria-label="Sumar uno" style="width: 56px; height: 56px; border: 1px solid #D9DCD6; border-radius: 12px; background: #F3F4F1; font: inherit; font-size: 26px; color: #15181B">+</button>
+      </div>
+      <div style="display: flex; justify-content: center; gap: 10px; align-items: baseline; border-top: 1px solid #E4E6E1; padding-top: 12px; font-family: 'IBM Plex Mono', monospace">
+        <span style="font-size: 12px; color: #5B636B">STOCK</span>
+        <span style="font-size: 16px; color: #9A3B0B">1</span>
+        <svg aria-hidden="true" width="16" height="10" viewBox="0 0 16 10" fill="none" stroke="#5B636B" stroke-width="1.5"><path d="M0 5h14M10 1l4 4-4 4"/></svg>
+        <span style="font-size: 16px; font-weight: 600">7</span>
+        <span style="font-size: 12px; color: #5B636B">bot.</span>
+      </div>
+    </div>
+
+    <div style="display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px">
+      <label style="display: flex; flex-direction: column; gap: 6px">
+        <span style="font-family: 'IBM Plex Mono', monospace; font-size: 11px; letter-spacing: 0.06em; color: #5B636B">LOTE</span>
+        <input type="text" value="K5341298" style="height: 46px; box-sizing: border-box; padding: 0 12px; border: 1px solid #D9DCD6; border-radius: 10px; background: #FFFFFF; font-family: 'IBM Plex Mono', monospace; font-size: 15px; color: #15181B">
+      </label>
+      <label style="display: flex; flex-direction: column; gap: 6px">
+        <span style="font-family: 'IBM Plex Mono', monospace; font-size: 11px; letter-spacing: 0.06em; color: #5B636B">CADUCIDAD</span>
+        <input type="text" value="03 / 2029" style="height: 46px; box-sizing: border-box; padding: 0 12px; border: 1px solid #D9DCD6; border-radius: 10px; background: #FFFFFF; font-family: 'IBM Plex Mono', monospace; font-size: 15px; color: #15181B">
+      </label>
+    </div>
+
+    <label style="display: flex; flex-direction: column; gap: 6px">
+      <span style="font-family: 'IBM Plex Mono', monospace; font-size: 11px; letter-spacing: 0.06em; color: #5B636B">NOTA (OPCIONAL)</span>
+      <input type="text" placeholder="Nº de albarán, proveedor…" style="height: 46px; box-sizing: border-box; padding: 0 12px; border: 1px solid #D9DCD6; border-radius: 10px; background: #FFFFFF; font: inherit; font-size: 15px; color: #15181B">
+    </label>
+
+    <div style="display: flex; gap: 10px; align-items: flex-start; padding: 12px; border-radius: 10px; background: #E6EAFB">
+      <svg aria-hidden="true" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#1B33A0" stroke-width="1.8" stroke-linecap="round" style="flex-shrink: 0; margin-top: 1px"><circle cx="12" cy="12" r="9"/><path d="M12 11v6M12 7.5v.5"/></svg>
+      <span style="font-size: 13px; line-height: 1.45; color: #1B33A0">Al guardar, el producto sale de la lista «A pedir» porque supera el mínimo (3).</span>
+    </div>
+  </div>
+
+  <div style="padding: 16px 20px 28px; background: #F3F4F1; border-top: 1px solid #D9DCD6">
+    <button style="width: 100%; height: 54px; border: none; border-radius: 12px; background: #2340B8; color: #FFFFFF; font: inherit; font-size: 16px; font-weight: 600">Guardar entrada</button>
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":390,"height":844}}'>
+class Component extends DCLogic {
+  renderVals() {
+    return {};
+  }
+}
+</script>
+</body>
+</html>

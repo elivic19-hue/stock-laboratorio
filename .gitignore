@@ -1,0 +1,24 @@
+# Registros
+logs
+*.log
+npm-debug.log*
+
+# Dependencias y compilación
+node_modules
+dist
+dist-ssr
+dev-dist
+coverage
+*.local
+
+# Editores y sistema
+.vscode/*
+!.vscode/extensions.json
+.idea
+.DS_Store
+Thumbs.db
+*.suo
+*.sw?
+
+# Ajustes locales de Claude Code
+.claude/settings.local.json

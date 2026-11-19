@@ -1,0 +1,77 @@
+/* Barra inferior fija (CLAUDE.md §6): Stock · A pedir · cámara · Entrada · Catálogo */
+.barra-inferior {
+  position: fixed;
+  z-index: 20;
+  bottom: 0;
+  left: 50%;
+  transform: translateX(-50%);
+  width: min(100%, var(--ancho-max));
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  align-items: start;
+  padding: 8px 0 max(8px, env(safe-area-inset-bottom, 0px));
+  border-top: 1px solid var(--linea);
+  background: var(--superficie);
+}
+
+@media (min-width: 481px) {
+  .barra-inferior {
+    border-inline: 1px solid var(--linea);
+  }
+}
+
+.barra-inferior__enlace {
+  position: relative;
+  min-height: var(--tactil);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  padding-top: 2px;
+  color: var(--tinta-2);
+  font-size: 11px;
+  text-decoration: none;
+}
+
+.barra-inferior__enlace[aria-current='page'] {
+  color: var(--tinta);
+  font-weight: 600;
+}
+
+.barra-inferior__contador {
+  position: absolute;
+  top: -4px;
+  left: 50%;
+  min-width: 18px;
+  height: 18px;
+  margin-left: 6px;
+  padding: 0 5px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 9px;
+  background: var(--alerta);
+  color: #ffffff;
+  font-family: var(--fuente-mono);
+  font-size: 11px;
+  font-weight: 600;
+}
+
+/* Botón central azul de cámara (Retirar) */
+.barra-inferior__camara {
+  justify-self: center;
+  width: 64px;
+  height: 64px;
+  margin-top: -30px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 32px;
+  background: var(--accion);
+  color: #ffffff;
+  box-shadow: 0 0 0 5px var(--fondo);
+}
+
+.barra-inferior__camara:active {
+  background: var(--accion-pulsado);
+}

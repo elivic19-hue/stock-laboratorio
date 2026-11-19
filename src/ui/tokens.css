@@ -1,0 +1,42 @@
+/*
+ * Tokens de diseño (CLAUDE.md §6). Los componentes solo usan estas variables, nunca colores sueltos.
+ * Estética de instrumento de laboratorio: tema claro únicamente.
+ */
+:root {
+  --fondo: #f3f4f1; /* gris papel */
+  --superficie: #ffffff;
+  --superficie-2: #eceeea; /* control segmentado, fondos secundarios */
+  --tinta: #15181b;
+  --tinta-2: #5b636b; /* texto secundario, etiquetas */
+  --linea: #d9dcd6; /* bordes */
+  --linea-2: #e4e6e1; /* separadores dentro de tarjetas */
+  --accion: #2340b8; /* azul: retirar, confirmar, guardar */
+  --accion-suave: #e6eafb;
+  --accion-texto: #1b33a0;
+  --alerta: #b4470f; /* naranja óxido: SOLO para «bajo mínimo» */
+  --alerta-texto: #9a3b0b;
+  --alerta-suave: #fbede2;
+  --visor: #0e1114; /* fondo de la cámara */
+
+  /* Valores que aparecen en las maquetas, derivados de los anteriores */
+  --accion-pulsado: #182f8a;
+  --linea-hueco: #c9cdc6; /* huecos vacíos (fotos de referencia, avisos de obra) */
+  --sobre-visor: rgba(255, 255, 255, 0.12); /* botones y pastillas sobre el visor */
+  --visor-punto: #7fa0ff; /* indicador «reconocido en el móvil» */
+  --velo: rgba(14, 17, 20, 0.48); /* fondo detrás de los diálogos */
+
+  --fuente: 'IBM Plex Sans', system-ui, -apple-system, 'Segoe UI', sans-serif;
+  --fuente-mono: 'IBM Plex Mono', ui-monospace, 'SFMono-Regular', Menlo, Consolas, monospace;
+
+  --radio-insignia: 4px;
+  --radio-codigo: 6px;
+  --radio-control: 8px;
+  --radio-campo: 10px;
+  --radio-tarjeta: 12px;
+
+  --tactil: 44px; /* zona táctil mínima */
+  --ancho-max: 480px; /* en pantallas grandes la app se ve como una columna de móvil */
+  --alto-barra: calc(52px + max(8px, env(safe-area-inset-bottom, 0px)));
+  /* Barra de acción inferior (botón grande de 54 px con sus márgenes) */
+  --alto-barra-accion: calc(71px + max(28px, calc(12px + env(safe-area-inset-bottom, 0px))));
+}

@@ -1,0 +1,33 @@
+/* Ajustes (sin maqueta) */
+
+.ajustes {
+  gap: 28px;
+}
+
+.ajustes__guardar {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.ajustes__version {
+  font-family: var(--fuente-mono);
+  font-size: 11px;
+  letter-spacing: 0.04em;
+  text-align: center;
+  color: var(--tinta-2);
+}
+
+.dialogo-borrar {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.dialogo-borrar__instruccion {
+  font-size: 14px;
+}
+
+.dialogo-borrar__instruccion strong {
+  font-weight: 600;
+}

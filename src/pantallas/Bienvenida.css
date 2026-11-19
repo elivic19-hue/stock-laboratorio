@@ -1,0 +1,81 @@
+/* Primer arranque (sin maqueta: mismo lenguaje que «Registrar entrada») */
+
+.bienvenida__cabecera {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: calc(32px + env(safe-area-inset-top, 0px)) 20px 4px;
+}
+
+.bienvenida__titulo {
+  font-size: 26px;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+  line-height: 1.2;
+}
+
+.bienvenida__formulario {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  padding: 16px 20px 24px;
+}
+
+.opciones {
+  min-width: 0;
+  margin: 0;
+  padding: 0;
+  border: none;
+}
+
+.opciones__leyenda {
+  margin: 0 0 8px;
+  padding: 0;
+}
+
+.opcion {
+  display: flex;
+  gap: 12px;
+  align-items: flex-start;
+  padding: 12px 14px;
+  border: 1px solid var(--linea);
+  border-radius: var(--radio-campo);
+  background: var(--superficie);
+  cursor: pointer;
+}
+
+.opcion + .opcion {
+  margin-top: 8px;
+}
+
+/* La opción elegida se marca con el botón de radio y, además, con el borde azul */
+.opcion:has(input:checked) {
+  border-color: var(--accion);
+  box-shadow: inset 0 0 0 1px var(--accion);
+}
+
+.opcion input {
+  width: 20px;
+  height: 20px;
+  margin: 1px 0 0;
+  flex-shrink: 0;
+  accent-color: var(--accion);
+}
+
+.opcion__texto {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.opcion__titulo {
+  font-size: 15px;
+  font-weight: 500;
+}
+
+.opcion__detalle {
+  font-size: 13px;
+  line-height: 1.4;
+  color: var(--tinta-2);
+}

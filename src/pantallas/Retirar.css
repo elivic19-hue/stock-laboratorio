@@ -1,0 +1,87 @@
+/* Maqueta diseno/Retirar.dc.html: visor oscuro con marco cuadrado */
+
+.pantalla--visor {
+  background: var(--visor);
+  color: #ffffff;
+}
+
+.visor {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+}
+
+.visor__barra {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+  padding: calc(24px + env(safe-area-inset-top, 0px)) 16px 0;
+}
+
+.visor__boton,
+.visor__hueco {
+  width: var(--tactil);
+  height: var(--tactil);
+  flex-shrink: 0;
+}
+
+.visor__boton {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: none;
+  border-radius: 22px;
+  background: var(--sobre-visor);
+  color: #ffffff;
+}
+
+.visor__boton:focus-visible {
+  outline-color: #ffffff;
+}
+
+.visor__titulo {
+  font-size: 15px;
+  font-weight: 500;
+}
+
+.visor__zona {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 28px;
+  padding: 24px;
+}
+
+.visor__marco {
+  width: min(70vw, 260px);
+  aspect-ratio: 1;
+  color: #ffffff;
+}
+
+.visor__marco svg {
+  width: 100%;
+  height: 100%;
+}
+
+.visor__pastilla {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 12px;
+  border-radius: 16px;
+  background: var(--sobre-visor);
+  font-family: var(--fuente-mono);
+  font-size: 11px;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.visor__punto {
+  width: 7px;
+  height: 7px;
+  border-radius: 4px;
+  background: var(--visor-punto);
+}

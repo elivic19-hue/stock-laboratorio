@@ -1,0 +1,163 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<title>Stock</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&amp;family=IBM+Plex+Sans:wght@400;500;600;700&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0}
+a{color:#2340B8}a:hover{color:#182F8A}
+</style>
+</helmet>
+<div style="width: 390px; height: 844px; box-sizing: border-box; display: flex; flex-direction: column; background: #F3F4F1; font-family: 'IBM Plex Sans', system-ui, sans-serif; color: #15181B; overflow: hidden">
+
+  <header style="padding: 24px 20px 12px; display: flex; flex-direction: column; gap: 14px; background: #FFFFFF; border-bottom: 1px solid #D9DCD6">
+    <div style="display: flex; justify-content: space-between; align-items: center">
+      <div style="display: flex; flex-direction: column; gap: 3px">
+        <span style="font-family: 'IBM Plex Mono', monospace; font-size: 11px; letter-spacing: 0.08em; color: #5B636B">LAB. CARACTERIZACIÓN</span>
+        <div style="display: flex; align-items: baseline; gap: 10px">
+          <h1 style="margin: 0; font-size: 26px; font-weight: 600; letter-spacing: -0.01em">Stock</h1>
+          <span style="display: flex; align-items: center; gap: 5px; font-family: 'IBM Plex Mono', monospace; font-size: 10px; letter-spacing: 0.04em; color: #5B636B">
+            <span style="width: 6px; height: 6px; border-radius: 3px; background: #2340B8"></span>
+            SINCRONIZADO 08:12
+          </span>
+        </div>
+      </div>
+      <button aria-label="Perfil y ajustes" style="width: 44px; height: 44px; border: 1px solid #D9DCD6; border-radius: 22px; background: #F3F4F1; display: flex; align-items: center; justify-content: center">
+        <svg aria-hidden="true" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#15181B" stroke-width="1.6" stroke-linecap="round"><circle cx="12" cy="9" r="3.5"/><path d="M5.5 19c1.2-3 3.6-4.5 6.5-4.5s5.3 1.5 6.5 4.5"/></svg>
+      </button>
+    </div>
+
+    <div style="display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); border: 1px solid #D9DCD6; border-radius: 8px">
+      <div style="padding: 8px 10px; display: flex; flex-direction: column; gap: 1px; border-right: 1px solid #D9DCD6">
+        <span style="font-family: 'IBM Plex Mono', monospace; font-size: 10px; letter-spacing: 0.05em; color: #5B636B">PRODUCTOS</span>
+        <span style="font-family: 'IBM Plex Mono', monospace; font-size: 20px; font-weight: 500">46</span>
+      </div>
+      <a href="Pedir.dc.html" style="padding: 8px 10px; display: flex; flex-direction: column; gap: 1px; border-right: 1px solid #D9DCD6; background: #FBEDE2; text-decoration: none">
+        <span style="font-family: 'IBM Plex Mono', monospace; font-size: 10px; letter-spacing: 0.05em; color: #9A3B0B">BAJO MÍNIMO</span>
+        <span style="display: flex; justify-content: space-between; align-items: center; font-family: 'IBM Plex Mono', monospace; font-size: 20px; font-weight: 600; color: #9A3B0B">4
+          <svg aria-hidden="true" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#9A3B0B" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 6l6 6-6 6"/></svg>
+        </span>
+      </a>
+      <div style="padding: 8px 10px; display: flex; flex-direction: column; gap: 1px">
+        <span style="font-family: 'IBM Plex Mono', monospace; font-size: 10px; letter-spacing: 0.05em; color: #5B636B">CADUCAN &lt;30 D</span>
+        <span style="font-family: 'IBM Plex Mono', monospace; font-size: 20px; font-weight: 500">1</span>
+      </div>
+    </div>
+
+    <div style="display: flex; gap: 8px">
+      <label style="flex: 1; display: flex; align-items: center; gap: 10px; height: 44px; padding: 0 12px; border: 1px solid #D9DCD6; border-radius: 8px; background: #F3F4F1">
+        <svg aria-hidden="true" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#5B636B" stroke-width="1.8" stroke-linecap="round"><circle cx="11" cy="11" r="6.5"/><path d="M16 16l4 4"/></svg>
+        <span style="position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0)">Buscar producto</span>
+        <input type="search" placeholder="Nombre, código o ubicación" style="flex: 1; min-width: 0; border: none; outline: none; font: inherit; font-size: 15px; background: transparent; color: #15181B">
+      </label>
+      <button aria-label="Filtros y orden" style="width: 44px; height: 44px; border: 1px solid #D9DCD6; border-radius: 8px; background: #FFFFFF; display: flex; align-items: center; justify-content: center">
+        <svg aria-hidden="true" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#15181B" stroke-width="1.6" stroke-linecap="round"><path d="M4 7h10M18 7h2M4 17h4M12 17h8"/><circle cx="16" cy="7" r="2"/><circle cx="10" cy="17" r="2"/></svg>
+      </button>
+    </div>
+
+    <div role="tablist" aria-label="Tipo de producto" style="display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); padding: 3px; border-radius: 8px; background: #ECEEEA">
+      <button role="tab" aria-selected="true" style="height: 34px; border: none; border-radius: 6px; background: #FFFFFF; box-shadow: 0 1px 2px rgba(21,24,27,0.12); font: inherit; font-size: 13px; font-weight: 600; color: #15181B">Todos <span style="font-family: 'IBM Plex Mono', monospace; font-weight: 400; color: #5B636B">46</span></button>
+      <button role="tab" aria-selected="false" style="height: 34px; border: none; border-radius: 6px; background: transparent; font: inherit; font-size: 13px; color: #15181B">Reactivos <span style="font-family: 'IBM Plex Mono', monospace; color: #5B636B">18</span></button>
+      <button role="tab" aria-selected="false" style="height: 34px; border: none; border-radius: 6px; background: transparent; font: inherit; font-size: 13px; color: #15181B">Fungible <span style="font-family: 'IBM Plex Mono', monospace; color: #5B636B">28</span></button>
+    </div>
+  </header>
+
+  <div style="flex: 1; min-height: 0; overflow: hidden; display: flex; flex-direction: column">
+    <sc-for list="{{sections}}" as="sec" hint-placeholder-count="3">
+      <div style="display: flex; justify-content: space-between; align-items: center; padding: 14px 20px 6px">
+        <span style="font-family: 'IBM Plex Mono', monospace; font-size: 11px; font-weight: 500; letter-spacing: 0.07em; color: #5B636B">{{sec.title}}</span>
+        <span style="font-family: 'IBM Plex Mono', monospace; font-size: 11px; color: #5B636B">{{sec.count}}</span>
+      </div>
+      <div style="margin: 0 12px; background: #FFFFFF; border: 1px solid #D9DCD6; border-radius: 10px; overflow: hidden">
+        <sc-for list="{{sec.items}}" as="item" hint-placeholder-count="2">
+          <a href="Producto.dc.html" style="{{item.rowStyle}}">
+            <span style="width: 44px; flex-shrink: 0; padding: 5px 0; border: 1px solid #D9DCD6; border-radius: 6px; text-align: center; font-family: 'IBM Plex Mono', monospace; font-size: 10px; font-weight: 500; color: #15181B; background: #F3F4F1">{{item.code}}</span>
+            <span style="flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 3px">
+              <span style="font-size: 15px; font-weight: 500; white-space: nowrap; overflow: hidden; text-overflow: ellipsis">{{item.name}}</span>
+              <span style="font-size: 12px; color: #5B636B; white-space: nowrap; overflow: hidden; text-overflow: ellipsis">{{item.meta}}</span>
+            </span>
+            <span style="flex-shrink: 0; display: flex; flex-direction: column; align-items: flex-end; gap: 4px">
+              <span style="{{item.qtyStyle}}">{{item.qty}} <span style="font-size: 11px; font-weight: 400; color: #5B636B">{{item.unit}}</span></span>
+              <sc-if value="{{item.low}}" hint-placeholder-val="{{ false }}">
+                <span style="padding: 2px 6px; border-radius: 4px; background: #FBEDE2; color: #9A3B0B; font-family: 'IBM Plex Mono', monospace; font-size: 10px; font-weight: 600; letter-spacing: 0.04em">BAJO MÍN. {{item.min}}</span>
+              </sc-if>
+              <sc-if value="{{item.ok}}" hint-placeholder-val="{{ true }}">
+                <span style="font-family: 'IBM Plex Mono', monospace; font-size: 10px; letter-spacing: 0.04em; color: #5B636B">MÍN. {{item.min}}</span>
+              </sc-if>
+            </span>
+          </a>
+        </sc-for>
+      </div>
+    </sc-for>
+  </div>
+
+  <nav aria-label="Navegación principal" style="height: 84px; flex-shrink: 0; display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); align-items: start; background: #FFFFFF; border-top: 1px solid #D9DCD6; padding-top: 8px">
+    <a href="Main.dc.html" style="display: flex; flex-direction: column; align-items: center; gap: 4px; text-decoration: none; color: #15181B; font-size: 11px; font-weight: 600; min-height: 44px">
+      <svg aria-hidden="true" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round"><path d="M4 8l8-4 8 4v8l-8 4-8-4z"/><path d="M4 8l8 4 8-4M12 12v8"/></svg>
+      Stock
+    </a>
+    <a href="Pedir.dc.html" style="position: relative; display: flex; flex-direction: column; align-items: center; gap: 4px; text-decoration: none; color: #5B636B; font-size: 11px; min-height: 44px">
+      <svg aria-hidden="true" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"><path d="M6 4h12v16H6z"/><path d="M9 9h6M9 13h6M9 17h3"/></svg>
+      A pedir
+      <span style="position: absolute; top: -4px; left: 50%; margin-left: 6px; min-width: 18px; height: 18px; border-radius: 9px; background: #B4470F; color: #FFFFFF; font-family: 'IBM Plex Mono', monospace; font-size: 11px; font-weight: 600; display: flex; align-items: center; justify-content: center">4</span>
+    </a>
+    <a href="Retirar.dc.html" aria-label="Retirar con foto" style="justify-self: center; margin-top: -30px; width: 64px; height: 64px; border-radius: 32px; background: #2340B8; display: flex; align-items: center; justify-content: center; box-shadow: 0 0 0 5px #F3F4F1">
+      <svg aria-hidden="true" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#FFFFFF" stroke-width="1.8" stroke-linejoin="round"><path d="M4 8h3l2-2.5h6L17 8h3v11H4z"/><circle cx="12" cy="13" r="3.5"/></svg>
+    </a>
+    <a href="Entrada.dc.html" style="display: flex; flex-direction: column; align-items: center; gap: 4px; text-decoration: none; color: #5B636B; font-size: 11px; min-height: 44px">
+      <svg aria-hidden="true" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg>
+      Entrada
+    </a>
+    <a href="Producto.dc.html" style="display: flex; flex-direction: column; align-items: center; gap: 4px; text-decoration: none; color: #5B636B; font-size: 11px; min-height: 44px">
+      <svg aria-hidden="true" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"><path d="M5 5h6v6H5zM13 5h6v6h-6zM5 13h6v6H5zM13 13h6v6h-6z"/></svg>
+      Catálogo
+    </a>
+  </nav>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":390,"height":844}}'>
+class Component extends DCLogic {
+  renderVals() {
+    var groups = [
+      { title: 'ARMARIO INFLAMABLES', items: [
+        { code: 'R-014', name: 'Etanol absoluto', meta: 'Botella 1 L · últ. mov. hoy 08:12', qty: 1, unit: 'bot.', min: 3 },
+        { code: 'R-022', name: 'Isooctano', meta: 'Botella 2,5 L · cad. 12/2026', qty: 3, unit: 'bot.', min: 2 }
+      ]},
+      { title: 'ARMARIO 2 · FUNGIBLE', items: [
+        { code: 'F-031', name: 'Puntas de pipeta 1000 µL', meta: 'Rack 96 uds · balda 3', qty: 12, unit: 'racks', min: 5 },
+        { code: 'F-030', name: 'Puntas de pipeta 200 µL', meta: 'Rack 96 uds · balda 3', qty: 4, unit: 'racks', min: 5 },
+        { code: 'F-012', name: 'Tapones rosca 9 mm PTFE', meta: 'Bolsa 100 uds · balda 1', qty: 150, unit: 'uds', min: 200 }
+      ]},
+      { title: 'ARMARIO ÁCIDOS', items: [
+        { code: 'R-031', name: 'Ácido acético 3 %', meta: 'Bidón 5 L · balda 1', qty: 2, unit: 'bid.', min: 2 }
+      ]}
+    ];
+    var sections = groups.map(function (g) {
+      var n = g.items.length;
+      return {
+        title: g.title,
+        count: n + (n === 1 ? ' producto' : ' productos'),
+        items: g.items.map(function (it, i) {
+          var low = it.qty <= it.min;
+          return Object.assign({}, it, {
+            low: low,
+            ok: !low,
+            rowStyle: 'display: flex; align-items: center; gap: 12px; padding: 11px 12px; text-decoration: none; color: #15181B' + (i < n - 1 ? '; border-bottom: 1px solid #E4E6E1' : ''),
+            qtyStyle: "font-family: 'IBM Plex Mono', monospace; font-size: 20px; font-weight: 500; line-height: 1; color: " + (low ? '#9A3B0B' : '#15181B')
+          });
+        })
+      };
+    });
+    return { sections: sections };
+  }
+}
+</script>
+</body>
+</html>

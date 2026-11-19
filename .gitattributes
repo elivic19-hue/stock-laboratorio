@@ -1,0 +1,6 @@
+# Finales de línea LF en el repositorio y en la copia de trabajo (Windows y Linux por igual)
+* text=auto eol=lf
+
+*.png binary
+*.woff2 binary
+*.bin binary
