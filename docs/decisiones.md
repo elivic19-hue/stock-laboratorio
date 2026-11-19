@@ -317,3 +317,10 @@ Pedidos por el usuario al probar la etapa 4 («con las dudas haz lo que creas co
 - Un móvil conectado con la versión anterior (laboratorio = uid de la cuenta) pide volver a
   conectar; al hacerlo, si el laboratorio compartido está vacío, sube sus datos.
 
+
+### Android: final de la pantalla tapado (19/11/2026)
+
+- Con la app instalada en Android, el final de la pantalla (la barra inferior) quedaba tapado por la
+  barra de navegación del sistema; en iPhone se veía bien. `viewport-fit=cover` hace que Chrome
+  dibuje por debajo de esa barra sin descontarla siempre. Ahora `viewport-fit=cover` solo se pone en
+  iPhone/iPad (script en `index.html`); en Android la app termina encima de la barra del sistema.

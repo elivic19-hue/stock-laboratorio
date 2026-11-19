@@ -2,7 +2,17 @@
 <html lang="es">
   <head>
     <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <meta id="viewport" name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <script>
+      // viewport-fit=cover solo en iPhone/iPad (zona de la barra de inicio, que iOS sí descuenta con
+      // env(safe-area-inset-bottom)). En Android, Chrome dibuja entonces la app instalada por debajo
+      // de la barra de navegación del sistema sin descontarla, y el final de la pantalla queda tapado.
+      ;(function () {
+        var agente = navigator.userAgent
+        var ios = /iPhone|iPad|iPod/.test(agente) || (/Macintosh/.test(agente) && navigator.maxTouchPoints > 1)
+        if (!ios) document.getElementById('viewport').setAttribute('content', 'width=device-width, initial-scale=1')
+      })()
+    </script>
     <title>Stock del laboratorio</title>
     <meta name="description" content="Control de stock de reactivos y material fungible del laboratorio." />
     <meta name="theme-color" content="#FFFFFF" />
