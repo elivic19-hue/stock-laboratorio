@@ -1,5 +1,6 @@
 import { useCallback, useId, useMemo, useState } from 'react'
 import { mostrarAviso } from '../app/avisos'
+import { notificarBajoMinimo } from '../app/avisosMovil'
 import { useServicios } from '../app/contexto'
 import { useAjustes, useConsulta } from '../app/hooks'
 import { volver } from '../app/navegacion'
@@ -355,14 +356,23 @@ function FormularioRetirada({
           console.warn('No se pudo guardar la foto de referencia', e)
         }
       }
-      volver({ pantalla: 'stock' })
       const bajo = estaBajoMinimo(actualizado)
+      // Si ya está pedido, no hace falta insistir en que hay que pedirlo.
+      const yaPedido = bajo && (await repo.listarPedidos('pedido')).some((p) => p.productoId === producto.id)
+      volver({ pantalla: 'stock' })
+      if (bajo && !yaPedido) notificarBajoMinimo(actualizado, ajustes)
+      const minimo = formatearNumero(producto.stockMinimo)
       mostrarAviso({
         texto:
           conPunto(
             `Retirado: ${producto.nombre}, ${formatearNumero(producto.stockActual)} → ` +
               `${formatearNumero(actualizado.stockActual)} ${producto.unidadCorta}`,
-          ) + (bajo ? ` Está en su mínimo (${formatearNumero(producto.stockMinimo)}): hay que pedirlo.` : ''),
+          ) +
+          (bajo
+            ? yaPedido
+              ? ` Está en su mínimo (${minimo}); ya está pedido.`
+              : ` Está en su mínimo (${minimo}): hay que pedirlo.`
+            : ''),
         accion: 'Deshacer',
         alPulsarAccion: async () => {
           await repo.deshacerMovimiento(movimiento.id)

@@ -8,6 +8,7 @@ export type CodigoError =
   | 'codigo-duplicado'
   | 'limite-fotos'
   | 'no-es-el-ultimo-movimiento'
+  | 'copia-no-valida'
 
 /** Error de las reglas del stock, con un mensaje listo para enseñar al usuario. */
 export class ErrorStock extends Error {

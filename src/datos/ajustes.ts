@@ -13,8 +13,17 @@ export interface AjustesDispositivo {
   /** Temperatura del softmax que da el % de confianza. Se calibra en la etapa 3. */
   temperatura: number
   modoDiagnostico: boolean
-  /** Guardar la foto como referencia al confirmar una retirada con buena confianza. */
+  /** Proponer guardar la foto como referencia al confirmar una retirada (docs/decisiones.md, duda 11). */
   guardarFotoAlConfirmar: boolean
+  /** Notificaciones del móvil (bajo mínimo al retirar y aviso diario de lotes caducados). */
+  avisosEnElMovil: boolean
+  /** ISO de la última copia de seguridad guardada desde este móvil; vacío si nunca. */
+  ultimaCopia: string
+  /**
+   * AAAA-MM-DD del último aviso diario de lotes caducados. Lo escribe también el service worker
+   * (public/sw-avisos.js), que lee y guarda este mismo registro.
+   */
+  ultimoAvisoCaducados: string
 }
 
 export const AJUSTES_INICIALES: AjustesDispositivo = {
@@ -24,6 +33,9 @@ export const AJUSTES_INICIALES: AjustesDispositivo = {
   temperatura: 0.05,
   modoDiagnostico: false,
   guardarFotoAlConfirmar: true,
+  avisosEnElMovil: false,
+  ultimaCopia: '',
+  ultimoAvisoCaducados: '',
 }
 
 export interface AlmacenAjustes {
@@ -34,7 +46,8 @@ export interface AlmacenAjustes {
   suscribir(alCambiar: () => void): () => void
 }
 
-const CLAVE = 'dispositivo'
+/** Clave del registro en la tabla «ajustes» (también la usa public/sw-avisos.js). */
+export const CLAVE_AJUSTES = 'dispositivo'
 
 export class AlmacenAjustesLocal implements AlmacenAjustes {
   readonly #db: BaseDatosStock
@@ -45,7 +58,7 @@ export class AlmacenAjustesLocal implements AlmacenAjustes {
   }
 
   async leer(): Promise<AjustesDispositivo> {
-    const registro = await this.#db.ajustes.get(CLAVE)
+    const registro = await this.#db.ajustes.get(CLAVE_AJUSTES)
     return { ...AJUSTES_INICIALES, ...registro?.valor }
   }
 
@@ -59,7 +72,7 @@ export class AlmacenAjustesLocal implements AlmacenAjustes {
     const nuevos = await this.#db.transaction('rw', this.#db.ajustes, async () => {
       const actuales = await this.leer()
       const siguientes = { ...actuales, ...limpios }
-      await this.#db.ajustes.put({ clave: CLAVE, valor: siguientes })
+      await this.#db.ajustes.put({ clave: CLAVE_AJUSTES, valor: siguientes })
       return siguientes
     })
     this.#avisar()

@@ -45,8 +45,8 @@ export function calcularStockResultante(
 /**
  * Productos que hay que pedir: en su mínimo o por debajo, no archivados y sin pedido en curso.
  *
- * Provisional (duda 6, pendiente de confirmar en la etapa 4): al marcar un producto como pedido
- * sale de esta lista y del contador, y pasa a «Pedidos en curso».
+ * Duda 6 (resuelta en la etapa 4): al marcar un producto como pedido sale de esta lista y del
+ * contador, y pasa a «Pedidos en curso» hasta que se registra su entrada.
  */
 export function productosAPedir(productos: readonly Producto[], pedidos: readonly Pedido[]): Producto[] {
   const conPedidoEnCurso = new Set(pedidos.filter((p) => p.estado === 'pedido').map((p) => p.productoId))

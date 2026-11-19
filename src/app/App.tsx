@@ -14,6 +14,7 @@ import { Retirar } from '../pantallas/Retirar'
 import { Stock } from '../pantallas/Stock'
 import { AvisoActualizacion } from './AvisoActualizacion'
 import { AvisoGlobal } from './AvisoGlobal'
+import { useInsigniaIcono } from './avisosMovil'
 import { useAviso } from './avisos'
 import { useAjustes } from './hooks'
 import { colocarScroll, useRuta } from './navegacion'
@@ -23,6 +24,7 @@ export function App() {
   const ajustes = useAjustes()
   const ruta = useRuta()
   const hayAviso = useAviso() !== null
+  useInsigniaIcono()
 
   useLayoutEffect(() => {
     colocarScroll()

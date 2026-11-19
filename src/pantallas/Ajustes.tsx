@@ -10,11 +10,12 @@ import { mensajeDeError } from '../dominio/errores'
 import { formatearFechaHora, formatearNumero, formatearTamano } from '../dominio/formato'
 import { CabeceraVolver } from '../ui/CabeceraVolver'
 import { Dialogo } from '../ui/Dialogo'
-import { EnConstruccion } from '../ui/EnConstruccion'
 import { PantallaCompleta } from '../ui/Pantalla'
+import { SeccionAvisos } from './AjustesAvisos'
+import { SeccionCopia } from './AjustesCopia'
 import './Ajustes.css'
 
-/** Ajustes (sin maqueta): perfil, reconocimiento, datos del móvil y borrado. */
+/** Ajustes (sin maqueta): perfil, avisos, reconocimiento, copia de seguridad, datos del móvil y borrado. */
 export function Ajustes() {
   const { repo, ajustes: almacen } = useServicios()
   const ajustes = useAjustes()
@@ -52,7 +53,11 @@ export function Ajustes() {
       <main className="contenido ajustes">
         {ajustes && <FormularioPerfil ajustes={ajustes} alGuardar={(cambios) => almacen.guardar(cambios)} />}
 
+        {ajustes && <SeccionAvisos ajustes={ajustes} alGuardar={(cambios) => almacen.guardar(cambios)} />}
+
         {ajustes && <FormularioReconocimiento ajustes={ajustes} alGuardar={(cambios) => almacen.guardar(cambios)} />}
+
+        {ajustes && <SeccionCopia ajustes={ajustes} recuento={recuento} />}
 
         <section className="seccion" aria-labelledby="ajustes-datos">
           <h2 id="ajustes-datos" className="seccion__titulo">
@@ -70,15 +75,6 @@ export function Ajustes() {
           <button type="button" className="boton boton--contorno" onClick={() => setBorrarAbierto(true)}>
             Borrar todos los datos
           </button>
-        </section>
-
-        <section className="seccion" aria-labelledby="ajustes-proximamente">
-          <h2 id="ajustes-proximamente" className="seccion__titulo">
-            Próximamente
-          </h2>
-          <EnConstruccion etapa={4}>
-            Copia de seguridad: exportar e importar todos los datos (con fotos) en un archivo JSON.
-          </EnConstruccion>
         </section>
 
         <p className="ajustes__version">
@@ -382,7 +378,7 @@ function FormularioReconocimiento({
         <span className="opcion__texto">
           <span className="opcion__titulo">Aprender de las retiradas</span>
           <span className="opcion__detalle">
-            Al confirmar una retirada reconocida con seguridad, se propone guardar la foto como referencia.
+            Al confirmar una retirada con foto, se propone guardarla como referencia del producto confirmado.
           </span>
         </span>
       </label>

@@ -38,3 +38,49 @@
 .dialogo-borrar__instruccion strong {
   font-weight: 600;
 }
+
+/* Avisos y copia de seguridad */
+.ajustes__boton-suelto {
+  align-self: flex-start;
+}
+
+.ajustes__botones {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.ajustes__ultima-copia {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 12px;
+  padding: 10px 12px;
+  border: 1px solid var(--linea);
+  border-radius: var(--radio-campo);
+  background: var(--superficie);
+  font-size: 14px;
+}
+
+.ajustes__dato {
+  font-size: 14px;
+  font-weight: 500;
+  overflow-wrap: anywhere;
+}
+
+/* Aviso de que se sustituyen los datos: tinta, no naranja (el naranja es solo para «bajo mínimo») */
+.nota-grave {
+  display: flex;
+  gap: 10px;
+  align-items: flex-start;
+  padding: 12px;
+  border: 1px solid var(--tinta);
+  border-radius: var(--radio-campo);
+  font-size: 13px;
+  line-height: 1.45;
+}
+
+.nota-grave svg {
+  flex-shrink: 0;
+  margin-top: 1px;
+}

@@ -55,7 +55,6 @@ Si algo de aquí contradice CLAUDE.md, manda CLAUDE.md y hay que preguntar.
 
 | Duda | Qué hay ahora |
 | --- | --- |
-| 6. ¿Al «Marcar pedido» sale el producto de la lista y de los contadores? | Provisional: sí. Los contadores (celda «Bajo mínimo», barra y, más adelante, el icono) cuentan lo pendiente de pedir. |
 | ¿El móvil de prueba lo usará una persona o varias? | Sin respuesta: un usuario por móvil, que se cambia en Ajustes. |
 
 ## Etapa 2 (19/11/2026)
@@ -196,3 +195,50 @@ El usuario lo dejó a mi criterio («haz lo que creas que es mejor»).
 - **Margen de duda (0,03):** se queda fijo, sin llevarlo a Ajustes: con umbral y temperatura basta
   para calibrar, y el modo diagnóstico enseña las puntuaciones para revisarlo con productos reales
   en la etapa 5.
+
+## Etapa 4 (19/11/2026)
+
+### A pedir
+
+- **Duda 6 (resuelta):** al «Marcar pedido» el producto sale de la lista y de los contadores (celda
+  «Bajo mínimo», barra e icono) y pasa a «Pedidos en curso» hasta que se registra su entrada. En
+  Stock sigue saliendo como «BAJO MÍN.», porque lo está.
+- Orden: lo más urgente primero (menos stock en proporción a su mínimo). La tarjeta de la maqueta
+  lleva además el código delante de la ubicación.
+- «Marcar pedido» es un toque, con la cantidad sugerida del producto y «Deshacer». Al tocar un pedido
+  en curso se abre una hoja con fecha, cantidad y stock, «Registrar entrada» (con el producto ya
+  elegido) y «Anular pedido».
+- «Compartir lista» abre una hoja con el texto exacto que se va a mandar (por si se quiere revisar) y
+  dos botones: «Compartir» (Web Share, o copiar si no hay) y «CSV» (punto y coma, coma decimal y
+  BOM, para que Excel en español lo abra bien). La lista solo lleva lo que hay que pedir, no lo que
+  ya está pedido, para no pedirlo dos veces.
+
+### Avisos
+
+- Las notificaciones se activan en Ajustes → Avisos (se pide permiso al activarlas). Además del
+  permiso, la app recuerda si se quieren, para poder apagarlas sin ir a los ajustes del navegador.
+- Bajo mínimo: tras una retirada que deja el producto en su mínimo o por debajo, si no está ya
+  pedido. Una notificación por producto (la siguiente sustituye a la anterior). Al tocarla se abre
+  «A pedir». Si ya está pedido, el aviso de la app lo dice («ya está pedido») y no hay notificación.
+- **Lotes caducados (duda 7b, la notificación pendiente):** sin servidor no se puede mandar nada a
+  una hora fija. Se usa Periodic Background Sync: el service worker (`public/sw-avisos.js`, añadido
+  al de vite-plugin-pwa con `importScripts`, sin dependencias nuevas) mira la base de datos como
+  mucho dos veces al día, también con la app cerrada, y avisa una vez al día como mucho. Solo
+  existe en Chrome para Android con la app instalada; en iPhone no hay aviso diario (se ve la banda
+  al abrir la app). Ajustes dice en qué caso está el móvil. El service worker repite en pequeño la
+  lógica de `lotesCaducados` y `productosAPedir` (anotado en los dos sitios).
+- Número en el icono (`setAppBadge`): productos a pedir. Lo pone la app al cambiar los datos y el
+  service worker en su revisión diaria.
+- Se puede mandar un aviso de prueba desde Ajustes.
+
+### Copia de seguridad
+
+- JSON con `formato` y `version` (1), fecha, productos, movimientos, pedidos y fotos (embedding y
+  miniatura en base64). Lleva también el nombre del laboratorio, el umbral y la temperatura; el
+  usuario no, porque es de cada móvil.
+- «Descargar copia» y, si el móvil puede compartir archivos, «Enviar copia». Se guarda la fecha de la
+  última copia y Ajustes la enseña.
+- Restaurar comprueba todo el archivo antes de tocar nada (tipos, que cada movimiento, foto y pedido
+  sea de un producto que está, que no haya repetidos) y dice qué falla. Antes de sustituir enseña
+  qué trae la copia y qué hay ahora en el móvil.
+- Propuesta para la etapa 5: recordar en Stock que hace tiempo que no se guarda una copia.

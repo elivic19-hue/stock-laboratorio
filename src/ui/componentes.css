@@ -253,6 +253,10 @@
   background: var(--linea);
 }
 
+.ficha dd {
+  margin: 0;
+}
+
 .ficha__celda {
   min-width: 0;
   display: flex;
@@ -302,22 +306,6 @@
   font-size: 10px;
   letter-spacing: 0.08em;
   text-transform: uppercase;
-}
-
-/* Hueco de una pantalla que llega en una etapa posterior */
-.en-construccion {
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
-  padding: 14px 16px;
-  border: 1.5px dashed var(--linea-hueco);
-  border-radius: var(--radio-campo);
-}
-
-.en-construccion p {
-  font-size: 13px;
-  line-height: 1.45;
-  color: var(--tinta-2);
 }
 
 /* ── Barra de acción fija abajo (Registrar entrada, primer arranque) ─── */

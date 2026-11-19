@@ -18,6 +18,7 @@ import { AlmacenAjustesLocal } from './datos/ajustes'
 import { BaseDatosStock } from './datos/db'
 import { LocalRepository } from './datos/LocalRepository'
 import { precargarModelo } from './reconocimiento/modelo'
+import { escucharServiceWorker } from './app/avisosMovil'
 
 // Fase 1: todo en IndexedDB, en este móvil. En la fase 2 solo cambiará esta línea del repositorio.
 const baseDatos = new BaseDatosStock()
@@ -40,3 +41,6 @@ createRoot(raiz).render(
 // El modelo de reconocimiento se carga al arrancar, con calentamiento, para que la cámara
 // responda enseguida (CLAUDE.md §5, paso 8).
 precargarModelo()
+
+// Al tocar una notificación con la app abierta, se va a su pantalla (A pedir, Caducidades).
+escucharServiceWorker()

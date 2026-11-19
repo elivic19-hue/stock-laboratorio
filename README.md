@@ -7,7 +7,7 @@ cuando un producto llega a su mínimo. Funciona sin conexión y no tiene ningún
 La especificación completa está en [CLAUDE.md](CLAUDE.md); las maquetas, en [diseno/](diseno/), y las
 decisiones tomadas por el camino, en [docs/decisiones.md](docs/decisiones.md).
 
-**Estado:** etapa 3 de 5 (cámara y reconocimiento en el móvil). Fase 1: todos los datos se guardan solo en el móvil.
+**Estado:** etapa 4 de 5 (A pedir, avisos, compartir lista y copia de seguridad). Fase 1: todos los datos se guardan solo en el móvil.
 
 ## Requisitos
 
@@ -105,13 +105,33 @@ foto en un vector y se compara con las fotos de referencia de cada producto.
 Los pesos del modelo (14 MB) están en `public/models/` y la app los guarda para funcionar sin
 conexión desde la primera vez. Para volver a descargarlos: `npm run modelo`.
 
+## Avisos y lista para pedir
+
+- **A pedir** enseña lo que está en su mínimo o por debajo, lo más urgente primero. «Marcar pedido» lo
+  pasa a *Pedidos en curso* (con «Deshacer»); al registrar su entrada, el pedido queda recibido.
+  Tocando un pedido en curso se puede registrar la entrada o anularlo.
+- **Compartir lista** enseña el texto que se va a mandar y lo comparte (WhatsApp, Teams, correo…) o,
+  si el navegador no puede, lo copia. «CSV» da la misma lista para Excel.
+- **Notificaciones:** se activan en Ajustes → Avisos. Llega una cuando una retirada deja un producto
+  en su mínimo (si no está ya pedido) y, como mucho una vez al día, si hay lotes caducados.
+  - El aviso diario con la app cerrada solo funciona en **Chrome para Android con la app instalada**
+    (el móvil decide la hora). En iPhone las notificaciones necesitan la app instalada (iOS 16.4 o
+    posterior) y el aviso diario no está disponible: los caducados se ven al abrir la app.
+- **Icono:** con la app instalada, el número de productos a pedir aparece en el icono (si el móvil lo
+  permite).
+
 ## Copias de seguridad
 
 En la fase 1 los datos **solo están en el móvil**. Se pierden si se pierde el móvil, si se borran los
 datos del navegador o si se desinstala la app.
 
-- La exportación e importación de una copia en JSON (con fotos de referencia incluidas) llega en la
-  etapa 4: Ajustes → Copia de seguridad.
+- **Guardar una copia:** Ajustes → Copia de seguridad → «Descargar copia» (va a Descargas) o «Enviar
+  copia» (correo, Drive, WhatsApp…). Es un archivo `stock-laboratorio-AAAA-MM-DD.json` con todo:
+  productos, movimientos, pedidos y fotos de referencia (con sus datos de reconocimiento). Ajustes
+  enseña la fecha de la última copia. Conviene hacer una cada semana y guardarla fuera del móvil.
+- **Restaurar:** «Restaurar una copia…» y elegir el archivo. La app enseña qué contiene y, al
+  confirmar, **sustituye** todos los datos del móvil (también sirve para pasar los datos a otro móvil).
+  También recupera el nombre del laboratorio, el umbral y la temperatura; el usuario no cambia.
 - La app pide al navegador almacenamiento persistente, para que no borre los datos si falta espacio.
   En Ajustes se ve si lo ha concedido; instalar la app ayuda.
 
@@ -135,11 +155,12 @@ src/
   datos/      modelo de datos, StockRepository y LocalRepository (Dexie), ajustes del móvil, datos de ejemplo
   dominio/    reglas de stock, códigos, formatos de España, caducidad, búsqueda, listas y formularios
               (funciones puras, con tests)
-  app/        arranque, navegación por #/rutas, hooks y avisos (versión nueva, «Deshacer»)
+  app/        arranque, navegación por #/rutas, hooks, avisos («Deshacer», notificaciones, icono) y compartir
   ui/         tokens de diseño, estilos base, iconos y componentes comunes
   reconocimiento/  modelo, cámara, recorte del marco y comparación de fotos (la comparación, con tests)
   pantallas/  una por pantalla
-public/       icono de la app y el modelo de reconocimiento (public/models/)
+public/       icono de la app, el modelo de reconocimiento (public/models/) y sw-avisos.js
+              (avisos del service worker: aviso diario de caducados, número en el icono)
 scripts/      generador de iconos y descarga del modelo
 diseno/       maquetas de referencia
 docs/         decisiones tomadas durante el desarrollo
@@ -153,5 +174,5 @@ añadirá otra implementación sin tocarlas.
 1. Esqueleto: Vite, PWA, fuentes, tokens, navegación y repositorio local con datos de ejemplo. **Hecha.**
 2. Pantallas Stock, Ficha, Catálogo/alta y Entrada, con la lógica de stock y sus tests (más Caducidades). **Hecha.**
 3. Cámara y reconocimiento: fotos de referencia, retirada con foto y modo diagnóstico. **Hecha.**
-4. A pedir, avisos, compartir lista y copia de seguridad.
+4. A pedir, avisos, compartir lista y copia de seguridad. **Hecha.**
 5. Pulido visual, accesibilidad y prueba en móvil real.

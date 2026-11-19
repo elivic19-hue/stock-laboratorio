@@ -1,0 +1,187 @@
+/* Maqueta diseno/Pedir.dc.html */
+
+.a-pedir {
+  gap: 10px;
+  padding-top: 0;
+}
+
+.a-pedir__vacio {
+  padding: 16px 14px;
+  border: 1px solid var(--linea);
+  border-radius: var(--radio-tarjeta);
+  background: var(--superficie);
+  font-size: 14px;
+  line-height: 1.45;
+}
+
+.a-pedir__lista {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.tarjeta-pedir {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 12px 14px;
+  border: 1px solid var(--linea);
+  border-radius: var(--radio-tarjeta);
+  background: var(--superficie);
+}
+
+.tarjeta-pedir__cabecera {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 10px;
+}
+
+.tarjeta-pedir__producto {
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  color: var(--tinta);
+  text-decoration: none;
+}
+
+.tarjeta-pedir__nombre {
+  font-size: 15px;
+  font-weight: 500;
+  line-height: 1.3;
+}
+
+.tarjeta-pedir__ubicacion {
+  font-family: var(--fuente-mono);
+  font-size: 11px;
+  text-transform: uppercase;
+  color: var(--tinta-2);
+}
+
+/* Botón con borde de tinta, como en la maqueta */
+.tarjeta-pedir__marcar {
+  flex-shrink: 0;
+  min-height: 36px;
+  padding: 0 12px;
+  border-color: var(--tinta);
+  border-radius: var(--radio-control);
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.tarjeta-pedir__marcar::after {
+  inset: -4px -4px;
+}
+
+.tarjeta-pedir__datos {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  margin: 0;
+  padding-top: 8px;
+  border-top: 1px solid var(--linea-2);
+}
+
+.tarjeta-pedir__datos > div {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+}
+
+.tarjeta-pedir__valor {
+  margin: 0;
+  font-family: var(--fuente-mono);
+  font-size: 17px;
+  font-weight: 500;
+  font-variant-numeric: tabular-nums;
+}
+
+.tarjeta-pedir__valor--quedan {
+  font-weight: 600;
+  color: var(--alerta-texto);
+}
+
+.tarjeta-pedir__unidad {
+  font-size: 11px;
+  font-weight: 400;
+}
+
+/* Pedidos en curso */
+.en-curso {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.en-curso__titulo {
+  display: flex;
+  justify-content: space-between;
+  padding: 12px 0 6px;
+  border-bottom: 1px solid var(--linea);
+  font-family: var(--fuente-mono);
+  font-size: 11px;
+  font-weight: 400;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--tinta-2);
+}
+
+.en-curso .texto-secundario {
+  padding-top: 8px;
+}
+
+.en-curso__lista {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.en-curso__fila {
+  width: 100%;
+  min-height: var(--tactil);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+  padding: 2px 0;
+  border: none;
+  background: none;
+  color: var(--tinta);
+  text-align: left;
+}
+
+.en-curso__nombre {
+  min-width: 0;
+  font-size: 14px;
+}
+
+.en-curso__fecha {
+  flex-shrink: 0;
+  font-family: var(--fuente-mono);
+  font-size: 11px;
+  text-transform: uppercase;
+  color: var(--tinta-2);
+}
+
+/* Diálogo «Compartir lista»: el texto tal cual se va a mandar */
+.compartir__vista {
+  max-height: 44dvh;
+  overflow: auto;
+  margin: 0;
+  padding: 12px;
+  border: 1px solid var(--linea);
+  border-radius: var(--radio-campo);
+  background: var(--fondo);
+  font-family: var(--fuente-mono);
+  font-size: 12px;
+  line-height: 1.5;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+
+.ficha__valor--fecha {
+  font-size: 16px;
+}

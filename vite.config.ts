@@ -61,6 +61,9 @@ export default defineConfig(({ mode }) => {
             globPatterns: ['**/*.{html,js,css,woff2,svg,png,webmanifest,json,bin}'],
             maximumFileSizeToCacheInBytes: 32 * 1024 * 1024,
             cleanupOutdatedCaches: true,
+            // Avisos del móvil: aviso diario de caducados, número en el icono y clic en las
+            // notificaciones (etapa 4).
+            importScripts: ['sw-avisos.js'],
           },
         }),
     ],
