@@ -71,17 +71,18 @@ Cuando se publica una versión nueva, la app muestra «Hay una versión nueva de
 
 1. Crea una cuenta en [GitHub](https://github.com) y un repositorio **público** vacío llamado
    `stock-laboratorio` (sin README ni licencia). GitHub Pages solo es gratis con repositorios públicos.
-2. En la carpeta del proyecto:
+2. Antes de subir nada, en el repositorio de GitHub:
+   **Settings → Pages → Build and deployment → Source: GitHub Actions**.
+3. En una ventana de PowerShell, desde la carpeta del proyecto:
    ```
    git remote add origin https://github.com/TU-USUARIO/stock-laboratorio.git
    git push -u origin main
    ```
-   La primera vez se abre el navegador para iniciar sesión en GitHub.
-3. En el repositorio de GitHub: **Settings → Pages → Build and deployment → Source: GitHub Actions**.
-   Si la primera publicación falló porque este paso aún no estaba hecho, vuelve a lanzarla desde
-   **Actions → Desplegar en GitHub Pages → Re-run jobs**.
-4. La app queda en `https://TU-USUARIO.github.io/stock-laboratorio/`. Cada `git push` a `main` pasa los
-   tests y vuelve a publicarla.
+   La primera vez se abre una ventana para iniciar sesión en GitHub.
+4. En la pestaña **Actions** del repositorio aparece «Desplegar en GitHub Pages». Cuando termine en
+   verde (un par de minutos), la app queda en `https://TU-USUARIO.github.io/stock-laboratorio/`.
+   Si falló porque el paso 2 no estaba hecho, hazlo y pulsa **Re-run jobs**.
+5. Cada `git push` a `main` pasa los tests y vuelve a publicarla.
 
 ## Copias de seguridad
 
