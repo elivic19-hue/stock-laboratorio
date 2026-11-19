@@ -194,6 +194,20 @@
   font-family: var(--fuente-mono);
 }
 
+.campo__entrada--area {
+  height: auto;
+  min-height: 46px;
+  padding: 11px 12px;
+  line-height: 1.4;
+  resize: vertical;
+}
+
+.campo__ayuda {
+  font-size: 12px;
+  line-height: 1.45;
+  color: var(--tinta-2);
+}
+
 /* Error: borde más marcado y mensaje de texto (el naranja queda reservado a «bajo mínimo») */
 .campo__entrada[aria-invalid='true'] {
   border-color: var(--tinta);
@@ -379,6 +393,8 @@ body:has(.barra-accion) .aviso {
 /* ── Hoja inferior (diálogos) ──────────────────────────────────────────── */
 
 .hoja {
+  overflow-y: auto;
+  overscroll-behavior: contain;
   width: 100%;
   max-width: var(--ancho-max);
   max-height: 90dvh;
@@ -414,4 +430,221 @@ body:has(.barra-accion) .aviso {
 
 .hoja__acciones > * {
   flex: 1;
+}
+
+/* ── Opciones (radio y casillas en tarjeta) ────────────────────────────── */
+
+.opciones {
+  min-width: 0;
+  margin: 0;
+  padding: 0;
+  border: none;
+}
+
+.opciones__leyenda {
+  margin: 0 0 8px;
+  padding: 0;
+}
+
+.opcion {
+  display: flex;
+  gap: 12px;
+  align-items: flex-start;
+  padding: 12px 14px;
+  border: 1px solid var(--linea);
+  border-radius: var(--radio-campo);
+  background: var(--superficie);
+  cursor: pointer;
+}
+
+.opcion + .opcion {
+  margin-top: 8px;
+}
+
+/* La opción elegida se marca con el botón de radio y, además, con el borde azul */
+.opcion:has(input:checked) {
+  border-color: var(--accion);
+  box-shadow: inset 0 0 0 1px var(--accion);
+}
+
+.opcion input[type='radio'],
+.opcion input[type='checkbox'] {
+  width: 20px;
+  height: 20px;
+  margin: 1px 0 0;
+  flex-shrink: 0;
+  accent-color: var(--accion);
+}
+
+.opcion__texto {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.opcion__titulo {
+  font-size: 15px;
+  font-weight: 500;
+}
+
+.opcion__detalle {
+  font-size: 13px;
+  line-height: 1.4;
+  color: var(--tinta-2);
+}
+
+/* ── Buscador ──────────────────────────────────────────────────────────── */
+
+.buscador {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  height: var(--tactil);
+  padding: 0 4px 0 12px;
+  border: 1px solid var(--linea);
+  border-radius: var(--radio-control);
+  background: var(--fondo);
+  color: var(--tinta-2);
+}
+
+.buscador:focus-within {
+  border-color: var(--accion);
+  box-shadow: 0 0 0 1px var(--accion);
+}
+
+.buscador__entrada {
+  flex: 1;
+  min-width: 0;
+  height: 100%;
+  padding: 0;
+  border: none;
+  outline: none;
+  background: transparent;
+  color: var(--tinta);
+}
+
+.buscador__entrada::placeholder {
+  color: var(--tinta-2);
+}
+
+/* El botón propio de borrar sustituye al del navegador */
+.buscador__entrada::-webkit-search-cancel-button {
+  appearance: none;
+}
+
+.buscador__borrar {
+  width: 36px;
+  height: 36px;
+  flex-shrink: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: none;
+  border-radius: var(--radio-control);
+  background: transparent;
+  color: var(--tinta-2);
+}
+
+/* ── Control segmentado ────────────────────────────────────────────────── */
+
+.segmentado {
+  display: grid;
+  grid-auto-columns: minmax(0, 1fr);
+  grid-auto-flow: column;
+  padding: 3px;
+  border-radius: var(--radio-control);
+  background: var(--superficie-2);
+}
+
+.segmentado__opcion {
+  position: relative;
+  height: 34px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  padding: 0 4px;
+  border: none;
+  border-radius: var(--radio-codigo);
+  background: transparent;
+  color: var(--tinta);
+  font-size: 13px;
+  white-space: nowrap;
+}
+
+/* Zona táctil de 44 px sin cambiar el aspecto */
+.segmentado__opcion::after {
+  content: '';
+  position: absolute;
+  inset: -5px 0;
+}
+
+.segmentado__opcion[aria-selected='true'],
+.segmentado__opcion[aria-checked='true'] {
+  background: var(--superficie);
+  box-shadow: 0 1px 2px rgba(21, 24, 27, 0.12);
+  font-weight: 600;
+}
+
+.segmentado__contador {
+  font-family: var(--fuente-mono);
+  font-weight: 400;
+  color: var(--tinta-2);
+}
+
+/* Enlace con aspecto de texto (acciones secundarias dentro de un texto o una fila) */
+.enlace-boton {
+  min-height: var(--tactil);
+  padding: 0 4px;
+  border: none;
+  background: transparent;
+  color: var(--accion);
+  font-size: 14px;
+  font-weight: 500;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+/* «STOCK 1 → 7 bot.» */
+.cambio-stock {
+  display: flex;
+  justify-content: center;
+  align-items: baseline;
+  gap: 10px;
+  font-family: var(--fuente-mono);
+  font-variant-numeric: tabular-nums;
+  color: var(--tinta-2);
+}
+
+.cambio-stock svg {
+  align-self: center;
+}
+
+.cambio-stock__etiqueta,
+.cambio-stock__unidad {
+  font-size: 12px;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.cambio-stock__unidad {
+  text-transform: none;
+  letter-spacing: 0;
+}
+
+.cambio-stock__antes {
+  font-size: 16px;
+  color: var(--tinta);
+}
+
+.cambio-stock__antes--bajo {
+  color: var(--alerta-texto);
+}
+
+.cambio-stock__despues {
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--tinta);
 }

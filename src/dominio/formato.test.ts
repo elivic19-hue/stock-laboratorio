@@ -11,6 +11,7 @@ import {
   formatearMomento,
   formatearNumero,
   formatearTamano,
+  conPunto,
 } from './formato'
 
 // Fechas en hora local, para que los tests no dependan de la zona horaria del equipo.
@@ -37,6 +38,13 @@ describe('números', () => {
     expect(formatearCantidadConSigno(10)).toBe('+10')
     expect(formatearCantidadConSigno(-1)).toBe('−1')
     expect(formatearCantidadConSigno(-2.5)).toBe('−2,5')
+  })
+})
+
+describe('frases', () => {
+  it('no duplica el punto de abreviaturas como «bot.»', () => {
+    expect(conPunto('Quedan 7 bot.')).toBe('Quedan 7 bot.')
+    expect(conPunto('Quedan 7 uds')).toBe('Quedan 7 uds.')
   })
 })
 

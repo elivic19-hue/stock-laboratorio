@@ -1,7 +1,14 @@
 import { describe, expect, it } from 'vitest'
 import type { Pedido, Producto } from '../datos/tipos'
 import { ErrorStock } from './errores'
-import { calcularStockResultante, estaBajoMinimo, productosAPedir, validarCantidad } from './stock'
+import {
+  calcularStockResultante,
+  cantidadDeAjuste,
+  efectoEntrada,
+  estaBajoMinimo,
+  productosAPedir,
+  validarCantidad,
+} from './stock'
 
 function producto(parcial: Partial<Producto>): Producto {
   return {
@@ -84,5 +91,45 @@ describe('productosAPedir', () => {
   it('incluye lo que está en su mínimo o por debajo y no tiene pedido en curso', () => {
     const lista = productosAPedir([etanol, guantes, puntas, archivado], [pedidoGuantes, recibidoEtanol])
     expect(lista.map((p) => p.id)).toEqual(['etanol'])
+  })
+})
+
+describe('cantidadDeAjuste', () => {
+  it('es la diferencia entre el stock contado y el que había', () => {
+    expect(cantidadDeAjuste(12, 10)).toBe(-2)
+    expect(cantidadDeAjuste(0, 3)).toBe(3)
+    expect(cantidadDeAjuste(0.3, 0.2)).toBe(-0.1)
+  })
+
+  it('no admite negativos ni un ajuste que no cambia nada', () => {
+    expect(() => cantidadDeAjuste(5, -1)).toThrow(ErrorStock)
+    expect(() => cantidadDeAjuste(5, Number.NaN)).toThrow(ErrorStock)
+    expect(() => cantidadDeAjuste(5, 5)).toThrow('no hay nada que ajustar')
+  })
+})
+
+describe('efectoEntrada', () => {
+  it('avisa de que sale de «A pedir» si supera el mínimo', () => {
+    expect(efectoEntrada({ stockActual: 1, stockMinimo: 3 }, 6)).toEqual({
+      stockResultante: 7,
+      superaMinimo: true,
+      sigueBajoMinimo: false,
+    })
+  })
+
+  it('llegar justo al mínimo no basta para salir', () => {
+    expect(efectoEntrada({ stockActual: 1, stockMinimo: 3 }, 2)).toEqual({
+      stockResultante: 3,
+      superaMinimo: false,
+      sigueBajoMinimo: true,
+    })
+  })
+
+  it('si ya estaba por encima del mínimo no hay nada que avisar', () => {
+    expect(efectoEntrada({ stockActual: 12, stockMinimo: 5 }, 10)).toEqual({
+      stockResultante: 22,
+      superaMinimo: false,
+      sigueBajoMinimo: false,
+    })
   })
 })

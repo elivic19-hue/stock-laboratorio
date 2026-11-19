@@ -56,8 +56,59 @@ Si algo de aquí contradice CLAUDE.md, manda CLAUDE.md y hay que preguntar.
 | Duda | Qué hay ahora |
 | --- | --- |
 | 6. ¿Al «Marcar pedido» sale el producto de la lista y de los contadores? | Provisional: sí. Los contadores (celda «Bajo mínimo», barra y, más adelante, el icono) cuentan lo pendiente de pedir. |
-| 7. Caducidad: ¿mes/año o fecha completa? ¿Estimar lotes que quedan y contar lo ya caducado? | Regla de §4 tal cual: entradas que caducan entre hoy y 30 días, de productos con stock. |
+| 7b. Caducidad: ¿estimar qué lotes quedan y contar también lo ya caducado? | Regla de §4 tal cual: entradas que caducan entre hoy y 30 días, de productos con stock. |
 | 8. % de confianza con softmax: las alternativas salen bajas (no 71 % / 38 % como en la maqueta). | Se propone mantener el softmax (§5). |
 | 9. Cantidad por retirada (p. ej. bolsa de 100 tapones). | Se propone poder teclear la cantidad y un campo opcional «cantidad por retirada». |
 | 10. Fotos: la ficha muestra «n / 10» y el máximo es 20. | El repositorio ya aplica el máximo de 20; la galería se decide en la etapa 3. |
 | ¿El móvil de prueba lo usará una persona o varias? | Sin respuesta: un usuario por móvil, que se cambia en Ajustes. |
+
+## Etapa 2 (19/11/2026)
+
+- Etapa 1 aprobada sin cambios.
+- **Duda 7 (resuelta): la caducidad se apunta como mes/año** («03 / 2029»), como viene en las
+  etiquetas. Se guarda como el último día de ese mes (2029-03-31): el producto vale hasta final de
+  mes y el campo sigue siendo una fecha normal para «Caducan <30 d» y para la fase 2. Se aceptan
+  «3/29», «03-2029» o «032029», y avisa (sin bloquear) si la fecha ya ha pasado. Lo de estimar lotes
+  y contar lo ya caducado sigue pendiente (7b).
+- Datos de ejemplo: la caducidad del isooctano pasa a ser fin del mes en curso, para que siga
+  contando en «Caducan <30 d» con fechas por mes.
+
+### Stock y Catálogo
+
+- Buscador por nombre, código, formato o ubicación, sin distinguir tildes ni mayúsculas; vale con
+  formas abreviadas («arm. 2», «b3»). Todas las palabras tienen que aparecer.
+- Botón de filtros: «solo bajo mínimo», «solo caducan <30 d» y orden dentro de cada armario (nombre,
+  código o más urgentes primero). Cuando hay filtros, se dice con texto encima de la lista.
+- Los contadores del control segmentado cuentan lo que queda tras buscar y filtrar.
+- Armarios en orden alfabético natural (1, 2, 10…); se juntan los escritos con distinta mayúscula.
+- Búsqueda, filtros y pestaña se recuerdan mientras la app está abierta, y al volver de una ficha
+  se recupera la posición de la lista.
+- La insignia «BAJO MÍN.» sale aunque el producto ya esté pedido (es el estado del stock); la celda
+  «Bajo mínimo» y el contador siguen contando solo lo pendiente de pedir (duda 6).
+- Catálogo: por código, con stock y número de fotos de referencia («0 FOTOS» subrayado, nunca en
+  naranja). Los archivados van aparte («En uso / Archivados»).
+
+### Ficha, alta y edición
+
+- Rejilla de la maqueta (Stock, Avisar con, Unidad = formato, Ubicación) más una fila «Pedir /
+  Pedido en curso» si el producto tiene cantidad sugerida o pedido.
+- Botones «Registrar entrada» (con el producto ya elegido) y «Ajustar stock»: se escribe el stock
+  real y un motivo obligatorio, que queda como nota del movimiento `ajuste`.
+- Historial: cantidad, tipo, quién (y confianza, lote, caducidad o nota), cuándo y cuánto quedó.
+  Se ven 15 y un botón para ver todos. «Entrada · pedido» si esa entrada cerró un pedido.
+- Archivar pide confirmación y se puede deshacer; un producto archivado se recupera desde su ficha.
+- Formulario de alta y edición sin maqueta, en el lenguaje de «Registrar entrada». El código se
+  deja vacío para que se asigne solo (se dice cuál será). Armario y unidad sugieren los ya usados.
+- Hasta la etapa 3, el alta termina en la ficha (con aviso de que faltan las fotos); en la etapa 3
+  pasará directamente a hacerlas.
+- En la galería, el botón de añadir fotos está desactivado hasta la etapa 3.
+
+### Entrada
+
+- Cantidad por defecto: la del pedido en curso si lo hay; si no, 1. El número se puede escribir
+  (admite decimales con coma) además de usar −/+.
+- La nota azul explica qué pasará al guardar: el pedido pasa a recibido, el producto sale de «A
+  pedir» o sigue bajo mínimo.
+- Tras guardar se vuelve a la pantalla anterior con un aviso «Entrada guardada… Deshacer» durante
+  6 s. Lo mismo al ajustar stock y al archivar.
+

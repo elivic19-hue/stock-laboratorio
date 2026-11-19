@@ -1,5 +1,9 @@
 /* Maqueta diseno/Producto.dc.html */
 
+.ficha-producto {
+  gap: 18px;
+}
+
 .ficha-producto__titulo {
   display: flex;
   flex-direction: column;
@@ -17,4 +21,219 @@
   font-weight: 600;
   letter-spacing: -0.01em;
   line-height: 1.25;
+}
+
+/* Rejilla de datos como lista de definiciones */
+.ficha--datos {
+  margin: 0;
+}
+
+.ficha--datos dd {
+  margin: 0;
+}
+
+.ficha__valor--fuerte {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  column-gap: 6px;
+  font-weight: 600;
+}
+
+.ficha__insignia {
+  align-self: center;
+}
+
+.ficha__texto {
+  font-size: 14px;
+  line-height: 1.4;
+  overflow-wrap: anywhere;
+}
+
+.ficha-producto__acciones {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.ficha-producto__acciones .boton {
+  padding: 0 10px;
+}
+
+.ficha-producto__notas {
+  font-size: 14px;
+  line-height: 1.5;
+  white-space: pre-line;
+}
+
+.nota-archivado {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px;
+  border: 1px solid var(--tinta);
+  border-radius: var(--radio-campo);
+  background: var(--superficie);
+  font-size: 13px;
+  line-height: 1.45;
+}
+
+.nota-archivado strong {
+  font-weight: 600;
+}
+
+/* Fotos de reconocimiento */
+.galeria {
+  gap: 10px;
+}
+
+.galeria__cabecera {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+}
+
+.galeria__titulo {
+  font-family: var(--fuente-mono);
+  font-size: 11px;
+  font-weight: 500;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--tinta-2);
+}
+
+.galeria__contador {
+  font-family: var(--fuente-mono);
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.galeria__rejilla {
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.galeria__foto,
+.galeria__anadir,
+.galeria__hueco {
+  aspect-ratio: 1;
+  border-radius: var(--radio-control);
+}
+
+.galeria__foto {
+  overflow: hidden;
+  border: 1px solid var(--tinta);
+  background: var(--visor);
+}
+
+.galeria__foto img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.galeria__anadir {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  border: 1.5px dashed var(--accion);
+  background: var(--superficie);
+  color: var(--accion);
+}
+
+.galeria__anadir:disabled {
+  opacity: 0.45;
+}
+
+.galeria__hueco {
+  border: 1.5px dashed var(--linea-hueco);
+}
+
+/* Historial de movimientos */
+.ficha-movimientos {
+  display: flex;
+  flex-direction: column;
+}
+
+.ficha-movimientos .seccion__titulo {
+  margin-bottom: 4px;
+}
+
+.ficha-movimientos__vacio {
+  padding: 9px 0;
+}
+
+.ficha-movimientos__lista {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.movimiento {
+  display: grid;
+  grid-template-columns: 52px minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 10px;
+  padding: 9px 0;
+  border-bottom: 1px solid var(--linea-2);
+}
+
+.movimiento__cantidad {
+  font-family: var(--fuente-mono);
+  font-size: 15px;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+  overflow-wrap: anywhere;
+}
+
+.movimiento__cantidad--entra {
+  color: var(--accion-texto);
+}
+
+.movimiento__textos {
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+}
+
+.movimiento__titulo {
+  font-size: 14px;
+}
+
+.movimiento__detalle {
+  font-size: 12px;
+  line-height: 1.4;
+  color: var(--tinta-2);
+  overflow-wrap: anywhere;
+}
+
+.movimiento__cuando {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 1px;
+  font-family: var(--fuente-mono);
+  font-size: 11px;
+  text-transform: uppercase;
+  color: var(--tinta-2);
+  white-space: nowrap;
+}
+
+.movimiento__resultante {
+  font-size: 10px;
+  letter-spacing: 0.03em;
+}
+
+.ficha-movimientos__mas {
+  margin-top: 12px;
+}
+
+.dialogo-ajuste {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
 }

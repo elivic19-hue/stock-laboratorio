@@ -1,6 +1,7 @@
 import type { Pedido, Producto, TipoMovimiento } from '../datos/tipos'
 import { ErrorStock } from './errores'
 import { formatearNumero } from './formato'
+import { redondear } from './numeros'
 
 export function esRetirada(tipo: TipoMovimiento): boolean {
   return tipo === 'retirada_foto' || tipo === 'retirada_manual'
@@ -30,7 +31,7 @@ export function calcularStockResultante(
   cantidad: number,
 ): number {
   // Redondeo para que 0,3 − 0,1 dé 0,2 y no 0,19999999999999998.
-  const resultante = Math.round((producto.stockActual + cantidad) * 1e6) / 1e6
+  const resultante = redondear(producto.stockActual + cantidad)
   if (resultante < 0) {
     throw new ErrorStock(
       'stock-insuficiente',
@@ -50,4 +51,39 @@ export function calcularStockResultante(
 export function productosAPedir(productos: readonly Producto[], pedidos: readonly Pedido[]): Producto[] {
   const conPedidoEnCurso = new Set(pedidos.filter((p) => p.estado === 'pedido').map((p) => p.productoId))
   return productos.filter((p) => !p.archivado && estaBajoMinimo(p) && !conPedidoEnCurso.has(p.id))
+}
+
+/**
+ * Cantidad del movimiento de ajuste que deja el stock en `nuevoStock` (p. ej. tras un recuento).
+ * Lanza un error si el valor no es válido o si no cambia nada.
+ */
+export function cantidadDeAjuste(stockActual: number, nuevoStock: number): number {
+  if (!Number.isFinite(nuevoStock) || nuevoStock < 0) {
+    throw new ErrorStock('cantidad-no-valida', 'El stock tiene que ser un número igual o mayor que cero.')
+  }
+  const cantidad = redondear(nuevoStock - stockActual)
+  if (cantidad === 0) throw new ErrorStock('cantidad-no-valida', 'Ese es el stock que ya hay: no hay nada que ajustar.')
+  return cantidad
+}
+
+export interface EfectoEntrada {
+  stockResultante: number
+  /** Estaba en su mínimo o por debajo y con la entrada lo supera. */
+  superaMinimo: boolean
+  /** Sigue en su mínimo o por debajo después de la entrada. */
+  sigueBajoMinimo: boolean
+}
+
+/** Qué pasa con el producto si se registra una entrada de `cantidad` unidades. */
+export function efectoEntrada(
+  producto: Pick<Producto, 'stockActual' | 'stockMinimo'>,
+  cantidad: number,
+): EfectoEntrada {
+  const stockResultante = redondear(producto.stockActual + Math.max(0, cantidad))
+  const despues = { stockActual: stockResultante, stockMinimo: producto.stockMinimo }
+  return {
+    stockResultante,
+    superaMinimo: estaBajoMinimo(producto) && !estaBajoMinimo(despues),
+    sigueBajoMinimo: estaBajoMinimo(despues),
+  }
 }

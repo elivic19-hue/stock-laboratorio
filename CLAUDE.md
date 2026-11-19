@@ -1,3 +1,5 @@
+> Lee también [docs/decisiones.md](docs/decisiones.md): recoge lo acordado durante el desarrollo que no está aquí.
+
 # Stock del laboratorio — especificación del proyecto
 
 Este archivo es la referencia permanente del proyecto. Léelo entero antes de cada sesión de trabajo y respétalo. Si algo de aquí entra en conflicto con lo que te pida en el chat, pregúntame antes de decidir.

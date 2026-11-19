@@ -1,0 +1,32 @@
+/* Catálogo (sin maqueta: mismo lenguaje que Stock) */
+
+.catalogo-herramientas {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 0 20px 14px;
+}
+
+/* Sobre el fondo gris, el buscador va en blanco */
+.buscador--claro {
+  flex: none;
+  background: var(--superficie);
+}
+
+.catalogo-contenido {
+  display: flex;
+  flex-direction: column;
+  padding: 0 12px 16px;
+}
+
+/* Sin fotos no se puede reconocer: se dice con texto y subrayado, nunca en naranja */
+.catalogo-sin-fotos {
+  color: var(--tinta);
+  text-decoration: underline;
+  text-decoration-style: dotted;
+  text-underline-offset: 2px;
+}
+
+.catalogo-contenido > .lista-vacia {
+  margin-top: 4px;
+}

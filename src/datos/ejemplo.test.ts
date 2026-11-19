@@ -68,3 +68,14 @@ describe('datos de ejemplo', () => {
     expect(madrugada.movimientos.every((m) => Date.parse(m.fecha) <= temprano.getTime())).toBe(true)
   })
 })
+
+describe('caducidades de ejemplo', () => {
+  it('son por mes/año: siempre el último día del mes', () => {
+    const caducidades = datos.movimientos.flatMap((m) => (m.caducidad ? [m.caducidad] : []))
+    expect(caducidades.length).toBeGreaterThan(0)
+    for (const c of caducidades) {
+      const [anio, mes, dia] = c.split('-').map(Number)
+      expect(new Date(anio ?? 0, mes ?? 0, 0).getDate()).toBe(dia)
+    }
+  })
+})

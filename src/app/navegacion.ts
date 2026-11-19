@@ -79,8 +79,32 @@ export function useRuta(): Ruta {
   return useMemo(() => leerRuta(hash), [hash])
 }
 
+let cancelarEspera: (() => void) | undefined
+
 /** Tras cambiar de pantalla: arriba del todo, o donde estaba si se ha vuelto atrás. */
 export function colocarScroll(): void {
+  cancelarEspera?.()
   const y = vieneDeAtras ? (posicionesScroll.get(indiceMostrado) ?? 0) : 0
   window.scrollTo(0, y)
+  if (y === 0 || Math.abs(window.scrollY - y) < 2 || typeof ResizeObserver !== 'function') return
+
+  // Los datos de la pantalla aún se están leyendo y la página no es lo bastante alta:
+  // se vuelve a intentar cada vez que crece, durante un momento o hasta que se toque la pantalla.
+  const observador = new ResizeObserver(() => {
+    window.scrollTo(0, y)
+    if (Math.abs(window.scrollY - y) < 2) terminar()
+  })
+  const temporizador = setTimeout(terminar, 1500)
+  const opciones = { passive: true, once: true } as const
+  function terminar() {
+    observador.disconnect()
+    clearTimeout(temporizador)
+    window.removeEventListener('touchstart', terminar)
+    window.removeEventListener('wheel', terminar)
+    cancelarEspera = undefined
+  }
+  observador.observe(document.body)
+  window.addEventListener('touchstart', terminar, opciones)
+  window.addEventListener('wheel', terminar, opciones)
+  cancelarEspera = terminar
 }

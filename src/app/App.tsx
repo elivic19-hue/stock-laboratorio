@@ -11,6 +11,8 @@ import { ProductoNuevo } from '../pantallas/ProductoNuevo'
 import { Retirar } from '../pantallas/Retirar'
 import { Stock } from '../pantallas/Stock'
 import { AvisoActualizacion } from './AvisoActualizacion'
+import { AvisoGlobal } from './AvisoGlobal'
+import { useAviso } from './avisos'
 import { useAjustes } from './hooks'
 import { colocarScroll, useRuta } from './navegacion'
 import type { Ruta } from './rutas'
@@ -18,6 +20,7 @@ import type { Ruta } from './rutas'
 export function App() {
   const ajustes = useAjustes()
   const ruta = useRuta()
+  const hayAviso = useAviso() !== null
 
   useLayoutEffect(() => {
     colocarScroll()
@@ -31,7 +34,9 @@ export function App() {
   return (
     <>
       {contenido}
-      <AvisoActualizacion />
+      <AvisoGlobal />
+      {/* El aviso de versión nueva espera a que no haya otro aviso a la vista. */}
+      <AvisoActualizacion oculto={hayAviso} />
     </>
   )
 }
@@ -45,7 +50,7 @@ function Pantalla({ ruta }: { ruta: Ruta }) {
     case 'retirar':
       return <Retirar />
     case 'entrada':
-      return <Entrada />
+      return <Entrada productoId={ruta.productoId} />
     case 'catalogo':
       return <Catalogo />
     case 'producto-nuevo':

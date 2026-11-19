@@ -1,3 +1,4 @@
+import { ultimoDiaDelMes } from '../dominio/caducidad'
 import { fechaSinHora } from '../dominio/formato'
 import type { VolcadoDatos } from './StockRepository'
 import type { Categoria, Movimiento, Pedido, Producto, TipoMovimiento } from './tipos'
@@ -20,8 +21,11 @@ interface MovimientoDeEjemplo {
   cantidad: number
   usuario: string
   lote?: string
-  /** Fecha fija (AAAA-MM-DD) o días a partir de hoy. */
-  caducidad?: string | { enDias: number }
+  /**
+   * Caducidad por mes/año, guardada como el último día del mes: fecha fija (AAAA-MM-DD) o
+   * «fin de este mes» (siempre a menos de 30 días, para la celda «Caducan <30 d»).
+   */
+  caducidad?: string | 'fin-de-este-mes'
   nota?: string
   confianza?: number
 }
@@ -78,7 +82,7 @@ const CATALOGO: ProductoDeEjemplo[] = [
     stockMinimo: 2,
     cantidadPedidoSugerida: 4,
     movimientos: [
-      { hace: 60, hora: '11:30', tipo: 'entrada', cantidad: 4, usuario: 'LP', lote: 'S1158730', caducidad: { enDias: 20 } },
+      { hace: 60, hora: '11:30', tipo: 'entrada', cantidad: 4, usuario: 'LP', lote: 'S1158730', caducidad: 'fin-de-este-mes' },
       { hace: 15, hora: '16:10', tipo: 'retirada_manual', cantidad: -1, usuario: 'AR' },
     ],
   },
@@ -211,8 +215,8 @@ function momento(ahora: Date, hace: number, hora: string): string {
 }
 
 function caducidadDe(valor: MovimientoDeEjemplo['caducidad'], ahora: Date): string | undefined {
-  if (valor === undefined || typeof valor === 'string') return valor
-  return fechaSinHora(new Date(ahora.getFullYear(), ahora.getMonth(), ahora.getDate() + valor.enDias))
+  if (valor !== 'fin-de-este-mes') return valor
+  return fechaSinHora(ultimoDiaDelMes(ahora.getFullYear(), ahora.getMonth() + 1))
 }
 
 export function crearDatosEjemplo(ahora: Date = new Date()): VolcadoDatos {

@@ -7,7 +7,7 @@ cuando un producto llega a su mínimo. Funciona sin conexión y no tiene ningún
 La especificación completa está en [CLAUDE.md](CLAUDE.md); las maquetas, en [diseno/](diseno/), y las
 decisiones tomadas por el camino, en [docs/decisiones.md](docs/decisiones.md).
 
-**Estado:** etapa 1 de 5 (esqueleto). Fase 1: todos los datos se guardan solo en el móvil.
+**Estado:** etapa 2 de 5 (Stock, Ficha, Catálogo/alta y Entrada). Fase 1: todos los datos se guardan solo en el móvil.
 
 ## Requisitos
 
@@ -111,8 +111,9 @@ datos del navegador o si se desinstala la app.
 ```
 src/
   datos/      modelo de datos, StockRepository y LocalRepository (Dexie), ajustes del móvil, datos de ejemplo
-  dominio/    reglas de stock, códigos, formatos de España, ubicaciones y resumen (funciones puras, con tests)
-  app/        arranque, navegación por #/rutas, hooks y aviso de versión nueva
+  dominio/    reglas de stock, códigos, formatos de España, caducidad, búsqueda, listas y formularios
+              (funciones puras, con tests)
+  app/        arranque, navegación por #/rutas, hooks y avisos (versión nueva, «Deshacer»)
   ui/         tokens de diseño, estilos base, iconos y componentes comunes
   pantallas/  una por pantalla
 public/       icono de la app (y en la etapa 3, el modelo de reconocimiento en public/models/)
@@ -127,7 +128,7 @@ añadirá otra implementación sin tocarlas.
 ## Etapas
 
 1. Esqueleto: Vite, PWA, fuentes, tokens, navegación y repositorio local con datos de ejemplo. **Hecha.**
-2. Pantallas Stock, Ficha, Catálogo/alta y Entrada, con la lógica de stock y sus tests.
+2. Pantallas Stock, Ficha, Catálogo/alta y Entrada, con la lógica de stock y sus tests. **Hecha.**
 3. Cámara y reconocimiento: fotos de referencia, retirada con foto y modo diagnóstico.
 4. A pedir, avisos, compartir lista y copia de seguridad.
 5. Pulido visual, accesibilidad y prueba en móvil real.

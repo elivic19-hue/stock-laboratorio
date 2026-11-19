@@ -21,6 +21,11 @@ export function formatearCantidadConSigno(valor: number): string {
   return valor > 0 ? `+${formatearNumero(valor)}` : formatearNumero(valor)
 }
 
+/** Termina la frase con punto, sin duplicarlo si ya acaba en uno («7 bot.»). */
+export function conPunto(frase: string): string {
+  return frase.endsWith('.') ? frase : `${frase}.`
+}
+
 /** 850 KB · 14,2 MB */
 export function formatearTamano(bytes: number): string {
   const megas = bytes / (1024 * 1024)

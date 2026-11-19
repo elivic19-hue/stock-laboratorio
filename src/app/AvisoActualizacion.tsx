@@ -8,7 +8,7 @@ const UNA_HORA = 60 * 60 * 1000
  * Registra el service worker (la app funciona sin conexión) y avisa cuando hay una versión nueva.
  * No se actualiza sola para no recargar la página mientras alguien está registrando algo.
  */
-export function AvisoActualizacion() {
+export function AvisoActualizacion({ oculto = false }: { oculto?: boolean }) {
   const {
     needRefresh: [hayVersionNueva, setHayVersionNueva],
     offlineReady: [listaSinConexion, setListaSinConexion],
@@ -29,6 +29,7 @@ export function AvisoActualizacion() {
     return () => clearTimeout(temporizador)
   }, [listaSinConexion, setListaSinConexion])
 
+  if (oculto) return null
   if (hayVersionNueva) {
     return (
       <Aviso

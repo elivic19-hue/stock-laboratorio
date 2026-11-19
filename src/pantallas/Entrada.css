@@ -1,0 +1,154 @@
+/* Maqueta diseno/Entrada.dc.html */
+
+.selector-producto {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+  min-height: 60px;
+  padding: 10px 14px;
+  border: 1px solid var(--linea);
+  border-radius: var(--radio-campo);
+  background: var(--superficie);
+  color: var(--tinta-2);
+  text-align: left;
+}
+
+.selector-producto[aria-invalid='true'] {
+  border-color: var(--tinta);
+  box-shadow: 0 0 0 1px var(--tinta);
+}
+
+.selector-producto__textos {
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.selector-producto__nombre {
+  font-size: 16px;
+  font-weight: 500;
+  color: var(--tinta);
+}
+
+.selector-producto__nombre--vacio {
+  font-weight: 400;
+  color: var(--tinta-2);
+}
+
+.selector-producto__ubicacion {
+  font-family: var(--fuente-mono);
+  font-size: 11px;
+  text-transform: uppercase;
+  color: var(--tinta-2);
+}
+
+.tarjeta-cantidad {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  padding: 16px;
+  border: 1px solid var(--linea);
+  border-radius: var(--radio-tarjeta);
+  background: var(--superficie);
+}
+
+.contador {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 8px;
+}
+
+.contador__boton {
+  width: 56px;
+  height: 56px;
+  flex-shrink: 0;
+  border: 1px solid var(--linea);
+  border-radius: var(--radio-tarjeta);
+  background: var(--fondo);
+  color: var(--tinta);
+  font-size: 26px;
+  line-height: 1;
+}
+
+.contador__boton:disabled {
+  opacity: 0.4;
+}
+
+.contador__valor {
+  min-width: 0;
+  display: flex;
+  justify-content: center;
+  align-items: baseline;
+  font-family: var(--fuente-mono);
+  font-size: 48px;
+  font-weight: 500;
+  letter-spacing: -0.02em;
+  line-height: 1.1;
+}
+
+/* El número se puede escribir: campo sin bordes con el mismo aspecto que el de la maqueta */
+.contador__entrada {
+  min-width: 1ch;
+  max-width: 6ch;
+  padding: 0;
+  border: none;
+  border-bottom: 1px dashed transparent;
+  border-radius: 0;
+  background: transparent;
+  font-family: inherit;
+  font-size: inherit;
+  font-weight: inherit;
+  letter-spacing: inherit;
+  text-align: left;
+  font-variant-numeric: tabular-nums;
+}
+
+.contador__entrada:focus-visible {
+  outline: none;
+  border-bottom-color: var(--accion);
+}
+
+.contador__entrada[aria-invalid='true'] {
+  border-bottom: 2px solid var(--tinta);
+}
+
+.tarjeta-cantidad__resultado {
+  padding-top: 12px;
+  border-top: 1px solid var(--linea-2);
+}
+
+.entrada__pareja {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+  align-items: start;
+}
+
+/* Lista del selector de producto */
+.selector-lista {
+  flex-shrink: 0;
+}
+
+.selector-lista__opcion {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-height: 62px;
+  padding: 11px 12px;
+  border: none;
+  background: transparent;
+  color: var(--tinta);
+  text-align: left;
+}
+
+.selector-lista__opcion[aria-current='true'] {
+  background: var(--accion-suave);
+}
+
+.selector-lista__opcion:focus-visible {
+  outline-offset: -2px;
+}

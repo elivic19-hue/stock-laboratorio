@@ -1,0 +1,159 @@
+/* Listas de productos (maqueta Main) */
+
+.lista-tarjeta {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  overflow: hidden;
+  border: 1px solid var(--linea);
+  border-radius: var(--radio-campo);
+  background: var(--superficie);
+}
+
+.lista-tarjeta > li + li {
+  border-top: 1px solid var(--linea-2);
+}
+
+.fila-producto {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-height: 62px;
+  padding: 11px 12px;
+  color: var(--tinta);
+  text-decoration: none;
+}
+
+.fila-producto:active {
+  background: var(--fondo);
+}
+
+.fila-producto:focus-visible {
+  outline-offset: -2px;
+}
+
+.codigo-producto {
+  min-width: 44px;
+  flex-shrink: 0;
+  padding: 5px 4px;
+  border: 1px solid var(--linea);
+  border-radius: var(--radio-codigo);
+  background: var(--fondo);
+  font-family: var(--fuente-mono);
+  font-size: 10px;
+  font-weight: 500;
+  line-height: 1.2;
+  text-align: center;
+  white-space: nowrap;
+}
+
+.fila-producto__textos {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.fila-producto__nombre,
+.fila-producto__linea {
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+.fila-producto__nombre {
+  font-size: 15px;
+  font-weight: 500;
+}
+
+.fila-producto__linea {
+  font-size: 12px;
+  color: var(--tinta-2);
+}
+
+.fila-producto__derecha {
+  flex-shrink: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 4px;
+}
+
+.cantidad-fila {
+  font-family: var(--fuente-mono);
+  font-size: 20px;
+  font-weight: 500;
+  line-height: 1;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+.cantidad-fila--bajo {
+  color: var(--alerta-texto);
+}
+
+.cantidad-fila__unidad {
+  font-size: 11px;
+  font-weight: 400;
+  color: var(--tinta-2);
+}
+
+/* «BAJO MÍN. 3»: el único sitio con naranja, y siempre con texto */
+.insignia-bajo-minimo {
+  padding: 2px 6px;
+  border-radius: var(--radio-insignia);
+  background: var(--alerta-suave);
+  color: var(--alerta-texto);
+  font-family: var(--fuente-mono);
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+/* Cabecera de cada grupo: «ARMARIO 2 … 3 productos» */
+.grupo-lista__cabecera {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+  padding: 14px 8px 6px;
+}
+
+.grupo-lista__titulo {
+  min-width: 0;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  font-family: var(--fuente-mono);
+  font-size: 11px;
+  font-weight: 500;
+  letter-spacing: 0.07em;
+  text-transform: uppercase;
+  color: var(--tinta-2);
+}
+
+.grupo-lista__contador {
+  flex-shrink: 0;
+  font-family: var(--fuente-mono);
+  font-size: 11px;
+  color: var(--tinta-2);
+}
+
+/* Lista vacía o sin resultados */
+.lista-vacia {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 10px;
+  padding: 20px 16px;
+  border: 1px dashed var(--linea-hueco);
+  border-radius: var(--radio-campo);
+}
+
+.lista-vacia__titulo {
+  font-size: 15px;
+  font-weight: 500;
+}

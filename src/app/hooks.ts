@@ -92,3 +92,34 @@ export function useColorBarraEstado(color: string): void {
     document.querySelector('meta[name="theme-color"]')?.setAttribute('content', color)
   }, [color])
 }
+
+function leerRecordado<T>(clave: string, inicial: T): T {
+  try {
+    const guardado = sessionStorage.getItem(`stock-lab:${clave}`)
+    return guardado === null ? inicial : { ...inicial, ...(JSON.parse(guardado) as T) }
+  } catch {
+    return inicial
+  }
+}
+
+/**
+ * Estado que se recuerda mientras la app sigue abierta (búsqueda, filtros…), para encontrarlo
+ * igual al volver de la ficha de un producto. Si el navegador no deja guardarlo, se usa el inicial.
+ */
+export function useEstadoRecordado<T extends object>(clave: string, inicial: T): [T, (cambios: Partial<T>) => void] {
+  const [valor, setValor] = useState<T>(() => leerRecordado(clave, inicial))
+
+  function cambiar(cambios: Partial<T>) {
+    setValor((previo) => {
+      const siguiente = { ...previo, ...cambios }
+      try {
+        sessionStorage.setItem(`stock-lab:${clave}`, JSON.stringify(siguiente))
+      } catch {
+        // Sin almacenamiento de sesión: se recuerda solo mientras la pantalla está abierta.
+      }
+      return siguiente
+    })
+  }
+
+  return [valor, cambiar]
+}
