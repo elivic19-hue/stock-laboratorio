@@ -18,19 +18,21 @@ import {
   type DocumentData,
   type Firestore,
 } from 'firebase/firestore'
+import { LABORATORIO_ID } from './configuracion'
 import type { AlmacenRemoto, CambioRemoto, DatosRemotos, Tabla } from './remoto'
 
 /**
  * La nube del laboratorio en Firebase (fase 2): Firestore para los datos y una cuenta de correo y
- * contraseña por laboratorio. Cada laboratorio tiene sus datos en `laboratorios/{uid de su cuenta}`
- * y las reglas solo dejan entrar a esa cuenta (README, «Compartir el stock»).
+ * contraseña por persona. Todas las cuentas del proyecto comparten el laboratorio
+ * `laboratorios/{LABORATORIO_ID}`; solo existen las que se crean en la consola de Firebase, porque
+ * la creación de cuentas desde la app está desactivada (README, «Compartir el stock»).
  *
  * Este módulo se carga solo cuando el móvil está conectado: sin él, la app no descarga Firebase.
  */
 
 export interface SesionFirebase {
   remoto: AlmacenRemoto
-  /** uid de la cuenta del laboratorio = identificador del laboratorio. */
+  /** Laboratorio al que se conecta (el mismo para todas las cuentas del proyecto). */
   laboratorioId: string
   correo: string
   cerrar(opciones?: { cerrarSesion?: boolean }): Promise<void>
@@ -59,8 +61,8 @@ export async function abrirSesionFirebase(
       localCache: persistentLocalCache({ tabManager: persistentMultipleTabManager() }),
     })
     return {
-      remoto: new RemotoFirestore(db, usuario.uid),
-      laboratorioId: usuario.uid,
+      remoto: new RemotoFirestore(db, LABORATORIO_ID),
+      laboratorioId: LABORATORIO_ID,
       correo: usuario.email ?? credenciales?.correo ?? '',
       cerrar: (opciones) => cerrar(app, auth, opciones?.cerrarSesion ?? false),
     }
@@ -95,6 +97,8 @@ function traducirError(error: unknown): Error {
       return new ErrorSesion('La configuración de Firebase no es válida (apiKey).')
     case 'auth/operation-not-allowed':
       return new ErrorSesion('En Firebase falta activar el inicio de sesión con correo y contraseña.')
+    case 'auth/user-disabled':
+      return new ErrorSesion('Esta cuenta está deshabilitada en Firebase. Pide que la vuelvan a habilitar.')
     default:
       return error instanceof Error ? error : new Error(String(error))
   }

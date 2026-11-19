@@ -1,9 +1,11 @@
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
-    // Cada laboratorio (una cuenta de correo y contraseña) solo puede leer y escribir lo suyo.
+    // Todas las cuentas del proyecto (una por persona) comparten el laboratorio. Solo existen las
+    // que se crean en la consola de Firebase: la creación de cuentas desde fuera está desactivada.
     match /laboratorios/{laboratorio}/{documento=**} {
-      allow read, write: if request.auth != null && request.auth.uid == laboratorio;
+      allow read, write: if request.auth != null
+        && request.auth.token.firebase.sign_in_provider == 'password';
     }
   }
 }

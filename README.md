@@ -134,8 +134,9 @@ conexión desde la primera vez. Para volver a descargarlos: `npm run modelo`.
 
 ## Compartir el stock entre móviles
 
-Sin conectar, cada móvil tiene sus propios datos. Conectando todos los móviles (y el navegador del
-ordenador) a la misma **cuenta del laboratorio**, todos ven el mismo stock. Se usa
+Sin conectar, cada móvil tiene sus propios datos. Conectando los móviles (y el navegador del
+ordenador) con las **cuentas del laboratorio** (una por persona, todas en el mismo proyecto de
+Firebase), todos ven el mismo stock. Se usa
 [Firebase](https://firebase.google.com) de Google, en su plan gratuito (Spark): no pide tarjeta y da
 de sobra para un laboratorio (50.000 lecturas y 20.000 escrituras al día, 1 GB).
 
@@ -169,28 +170,30 @@ Hace falta una cuenta de Google (mejor una del laboratorio que una personal).
    rules_version = '2';
    service cloud.firestore {
      match /databases/{database}/documents {
-       // Cada laboratorio solo puede leer y escribir lo suyo.
        match /laboratorios/{laboratorio}/{documento=**} {
-         allow read, write: if request.auth != null && request.auth.uid == laboratorio;
+         allow read, write: if request.auth != null
+           && request.auth.token.firebase.sign_in_provider == 'password';
        }
      }
    }
    ```
 4. **Authentication** → **Comenzar** → **Correo electrónico/contraseña** → habilítalo (solo la primera
    opción) → **Guardar**.
-5. En Authentication → **Usuarios** → **Agregar usuario**: el correo y la contraseña que usarán todos
-   los móviles del laboratorio (el correo no tiene que existir de verdad, p. ej.
-   `stock@lab-caracterizacion.es`; la contraseña, larga).
-6. En Authentication → **Configuración** → **Acciones del usuario**, desmarca **Habilitar la creación
-   de cuentas**, para que nadie más pueda crearse cuentas en el proyecto.
+5. En Authentication → **Usuarios** → **Agregar usuario**: una cuenta (correo y contraseña) por cada
+   persona del laboratorio. El correo no tiene que existir de verdad.
+6. **Imprescindible:** en Authentication → **Configuración** → **Acciones del usuario**, desmarca
+   **Habilitar la creación (registro)**. Todas las cuentas del proyecto entran al laboratorio, así
+   que solo deben existir las que se crean aquí.
 7. **Configuración del proyecto** (la rueda) → **Tus apps** → icono web `</>` → un nombre (sin
    Hosting) → copia el bloque `const firebaseConfig = { … }`. No es secreto: lo que protege los datos
    son las reglas y la contraseña.
 
 ### Conectar los móviles
 
-- En cada móvil: Ajustes → **Compartir con el laboratorio** → pega la configuración, escribe el correo
-  y la contraseña → **Conectar**.
+- En cada móvil: Ajustes → **Compartir con el laboratorio** → el correo y la contraseña de la persona
+  → **Conectar**.
+- **Dar acceso a alguien:** crear su usuario en Authentication → Usuarios. **Quitárselo:** deshabilitar
+  o borrar su usuario (sus móviles dejan de sincronizar; los demás siguen igual).
 - El **primer** móvil que se conecta sube sus datos al laboratorio. Los siguientes se quedan con los
   del laboratorio (si tenían datos propios, la app avisa antes de sustituirlos).
 - Si se pone la configuración en `src/datos/sincronizacion/configuracion.ts` y se publica la app, los

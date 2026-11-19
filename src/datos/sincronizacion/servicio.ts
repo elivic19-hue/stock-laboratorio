@@ -81,7 +81,7 @@ export async function prepararSincronizacion(db: BaseDatosStock, repo: LocalRepo
     const { abrirSesionFirebase } = await cargarFirebase()
     sesion = await abrirSesionFirebase(guardada.configuracion)
     if (sesion.laboratorioId !== guardada.laboratorioId) {
-      throw new Error('La sesión guardada es de otra cuenta: vuelve a conectar este móvil.')
+      throw new Error('La conexión con el laboratorio ha cambiado: vuelve a conectar este móvil.')
     }
     empezar(guardada)
   } catch (error) {

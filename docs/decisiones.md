@@ -307,3 +307,13 @@ Pedidos por el usuario al probar la etapa 4 («con las dudas haz lo que creas co
   igual que preparar el proyecto de Firebase y calibrar el reconocimiento con los números del modo
   diagnóstico.
 
+### Una cuenta por persona (19/11/2026)
+
+- El usuario prefiere una cuenta de Firebase por persona en vez de una compartida. Todas las
+  cuentas del proyecto comparten el laboratorio `laboratorios/principal` (`LABORATORIO_ID`). Las
+  reglas dejan entrar a cualquier cuenta de correo y contraseña del proyecto, así que **la creación
+  de cuentas desde fuera tiene que estar desactivada** en Authentication (solo existen las que se
+  crean en la consola). Quitar el acceso a alguien = deshabilitar o borrar su usuario.
+- Un móvil conectado con la versión anterior (laboratorio = uid de la cuenta) pide volver a
+  conectar; al hacerlo, si el laboratorio compartido está vacío, sube sus datos.
+
