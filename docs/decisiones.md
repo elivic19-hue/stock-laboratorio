@@ -56,9 +56,6 @@ Si algo de aquí contradice CLAUDE.md, manda CLAUDE.md y hay que preguntar.
 | Duda | Qué hay ahora |
 | --- | --- |
 | 6. ¿Al «Marcar pedido» sale el producto de la lista y de los contadores? | Provisional: sí. Los contadores (celda «Bajo mínimo», barra y, más adelante, el icono) cuentan lo pendiente de pedir. |
-| 8. % de confianza con softmax: las alternativas salen muy bajas (0–2 %, no 71 % / 38 % como en la maqueta). | Se mantiene el softmax de §5. Si prefieres que las alternativas se vean «comparables», se puede enseñar la puntuación bruta en los botones. |
-| 9. Cantidad por retirada (p. ej. bolsa de 100 tapones). | La cantidad se puede teclear (y −/+). Falta decidir el campo opcional «cantidad por retirada» por producto. |
-| 11. ¿Guardar como referencia la foto cuando el usuario corrige el producto («¿No es este?»)? | §5 dice solo con buena confianza, así que ahora no se ofrece. Esas fotos serían de las más útiles para aprender. |
 | ¿El móvil de prueba lo usará una persona o varias? | Sin respuesta: un usuario por móvil, que se cambia en Ajustes. |
 
 ## Etapa 2 (19/11/2026)
@@ -170,8 +167,8 @@ Si algo de aquí contradice CLAUDE.md, manda CLAUDE.md y hay que preguntar.
 - Tras confirmar se vuelve a la pantalla anterior con «Deshacer», que también borra la foto guardada
   como referencia. Si la retirada deja el producto en su mínimo, el aviso lo dice y dura más (la
   notificación del móvil llega en la etapa 4).
-- La foto se ofrece como referencia solo si el reconocimiento estaba seguro de ese mismo producto
-  (casilla marcada según Ajustes).
+- La foto se ofrece como referencia siempre que se haya hecho foto (casilla marcada según Ajustes):
+  cuando el reconocimiento acierta y también cuando se corrige (ver duda 11).
 - **Duda 10 (resuelta):** el contador cuenta sobre 10 (lo recomendado) hasta llegar a 10 y después
   sobre 20 (el máximo). Al tocar una foto de la galería se ve en grande y se puede borrar.
 - Fotos de referencia: visor con el contador «6 / 10», la última foto hecha y «Listo». Indica qué
@@ -180,3 +177,22 @@ Si algo de aquí contradice CLAUDE.md, manda CLAUDE.md y hay que preguntar.
 - Ajustes → Reconocimiento: estado del modelo (GPU o no, tiempo de carga), umbral, temperatura,
   «Aprender de las retiradas», modo diagnóstico y volver a los valores iniciales.
 
+### Dudas 8, 9 y 11 y el margen (resueltas a criterio de Claude, 19/11/2026)
+
+El usuario lo dejó a mi criterio («haz lo que creas que es mejor»).
+
+- **Duda 8 (% de las alternativas):** se mantiene el softmax de §5 para todos los porcentajes, para
+  que el número signifique lo mismo en todas partes. Si dos productos se parecen de verdad, las
+  alternativas salen con % apreciables; si no, que salgan bajas es información útil. Por debajo del
+  1 % se enseña «<1 %» en vez de «0 %». La puntuación bruta sigue en el modo diagnóstico.
+- **Duda 9 (cantidad por retirada):** no se añade el campo. La cantidad empieza en 1, como dice §7,
+  y se puede teclear. Se recomienda que la unidad corta sea lo que se coge del armario (una bolsa,
+  un rack), no lo que hay dentro.
+- **Duda 11 (foto al corregir):** sí se ofrece guardarla, también al elegir «¿No es este?», una
+  alternativa de «No estoy seguro» o un producto buscado a mano después de la foto. La persona ha
+  dicho explícitamente qué producto es, así que la etiqueta es tan fiable como al acertar, y son
+  justo los casos que el reconocimiento aún no distingue. Se amplía así §5.6. El límite de 20 y el
+  descarte de la más antigua de origen `confirmacion` siguen igual, y «Deshacer» la borra.
+- **Margen de duda (0,03):** se queda fijo, sin llevarlo a Ajustes: con umbral y temperatura basta
+  para calibrar, y el modo diagnóstico enseña las puntuaciones para revisarlo con productos reales
+  en la etapa 5.

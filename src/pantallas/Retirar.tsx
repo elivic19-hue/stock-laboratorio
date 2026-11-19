@@ -171,8 +171,10 @@ function segundos(ms: number): string {
   return formatearNumero(s >= 0.1 ? Math.round(s * 10) / 10 : Math.max(0.01, Math.round(s * 100) / 100))
 }
 
+/** «87 %»; por debajo del 1 %, «<1 %» en vez de un «0 %» que parece un fallo. */
 function porcentaje(confianza: number): string {
-  return `${Math.round(confianza * 100)} %`
+  const redondeado = Math.round(confianza * 100)
+  return redondeado < 1 ? '<1 %' : `${redondeado} %`
 }
 
 function nombreCorto(nombre: string): string {
@@ -224,10 +226,9 @@ function HojaResultado({
             captura={captura}
             via={eleccion?.via ?? 'manual'}
             confianza={eleccion?.via === 'foto' ? puntuacionElegido?.confianza : undefined}
-            // La foto se guarda como referencia solo si el reconocimiento estaba seguro de este producto (§5).
-            puedeGuardarFoto={
-              conFoto && eleccion?.via === 'foto' && resultado.estado === 'seguro' && resultado.ranking[0]?.productoId === elegido.id
-            }
+            // Se ofrece guardar la foto siempre que la haya: si el reconocimiento acertó (§5) y también
+            // si la persona lo corrigió con «¿No es este?» o a mano, que son las fotos que más enseñan.
+            puedeGuardarFoto={conFoto}
             guardarFotoPorDefecto={ajustes.guardarFotoAlConfirmar}
           />
         </>
