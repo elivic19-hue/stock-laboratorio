@@ -150,6 +150,11 @@ Cómo funciona:
 - Restaurar una copia de seguridad en un móvil conectado sustituye los datos de **todo** el
   laboratorio. «Borrar todos los datos» desconecta antes el móvil y solo borra lo suyo.
 
+El proyecto del laboratorio ya está creado (`stock-laboratorio-5abeb`, con la base de datos en Madrid)
+y su configuración está en `src/datos/sincronizacion/configuracion.ts`. Las reglas están en
+`firestore.rules`; para volver a publicarlas: `npx firebase-tools deploy --only firestore:rules`.
+Los pasos siguientes son para montar otro proyecto desde cero.
+
 ### Preparar el proyecto (una vez, unos 10 minutos)
 
 Hace falta una cuenta de Google (mejor una del laboratorio que una personal).

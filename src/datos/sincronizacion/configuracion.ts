@@ -6,10 +6,18 @@ import { ErrorStock } from '../../dominio/errores'
  * Tus apps › Configuración del SDK). No es secreta: identifica el proyecto, y lo que protege los
  * datos son las reglas de Firestore y la contraseña de la cuenta del laboratorio.
  *
- * Mientras esté vacía, Ajustes pide pegarla en cada móvil. Cuando se rellene aquí, todos los móviles
- * solo tendrán que poner el correo y la contraseña del laboratorio.
+ * Proyecto `stock-laboratorio-5abeb` (base de datos en europe-southwest1, Madrid; reglas en
+ * firestore.rules). Con ella aquí, los móviles solo tienen que poner el correo y la contraseña del
+ * laboratorio. Si se deja en null, Ajustes pide pegar la configuración en cada móvil.
  */
-export const CONFIGURACION_FIREBASE: FirebaseOptions | null = null
+export const CONFIGURACION_FIREBASE: FirebaseOptions | null = {
+  apiKey: 'AIzaSyDx3-tRsqVPoQI6TVj04Pfqt976q2Iyfk0',
+  authDomain: 'stock-laboratorio-5abeb.firebaseapp.com',
+  projectId: 'stock-laboratorio-5abeb',
+  storageBucket: 'stock-laboratorio-5abeb.firebasestorage.app',
+  messagingSenderId: '635929826495',
+  appId: '1:635929826495:web:9ddab2065963b366d7220a',
+}
 
 const CAMPOS = ['apiKey', 'authDomain', 'projectId', 'storageBucket', 'messagingSenderId', 'appId', 'measurementId'] as const
 
