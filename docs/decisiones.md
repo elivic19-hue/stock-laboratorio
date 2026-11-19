@@ -292,3 +292,18 @@ Pedidos por el usuario al probar la etapa 4 («con las dudas haz lo que creas co
   conexión, borrados, restaurar). Falta probarlo con el proyecto de Firebase real, que tiene que
   crear el usuario (README, «Compartir el stock entre móviles»).
 
+## Etapa 5 (19/11/2026, en curso)
+
+- Repaso frente a las maquetas (Stock, A pedir, Ficha, Entrada, Retirar): estructura, textos,
+  tamaños y colores coinciden. Las diferencias que quedan son decisiones ya anotadas (celda
+  «CADUCADOS» en negro, código en las tarjetas de A pedir, campos de 16 px…).
+- La frase de la maqueta de Producto «Las fotos que haga cualquier compañero sirven para todos»
+  solo sale con el móvil conectado al laboratorio, que es cuando es verdad.
+- Auditoría de accesibilidad automática en todas las pantallas (navegador simulando un móvil):
+  contraste AA del texto, zonas táctiles de 44 px, etiquetas de los campos, nombres de botones y
+  enlaces, imágenes con `alt` y un solo `h1` por pantalla. Solo falló la zona táctil del nombre del
+  producto en las tarjetas de A pedir (37 px), corregida. Sin dependencias nuevas.
+- Prueba en móviles reales: lista en `docs/prueba-en-movil.md`. Queda pendiente del usuario,
+  igual que preparar el proyecto de Firebase y calibrar el reconocimiento con los números del modo
+  diagnóstico.
+

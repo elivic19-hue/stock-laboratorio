@@ -7,7 +7,8 @@ cuando un producto llega a su mínimo. Funciona sin conexión y no tiene ningún
 La especificación completa está en [CLAUDE.md](CLAUDE.md); las maquetas, en [diseno/](diseno/), y las
 decisiones tomadas por el camino, en [docs/decisiones.md](docs/decisiones.md).
 
-**Estado:** etapa 4 de 5 (A pedir, avisos, compartir lista y copia de seguridad). Los datos se guardan en el móvil y, si se conecta al laboratorio
+**Estado:** etapa 5 de 5 en curso: falta la prueba en móviles reales
+([docs/prueba-en-movil.md](docs/prueba-en-movil.md)) y calibrar el reconocimiento. Los datos se guardan en el móvil y, si se conecta al laboratorio
 (fase 2, con Firebase), se comparten con los demás móviles y el ordenador.
 
 ## Requisitos
@@ -250,4 +251,6 @@ implementación de `AlmacenRemoto` (`src/datos/sincronizacion/remoto.ts`).
 2. Pantallas Stock, Ficha, Catálogo/alta y Entrada, con la lógica de stock y sus tests (más Caducidades). **Hecha.**
 3. Cámara y reconocimiento: fotos de referencia, retirada con foto y modo diagnóstico. **Hecha.**
 4. A pedir, avisos, compartir lista y copia de seguridad. **Hecha.**
-5. Pulido visual, accesibilidad y prueba en móvil real.
+5. Pulido visual, accesibilidad y prueba en móvil real. **En curso:** repaso frente a las maquetas y
+   auditoría de accesibilidad hechos; falta la prueba en móviles reales (lista en
+   [docs/prueba-en-movil.md](docs/prueba-en-movil.md)).

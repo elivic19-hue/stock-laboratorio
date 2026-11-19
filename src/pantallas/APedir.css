@@ -42,8 +42,10 @@
 
 .tarjeta-pedir__producto {
   min-width: 0;
+  min-height: var(--tactil);
   display: flex;
   flex-direction: column;
+  justify-content: center;
   gap: 2px;
   color: var(--tinta);
   text-decoration: none;
