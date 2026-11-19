@@ -99,21 +99,29 @@ export class Sincronizador {
 
   /** Marca como pendiente todo lo que hay en el móvil (para subirlo al conectar el primer móvil). */
   async marcarTodo(): Promise<void> {
-    for (const tabla of TABLAS) {
-      const ids = (await this.#db.table(tabla).toCollection().primaryKeys()) as string[]
-      this.#marcar(tabla, ids)
-    }
+    const claves = await this.#todasLasClaves()
+    for (const tabla of TABLAS) this.#marcar(tabla, claves.get(tabla) ?? [])
   }
 
   /**
    * Ejecuta `cambiar` (p. ej. restaurar una copia) y manda después todo lo que había antes y lo que
    * hay ahora: lo que ya no está se borra en la nube. Hace falta porque vaciar una tabla de Dexie
-   * no avisa a los hooks.
+   * no avisa a los hooks. Lo de antes se marca después del cambio: si se marcara antes, el envío
+   * podría salir a mitad y mandar como vivas filas que el cambio borra.
    */
   async conTodoMarcado(cambiar: () => Promise<void>): Promise<void> {
-    await this.marcarTodo()
+    const antes = await this.#todasLasClaves()
     await cambiar()
-    await this.marcarTodo()
+    const despues = await this.#todasLasClaves()
+    for (const tabla of TABLAS) this.#marcar(tabla, [...(antes.get(tabla) ?? []), ...(despues.get(tabla) ?? [])])
+  }
+
+  async #todasLasClaves(): Promise<Map<Tabla, string[]>> {
+    const claves = new Map<Tabla, string[]>()
+    for (const tabla of TABLAS) {
+      claves.set(tabla, (await this.#db.table(tabla).toCollection().primaryKeys()) as string[])
+    }
+    return claves
   }
 
   /** Vacía el móvil sin mandar nada (al conectarse a un laboratorio que ya tiene datos). */
@@ -221,11 +229,16 @@ export class Sincronizador {
   async #aplicar(tabla: Tabla, cambios: CambioRemoto[]): Promise<void> {
     const db = this.#db
     const t = db.table(tabla)
-    const borrar = cambios.filter((c) => c.datos === null).map((c) => c.id)
-    const poner = cambios.flatMap((c) => (c.datos === null ? [] : [deRemoto(tabla, c.id, c.datos)]))
 
     await db.transaction('rw', db.productos, db.movimientos, db.fotos, db.pedidos, async (tx) => {
       transaccionesRemotas.add(tx)
+      // Lo que se ha cambiado en este móvil y aún no se ha mandado es más nuevo que lo que llega
+      // (p. ej. el eco de un cambio nuestro anterior): no se toca, o se resucitaría lo recién borrado.
+      // Se mira dentro de la transacción, cuando ya han terminado las escrituras locales previas.
+      const pendientes = this.#pendientes.get(tabla)
+      const aplicables = pendientes ? cambios.filter((c) => !pendientes.has(c.id)) : cambios
+      const borrar = aplicables.filter((c) => c.datos === null).map((c) => c.id)
+      const poner = aplicables.flatMap((c) => (c.datos === null ? [] : [deRemoto(tabla, c.id, c.datos)]))
       // Productos cuyo stock hay que recalcular a partir de sus movimientos.
       const afectados = new Set<string>()
       if (tabla === 'movimientos') {

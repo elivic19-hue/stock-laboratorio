@@ -254,7 +254,11 @@ describe('sincronización entre móviles', () => {
     await asentar(a, b)
 
     const copia = crearDatosEjemplo(new Date(2026, 10, 19))
-    await a.sync.conTodoMarcado(() => a.repo.reemplazarTodo(copia))
+    // Con una pausa antes de sustituir (como un móvil lento): el envío no puede salir a mitad.
+    await a.sync.conTodoMarcado(async () => {
+      await new Promise((r) => setTimeout(r, 30))
+      await a.repo.reemplazarTodo(copia)
+    })
     await asentar(a, b)
     const enB = await b.repo.volcar()
     expect(enB.productos.map((p) => p.codigo).sort()).toEqual(copia.productos.map((p) => p.codigo).sort())
