@@ -19,6 +19,9 @@ Si algo de aquí contradice CLAUDE.md, manda CLAUDE.md y hay que preguntar.
 - Oxlint: el linter que trae ahora la plantilla oficial. Se aprobó «el linter de la plantilla», que se
   esperaba que fuera ESLint; Oxlint cumple la misma función con una sola dependencia de desarrollo.
 - `fake-indexeddb`: solo para los tests del repositorio.
+- `firebase` (19/11/2026): la nube compartida (fase 2 adelantada).
+- `tesseract.js` (20/11/2026): leer el número de lote impreso en la etiqueta, en el móvil y sin
+  conexión («Lotes: archivar y restar de un lote»).
 - No se usan librerías de navegación, iconos, fechas ni UUID: router propio por `#/rutas`, iconos SVG
   de las maquetas, `Intl` en español y `crypto` para los UUID.
 
@@ -435,8 +438,88 @@ la ficha, el aviso diario y se puede desechar o dar por agotado, sin tocar esa l
 entradas). Sin lote ni caducidad sigue siendo un ajuste, como hasta ahora. Sin stock inicial no hay a
 qué ponérselos: se marca el stock inicial.
 
-**Historial de lotes.** Nueva sección «Lotes» en la ficha, antes de «Movimientos»: cada entrada con
-lote o caducidad (también el stock inicial), de la más reciente a la más antigua, con su caducidad,
-fecha, cantidad, quién y su estado: caducado, caduca pronto (30 días, como el resumen), desechado o
-agotado (con quién y cuándo). Siguiendo la duda 7b, no se calcula cuánto queda de cada lote. Se ven
-10 y un botón para verlos todos.
+**Historial de lotes.** Nueva sección «Lotes» en la ficha, antes de «Movimientos» (rehecha justo
+después: ver «Lotes: archivar y restar de un lote»).
+
+### Recuperar el stock de antes y que las actualizaciones no lo pierdan (20/11/2026)
+
+El usuario: «¿podemos hacer que cada vez que haya una actualización no se borre el stock?». Las
+actualizaciones no borran nada (la base de datos del móvil y la nube no se tocan al actualizar). Lo
+que pasó: la versión del 20/11 por la mañana (laboratorios separados) empezó a leer
+`laboratorios/cromatografia` y `/foodcontact` y dejó el stock de antes en `laboratorios/principal`,
+sin leerlo, así que la app arrancó vacía.
+
+- **Elegido por el usuario:** pasarlo a Lab. Cromatografía, sumándolo a lo metido desde entonces. Lo
+  hace solo el primer móvil que abre Cromatografía con conexión, cuando ya ha recibido lo de la nube:
+  - Producto con el mismo nombre y categoría que uno de Cromatografía: se queda el de Cromatografía y
+    solo recibe las fotos de antes (hasta 20); sus movimientos y pedidos no se traen, para no sumar
+    el stock dos veces.
+  - Los demás, enteros (producto, movimientos, fotos, pedidos) y con sus mismos identificadores; si
+    su código ya lo usa otro, se le da el siguiente libre (el aviso dice cuáles).
+  - Una marca en `laboratorios/cromatografia/migraciones/principal` (quién, cuándo y qué se trajo)
+    evita que se repita; sin conexión o si algo falla, no se marca y se reintenta. Repetirla no
+    duplica nada (mismos identificadores). `laboratorios/principal` no se borra.
+- **Regla para el desarrollo:** una actualización nunca puede dejar datos atrás. Si cambia dónde o
+  cómo se guardan, la misma versión los migra (y se prueba con los datos de antes).
+- La app pide almacenamiento persistente cada vez que abre un laboratorio (antes, solo al entrar).
+
+### Copia de seguridad diaria a las 7:00 (20/11/2026)
+
+Elegido por el usuario: GitHub, en un repositorio privado (gratis). Los móviles no pueden hacer nada a
+una hora fija con la app cerrada, y las copias de Firestore exigen el plan Blaze (de pago por uso).
+
+- `.github/workflows/copia-diaria.yml` + `scripts/copia-diaria.mjs` (sin dependencias: API REST de
+  Firebase con `fetch`). Entra con una cuenta de Firebase solo para copias (las reglas no cambian:
+  es una cuenta de correo más) y escribe `cromatografia.json` y `foodcontact.json` en el repositorio
+  privado (`<usuario>/stock-laboratorio-copias` o la variable `COPIAS_REPO`), un commit por día.
+- Mismo formato que la copia de la app (un test lo comprueba con `leerCopia`), sin umbral ni
+  temperatura para que restaurarla no cambie los ajustes del móvil. Un elemento por línea, para que
+  el historial de Git ocupe poco.
+- Hora: GitHub programa en UTC; se lanza a las 5:00 y a las 6:00 UTC y solo sigue si en Madrid son
+  las 7 (o las 8, por si GitHub se retrasa) y no hay copia de hoy. Así no depende del cambio de hora.
+- Sin los secretos, no hace nada (aviso en el registro, sin fallar). Los registros son públicos: solo
+  recuentos. Cada ejecución reactiva la programación (GitHub la apaga tras 60 días sin cambios).
+- Lo que tiene que hacer el usuario (README): crear la cuenta de copias, el repositorio privado, un
+  token con permiso de escritura en él y los tres secretos.
+
+### Lotes: archivar y restar de un lote (20/11/2026)
+
+Peticiones del usuario: archivar solo un lote de un reactivo cuando se termine, con los archivados
+«en su propia línea» dentro del producto (no una línea por lote); y, si se puede, reconocer el número
+de lote en la foto y restar de ese lote. Aclaró que en la mayoría de sus reactivos el lote es un
+número impreso en la etiqueta, no un código de barras.
+
+- **Qué es un lote:** lo que entra con un mismo código (puede llegar en varias entradas); sin código
+  pero con caducidad, el lote es «cad. MM/AAAA». Las retiradas guardan de qué lote salen (`lote`, o
+  solo `caducidad` en los lotes sin código: campos que §4 ya tenía en todos los movimientos).
+  «Quedan» = entradas del lote − retiradas que lo dicen: orientativo, porque las retiradas sin lote
+  (las de antes o «Sin lote») solo restan del stock del producto. Esto sustituye a la duda 7b («no se
+  estima qué lotes quedan») para las retiradas que dicen su lote.
+- **Ficha → Lotes:** los abiertos, cada uno en su línea, en el orden en que toca gastarlos (caducidad
+  más próxima primero; sin caducidad, al final), con lo que queda, su caducidad, el estado (caducado,
+  caduca pronto) y «Archivar». Los archivados, juntos en una sola línea «Archivados · n lotes» que se
+  despliega, cada uno con quién y cuándo y «Desarchivar» (los desechados no: se reabren anulando su
+  ajuste, como hasta ahora).
+- **Archivar** = cerrar todas las entradas del lote como agotadas (el `loteCerrado` de la duda 7b), sin
+  tocar el stock, con «Deshacer». **Se archiva solo** cuando una retirada lo deja a cero: el cierre
+  apunta a esa retirada (`loteCerrado.movimientoId`, campo nuevo) y deshacerla lo reabre.
+- **Retirar:** si el producto tiene lotes abiertos, la hoja pregunta de cuál sale (y «Sin lote»).
+  Propone, por este orden: el que se lea en la etiqueta, y si no, el que caduca antes. Avisa si la
+  retirada termina el lote, o si la etiqueta dice un lote que no está registrado.
+- **Leer el lote en la foto:**
+  - Texto impreso (OCR) con **Tesseract.js 7** (dependencia nueva aprobada por el usuario). Funciona
+    en el móvil sin conexión: el worker, el motor (solo la versión con SIMD y solo LSTM, que tienen
+    todos los móviles actuales) y el modelo de texto «fast» en inglés (basta para números y letras)
+    se sirven desde `public/ocr/` (unos 6 MB, en la caché de la app; `npm run ocr`). Se carga solo
+    la primera vez que hace falta: cuando el producto tiene 2 o más lotes abiertos.
+  - Se lee la zona del marco y algo más (1,4 veces), a la resolución de la cámara, en gris y
+    ampliada. El texto se compara con los lotes registrados del producto, no se usa tal cual:
+    tolera 1 carácter de diferencia en códigos de 5 a 7 y 2 desde 8, y en los numéricos las letras
+    que parecen cifras (O/0, I/1, S/5, B/8…). Si dos lotes encajan igual (lotes seguidos como
+    4920113 y 4920114 y una cifra dudosa), no elige. Prueba en el navegador con una etiqueta dibujada:
+    lee «Lot: 4920113» y elige ese lote y no el 4920114; 0,9 s la primera vez (con la carga) y
+    0,25 s después en el ordenador.
+  - También se lee el código de barras si lo hay (BarcodeDetector, sin dependencias: Chrome en
+    Android): GS1 DataMatrix con lote (10) y caducidad (17).
+  - En modo diagnóstico se ve el texto leído y los códigos de barras.
+- No se lee el lote al registrar una entrada: se escribe a mano como antes. Podría añadirse.

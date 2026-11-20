@@ -1,4 +1,4 @@
-import { Fragment, useCallback, useId, useMemo, useState, type ReactNode } from 'react'
+import { Fragment, useCallback, useEffect, useId, useMemo, useState, type ReactNode } from 'react'
 import { mostrarAviso } from '../app/avisos'
 import { notificarBajoMinimo } from '../app/avisosMovil'
 import { useServicios } from '../app/contexto'
@@ -7,12 +7,15 @@ import { volver } from '../app/navegacion'
 import type { AjustesDispositivo } from '../datos/ajustes'
 import type { Producto } from '../datos/tipos'
 import { mensajeDeError } from '../dominio/errores'
-import { conPunto, formatearNumero } from '../dominio/formato'
+import { conPunto, formatearMesAnio, formatearNumero } from '../dominio/formato'
+import { lotesAbiertos, nombreDeLote, referenciaDeLote, type LoteProducto } from '../dominio/lotes'
 import { leerNumero, numeroParaCampo, redondear } from '../dominio/numeros'
 import { estaBajoMinimo } from '../dominio/stock'
 import { ubicacionMedia } from '../dominio/ubicacion'
 import { crearMiniatura, type FotoCapturada } from '../reconocimiento/camara'
 import { reconocer, type PuntuacionProducto, type ResultadoReconocimiento } from '../reconocimiento/comparar'
+import { loteDeEtiqueta, loteEnCodigos, loteEnTexto, loteImpreso } from '../reconocimiento/etiquetas'
+import { leerTexto } from '../reconocimiento/ocr'
 import { cargarModelo, useEstadoModelo } from '../reconocimiento/modelo'
 import { Icono } from '../ui/Icono'
 import { PantallaCompleta } from '../ui/Pantalla'
@@ -27,6 +30,10 @@ interface Captura {
   vista: string
   /** Resolución de la cámara y tamaño del recorte, para el modo diagnóstico. */
   origen: Pick<FotoCapturada, 'camara' | 'recorte'> | null
+  /** Textos de los códigos de barras leídos en la foto (para saber el lote). */
+  codigos: string[]
+  /** Zona de la etiqueta a buena resolución, para leer el lote impreso (OCR). */
+  paraLeer: HTMLCanvasElement | null
   vector: number[]
   ms: number
   resultado: ResultadoReconocimiento
@@ -67,20 +74,20 @@ export function Retirar() {
   }, [])
 
   const alCapturar = useCallback(
-    async ({ foto: imagen, camara, recorte }: FotoCapturada) => {
+    async ({ foto: imagen, camara, recorte, codigos: leyendoCodigos, paraLeer }: FotoCapturada) => {
       if (!datos || !ajustes) return
       const vista = imagen.toDataURL('image/jpeg', 0.85)
       setFase({ fase: 'analizando', vista })
       try {
         const extractor = await cargarModelo()
-        const { vector, ms } = await extractor.embedding(imagen)
+        const [{ vector, ms }, codigos] = await Promise.all([extractor.embedding(imagen), leyendoCodigos])
         const resultado = reconocer(vector, datos.referencias, {
           umbral: ajustes.umbral,
           temperatura: ajustes.temperatura,
         })
         const mejor = resultado.ranking[0]
         setEleccion(resultado.estado === 'seguro' && mejor ? { productoId: mejor.productoId, via: 'foto' } : null)
-        setFase({ fase: 'resultado', imagen, vista, vector, ms, resultado, origen: { camara, recorte } })
+        setFase({ fase: 'resultado', imagen, vista, vector, ms, resultado, origen: { camara, recorte }, codigos, paraLeer })
       } catch (error) {
         setFase({ fase: 'visor' })
         mostrarAviso({ texto: mensajeDeError(error) })
@@ -167,6 +174,8 @@ export function Retirar() {
               vector: [],
               ms: 0,
               origen: null,
+              codigos: [],
+              paraLeer: null,
               resultado: { estado: 'sin-referencias', ranking: [] },
             })
           }
@@ -352,6 +361,36 @@ function FormularioRetirada({
   const idCantidad = useId()
   const idError = useId()
 
+  // Lote del que sale (docs/decisiones.md, «Lotes: archivar y restar de un lote»): el que se lea en
+  // la etiqueta y, si no, el que toca gastar primero (el que caduca antes). Se puede cambiar.
+  const [ahora] = useState(() => new Date())
+  const { datos: movimientos } = useConsulta((r) => r.listarMovimientos({ productoId: producto.id }), [producto.id])
+  const lotes = useMemo(() => (movimientos ? lotesAbiertos(movimientos, ahora) : []), [movimientos, ahora])
+  const loteEnCodigo = useMemo(() => loteEnCodigos(captura.codigos, lotes), [captura.codigos, lotes])
+  // Si hay varios lotes en uso y el código de barras no lo dice, se lee el número impreso (OCR).
+  const hayQueLeer = lotes.length >= 2 && !loteEnCodigo && captura.paraLeer !== null
+  const [lectura, setLectura] = useState<{ imagen: HTMLCanvasElement; texto: string } | null>(null)
+  useEffect(() => {
+    const imagen = captura.paraLeer
+    if (!hayQueLeer || !imagen) return
+    let vigente = true
+    void leerTexto(imagen).then((texto) => {
+      if (vigente) setLectura({ imagen, texto })
+    })
+    return () => {
+      vigente = false
+    }
+  }, [hayQueLeer, captura.paraLeer])
+  const leida = lectura && lectura.imagen === captura.paraLeer ? lectura : null
+  const leyendo = hayQueLeer && !leida
+  const textoLeido = leida?.texto ?? ''
+  const loteLeido = loteEnCodigo ?? (textoLeido ? loteEnTexto(textoLeido, lotes) : undefined)
+  const loteEnEtiqueta = loteDeEtiqueta(captura.codigos) ?? (textoLeido ? loteImpreso(textoLeido) : undefined)
+  /** undefined: el que propone la app; null: «Sin lote». */
+  const [claveElegida, setClaveElegida] = useState<string | null | undefined>(undefined)
+  const clave = claveElegida === undefined ? (loteLeido ?? lotes[0]?.clave ?? null) : claveElegida
+  const loteElegido = lotes.find((l) => l.clave === clave)
+
   const cantidad = leerNumero(cantidadTexto)
   const sinStock = producto.stockActual <= 0
   const valida = cantidad !== null && cantidad > 0 && cantidad <= producto.stockActual
@@ -376,12 +415,13 @@ function FormularioRetirada({
     }
     setGuardando(true)
     try {
-      const { movimiento, producto: actualizado } = await repo.registrarMovimiento({
+      const { movimiento, producto: actualizado, loteArchivado } = await repo.registrarMovimiento({
         productoId: producto.id,
         tipo: via === 'foto' ? 'retirada_foto' : 'retirada_manual',
         cantidad: -cantidad,
         usuario: ajustes.usuario,
         ...(via === 'foto' && confianza !== undefined ? { confianza } : {}),
+        ...(loteElegido ? referenciaDeLote(loteElegido) : {}),
       })
       let fotoId: string | undefined
       if (puedeGuardarFoto && guardarFoto) {
@@ -411,6 +451,11 @@ function FormularioRetirada({
             `Retirado: ${producto.nombre}, ${formatearNumero(producto.stockActual)} → ` +
               `${formatearNumero(actualizado.stockActual)} ${producto.unidadCorta}`,
           ) +
+          (loteElegido
+            ? loteArchivado
+              ? ` Lote ${loteArchivado} terminado: archivado.`
+              : ` Lote ${nombreDeLote(loteElegido)}.`
+            : '') +
           (bajo
             ? yaPedido
               ? ` Está en su mínimo (${minimo}); ya está pedido.`
@@ -503,6 +548,21 @@ function FormularioRetirada({
             </div>
           </div>
 
+          {lotes.length > 0 && (
+            <EleccionLote
+              lotes={lotes}
+              clave={clave}
+              leido={loteLeido}
+              enEtiqueta={loteEnEtiqueta}
+              leyendo={leyendo}
+              sinLeer={leida !== null && !loteLeido}
+              textoLeido={ajustes?.modoDiagnostico ? textoLeido : undefined}
+              cantidad={valida ? cantidad : null}
+              unidad={producto.unidadCorta}
+              alElegir={setClaveElegida}
+            />
+          )}
+
           {puedeGuardarFoto && (
             <label className="casilla">
               <input type="checkbox" checked={guardarFoto} onChange={(e) => setGuardarFoto(e.target.checked)} />
@@ -528,6 +588,93 @@ function FormularioRetirada({
         </>
       )}
     </>
+  )
+}
+
+/** Lote del que sale la retirada: los abiertos, en el orden en que toca gastarlos, y «Sin lote». */
+function EleccionLote({
+  lotes,
+  clave,
+  leido,
+  enEtiqueta,
+  leyendo,
+  sinLeer,
+  textoLeido,
+  cantidad,
+  unidad,
+  alElegir,
+}: {
+  lotes: LoteProducto[]
+  clave: string | null
+  leido: string | undefined
+  enEtiqueta: string | undefined
+  /** Se está leyendo el número de lote de la etiqueta. */
+  leyendo: boolean
+  /** Se ha leído la etiqueta, pero no aparece ningún lote en uso. */
+  sinLeer: boolean
+  /** Texto leído (solo en modo diagnóstico). */
+  textoLeido: string | undefined
+  /** Cantidad que se retira (si es válida), para avisar de que el lote se termina. */
+  cantidad: number | null
+  unidad: string
+  alElegir: (clave: string | null) => void
+}) {
+  const grupo = useId()
+  const elegido = lotes.find((l) => l.clave === clave)
+  const seTermina = elegido && cantidad !== null && redondear(elegido.quedan - cantidad) <= 0
+  const opcion = (activa: boolean) => (activa ? 'lote-opcion lote-opcion--elegida' : 'lote-opcion')
+
+  return (
+    <fieldset className="lotes-retirar">
+      <legend className="hoja-resultado__etiqueta-cantidad">Lote</legend>
+      <div className="lotes-retirar__opciones">
+        {lotes.map((l) => (
+          <label key={l.clave} className={opcion(l.clave === clave)}>
+            <input
+              type="radio"
+              className="solo-lector"
+              name={grupo}
+              checked={l.clave === clave}
+              onChange={() => alElegir(l.clave)}
+            />
+            <span className="lote-opcion__lote">{nombreDeLote(l)}</span>
+            <span className="lote-opcion__detalle">
+              {l.lote && l.caducidad ? `cad. ${formatearMesAnio(l.caducidad)} · ` : ''}quedan{' '}
+              {formatearNumero(Math.max(0, l.quedan))} {unidad}
+              {l.clave === leido && <span className="lote-opcion__leido"> · leído en la etiqueta</span>}
+            </span>
+          </label>
+        ))}
+        <label className={opcion(clave === null)}>
+          <input type="radio" className="solo-lector" name={grupo} checked={clave === null} onChange={() => alElegir(null)} />
+          <span className="lote-opcion__lote lote-opcion__lote--sin">Sin lote</span>
+          <span className="lote-opcion__detalle">No sé de cuál es</span>
+        </label>
+      </div>
+      <p className="lotes-retirar__aviso" role="status">
+        {leyendo
+          ? 'Leyendo el número de lote en la etiqueta…'
+          : enEtiqueta && !leido
+            ? ''
+            : sinLeer
+              ? 'No se ha leído el lote en la foto: se propone el que caduca antes. Para leerlo, fotografía la etiqueta de cerca.'
+              : ''}
+      </p>
+      {!leyendo && enEtiqueta && !leido && (
+        <p className="lotes-retirar__aviso">
+          La etiqueta dice lote <span className="mono">{enEtiqueta}</span>, que no está entre los lotes en uso de este
+          producto.
+        </p>
+      )}
+      {textoLeido !== undefined && textoLeido.trim() && (
+        <p className="lotes-retirar__aviso mono">Texto leído: {textoLeido.replace(/\s+/g, ' ').slice(0, 160)}</p>
+      )}
+      {seTermina && (
+        <p className="lotes-retirar__aviso">
+          Con esta retirada se termina el lote <span className="mono">{nombreDeLote(elegido)}</span> y se archiva.
+        </p>
+      )}
+    </fieldset>
   )
 }
 
@@ -567,6 +714,11 @@ function Diagnostico({
           {' '}px
         </p>
       )}
+      <p className="diagnostico__resumen mono">
+        {captura.codigos.length === 0
+          ? 'códigos de barras: ninguno leído'
+          : `códigos de barras: ${captura.codigos.map((c) => (c.length > 40 ? `${c.slice(0, 40)}…` : c)).join(' | ')}`}
+      </p>
       <table className="diagnostico__tabla">
         <thead>
           <tr>

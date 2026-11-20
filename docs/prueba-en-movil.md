@@ -44,7 +44,17 @@ Con esos números se ajustan el umbral (ahora 0,6) y la temperatura (0,05).
 - [ ] Anular el último movimiento desde la ficha.
 - [ ] Dar de alta un producto de prueba con stock inicial, lote y caducidad: en la ficha sale en
       «Lotes» (como «Stock inicial») y, si caduca pronto, en Caducidades. Después, eliminarlo.
-- [ ] Ficha de un reactivo con varias entradas: «Lotes» enseña cada lote con su caducidad y estado.
+- [ ] Ficha de un reactivo con varios lotes: cada lote en uso en su línea con «Quedan» y «Archivar»;
+      al archivar uno pasa a la línea «Archivados», que se despliega y deja desarchivarlo.
+- [ ] Retirar con foto un reactivo con 2 o más lotes, con la etiqueta de cerca: sale «Leyendo el número
+      de lote…» y se marca el lote correcto («leído en la etiqueta»). Apunta los que no lea (en modo
+      diagnóstico sale el texto leído).
+- [ ] Retirar hasta dejar un lote a cero: el aviso dice que se ha terminado y archivado; «Deshacer» lo
+      vuelve a abrir.
+- [ ] Cromatografía: tras actualizar, sale el aviso «Recuperado el stock de antes…» (una sola vez) y
+      están los productos de antes.
+- [ ] Copia diaria: preparada según el README, «Run workflow» deja los dos archivos en el repositorio
+      privado; al día siguiente hay un commit de las 7:00.
 - [ ] Fotos de referencia nuevas: al tocarlas en la galería de la ficha se ven nítidas. En modo
       diagnóstico, tras una foto en Retirar, apunta la línea «cámara … · recorte … · foto …».
 - [ ] A pedir: «Marcar pedido», compartir la lista por WhatsApp o correo, y el CSV.

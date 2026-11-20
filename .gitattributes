@@ -4,3 +4,7 @@
 *.png binary
 *.woff2 binary
 *.bin binary
+*.gz binary
+
+# Lector de lotes (Tesseract.js, de terceros y minificado): sin diferencias en los commits
+public/ocr/*.js -diff linguist-vendored

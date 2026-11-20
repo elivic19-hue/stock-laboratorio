@@ -38,6 +38,64 @@ export interface FotoCapturada {
   camara: { ancho: number; alto: number } | null
   /** Lado del cuadrado recortado, en píxeles de la imagen original. Para el modo diagnóstico. */
   recorte: number
+  /**
+   * Textos de los códigos de barras de la imagen entera (p. ej. el DataMatrix GS1 de la etiqueta, con
+   * el lote). Vacío si no hay o si el navegador no sabe leerlos (iPhone).
+   */
+  codigos: Promise<string[]>
+  /**
+   * Lo de alrededor del marco a la resolución de la cámara (hasta LADO_LECTURA), para leer el número
+   * de lote impreso en la etiqueta (OCR). null si no hay imagen.
+   */
+  paraLeer: HTMLCanvasElement | null
+}
+
+interface DetectorCodigos {
+  detect(fuente: ImageBitmapSource): Promise<{ rawValue: string }[]>
+}
+
+interface ClaseDetectorCodigos {
+  new (opciones: { formats: string[] }): DetectorCodigos
+  getSupportedFormats(): Promise<string[]>
+}
+
+/** Los que pueden llevar el lote (DataMatrix y QR de las etiquetas, Code 128 GS1…); EAN solo lleva el artículo. */
+const FORMATOS_CON_LOTE = ['data_matrix', 'qr_code', 'code_128', 'code_39', 'pdf417', 'aztec']
+
+let detector: Promise<DetectorCodigos | null> | undefined
+
+function obtenerDetector(): Promise<DetectorCodigos | null> {
+  detector ??= (async () => {
+    const Clase = (globalThis as { BarcodeDetector?: ClaseDetectorCodigos }).BarcodeDetector
+    if (!Clase) return null
+    const formatos = (await Clase.getSupportedFormats()).filter((f) => FORMATOS_CON_LOTE.includes(f))
+    return formatos.length > 0 ? new Clase({ formats: formatos }) : null
+  })().catch(() => null)
+  return detector
+}
+
+/** Lee los códigos de barras de una imagen con el lector del navegador (si lo tiene). Nunca falla. */
+export async function leerCodigosDeBarras(fuente: ImageBitmapSource): Promise<string[]> {
+  try {
+    const lector = await obtenerDetector()
+    if (!lector) return []
+    return (await lector.detect(fuente)).map((c) => c.rawValue).filter((t) => t.length > 0)
+  } catch {
+    return []
+  }
+}
+
+/** Códigos del fotograma que se está viendo (la imagen entera, no solo el marco: tiene más resolución). */
+function codigosDelVideo(video: HTMLVideoElement): Promise<string[]> {
+  return createImageBitmap(video)
+    .then(async (fotograma) => {
+      try {
+        return await leerCodigosDeBarras(fotograma)
+      } finally {
+        fotograma.close()
+      }
+    })
+    .catch(() => [])
 }
 
 export interface Camara {
@@ -103,6 +161,26 @@ export function recortarCuadrado(fuente: CanvasImageSource, recorte: Rect, lado:
   return lienzo
 }
 
+/** Lado máximo de la zona que se pasa al lector de texto (más, y tarda demasiado en el móvil). */
+const LADO_LECTURA = 1600
+
+/**
+ * El marco y un poco más (1,4 veces su lado, sin salirse de la imagen), sin reducir: el número de
+ * lote es letra pequeña y a veces queda justo fuera del marco.
+ */
+function zonaParaLeer(fuente: CanvasImageSource, recorte: Rect, ancho: number, alto: number): HTMLCanvasElement | null {
+  const lado = Math.min(recorte.lado * 1.4, ancho, alto)
+  if (lado <= 0) return null
+  const centroX = recorte.x + recorte.lado / 2
+  const centroY = recorte.y + recorte.lado / 2
+  const zona = {
+    x: Math.min(Math.max(0, centroX - lado / 2), ancho - lado),
+    y: Math.min(Math.max(0, centroY - lado / 2), alto - lado),
+    lado,
+  }
+  return recortarCuadrado(fuente, zona, Math.round(Math.min(lado, LADO_LECTURA)))
+}
+
 /** Lo que se ve dentro del marco del visor, a la mejor resolución útil (hasta LADO_FOTO). */
 export function capturarMarco(video: HTMLVideoElement, marco: HTMLElement): FotoCapturada {
   const vista = video.getBoundingClientRect()
@@ -118,6 +196,8 @@ export function capturarMarco(video: HTMLVideoElement, marco: HTMLElement): Foto
     foto: recortarCuadrado(video, recorte, ladoDeFoto(recorte.lado, LADO_FOTO, TAMANO_ENTRADA)),
     camara: { ancho: video.videoWidth, alto: video.videoHeight },
     recorte: Math.round(recorte.lado),
+    codigos: codigosDelVideo(video),
+    paraLeer: zonaParaLeer(video, recorte, video.videoWidth, video.videoHeight),
   }
 }
 
@@ -126,10 +206,13 @@ export async function capturarArchivo(archivo: File): Promise<FotoCapturada> {
   const imagen = await createImageBitmap(archivo, { imageOrientation: 'from-image' })
   try {
     const recorte = cuadradoCentrado(imagen.width, imagen.height)
+    const codigos = await leerCodigosDeBarras(imagen)
     return {
       foto: recortarCuadrado(imagen, recorte, ladoDeFoto(recorte.lado, LADO_FOTO, TAMANO_ENTRADA)),
       camara: null,
       recorte: Math.round(recorte.lado),
+      codigos: Promise.resolve(codigos),
+      paraLeer: zonaParaLeer(imagen, recorte, imagen.width, imagen.height),
     }
   } finally {
     imagen.close()

@@ -474,3 +474,59 @@ describe('todos los datos', () => {
     expect(avisos).toBe(1)
   })
 })
+
+describe('lotes: archivar y restar de un lote', () => {
+  async function conDosLotes() {
+    const p = await repo.crearProducto({ ...etanol, stockInicial: 2, loteInicial: 'A1', caducidadInicial: '2027-01-31' }, 'JA')
+    await repo.registrarMovimiento({ productoId: p.id, tipo: 'entrada', cantidad: 3, usuario: 'JA', lote: 'B2' })
+    return p
+  }
+
+  it('una retirada que dice su lote se resta de ese lote; si lo deja a cero, el lote se archiva solo', async () => {
+    const p = await conDosLotes()
+    const primera = await repo.registrarMovimiento({ productoId: p.id, tipo: 'retirada_manual', cantidad: -1, usuario: 'MG', lote: 'A1' })
+    expect(primera.loteArchivado).toBeUndefined()
+    expect(primera.movimiento.lote).toBe('A1')
+
+    const segunda = await repo.registrarMovimiento({ productoId: p.id, tipo: 'retirada_foto', cantidad: -1, usuario: 'MG', lote: 'A1' })
+    expect(segunda.loteArchivado).toBe('A1')
+    expect(segunda.producto.stockActual).toBe(3)
+    const inicial = (await repo.listarMovimientos({ productoId: p.id })).find((m) => m.lote === 'A1' && m.tipo === 'entrada')
+    expect(inicial?.loteCerrado).toMatchObject({ como: 'agotado', usuario: 'MG', movimientoId: segunda.movimiento.id })
+
+    // Deshacer la retirada vuelve a abrir el lote.
+    await repo.deshacerMovimiento(segunda.movimiento.id)
+    const reabierta = (await repo.listarMovimientos({ productoId: p.id })).find((m) => m.id === inicial?.id)
+    expect(reabierta?.loteCerrado).toBeUndefined()
+  })
+
+  it('las retiradas sin lote o de otro lote no archivan nada', async () => {
+    const p = await conDosLotes()
+    const sinLote = await repo.registrarMovimiento({ productoId: p.id, tipo: 'retirada_manual', cantidad: -2, usuario: 'MG' })
+    expect(sinLote.loteArchivado).toBeUndefined()
+    const otro = await repo.registrarMovimiento({ productoId: p.id, tipo: 'retirada_manual', cantidad: -1, usuario: 'MG', lote: 'B2' })
+    expect(otro.loteArchivado).toBeUndefined()
+  })
+
+  it('archivar a mano un lote, sin tocar el stock, y desarchivarlo', async () => {
+    const p = await conDosLotes()
+    await repo.archivarLote(p.id, 'B2', 'JA')
+    const tras = await repo.obtenerProducto(p.id)
+    expect(tras?.stockActual).toBe(5)
+    const entrada = (await repo.listarMovimientos({ productoId: p.id })).find((m) => m.lote === 'B2')
+    expect(entrada?.loteCerrado).toMatchObject({ como: 'agotado', usuario: 'JA' })
+    await expect(repo.archivarLote(p.id, 'B2', 'JA')).rejects.toMatchObject({ codigo: 'datos-no-validos' })
+
+    await repo.desarchivarLote(p.id, 'b2')
+    const otraVez = (await repo.listarMovimientos({ productoId: p.id })).find((m) => m.lote === 'B2')
+    expect(otraVez?.loteCerrado).toBeUndefined()
+    await expect(repo.archivarLote(p.id, 'NO-EXISTE', 'JA')).rejects.toMatchObject({ codigo: 'datos-no-validos' })
+  })
+
+  it('un lote desechado no se desarchiva desde aquí (hay que anular su ajuste)', async () => {
+    const p = await repo.crearProducto({ ...etanol, stockInicial: 2, loteInicial: 'C3', caducidadInicial: '2026-01-31' }, 'JA')
+    const [entrada] = await repo.listarMovimientos({ productoId: p.id })
+    await repo.cerrarLote(entrada?.id ?? '', { como: 'desechado', usuario: 'JA', cantidad: 2 })
+    await expect(repo.desarchivarLote(p.id, 'C3')).rejects.toMatchObject({ codigo: 'datos-no-validos' })
+  })
+})

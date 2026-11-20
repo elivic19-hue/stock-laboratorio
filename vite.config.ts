@@ -56,9 +56,10 @@ export default defineConfig(({ mode }) => {
             ],
           },
           workbox: {
-            // Se precarga todo para que la app funcione sin conexión desde la primera instalación.
-            // json y bin quedan preparados para los pesos del modelo (etapa 3, public/models/).
-            globPatterns: ['**/*.{html,js,css,woff2,svg,png,webmanifest,json,bin}'],
+            // Se precarga todo para que la app funcione sin conexión desde la primera instalación:
+            // json y bin son los pesos del modelo (public/models/) y gz, el modelo de texto del lector
+            // de lotes (public/ocr/, cuyo motor es un .js).
+            globPatterns: ['**/*.{html,js,css,woff2,svg,png,webmanifest,json,bin,gz}'],
             maximumFileSizeToCacheInBytes: 32 * 1024 * 1024,
             cleanupOutdatedCaches: true,
             // Avisos del móvil: aviso diario de caducados, número en el icono y clic en las

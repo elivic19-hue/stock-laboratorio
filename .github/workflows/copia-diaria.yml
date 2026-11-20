@@ -1,0 +1,109 @@
+# Copia de seguridad diaria del stock de los dos laboratorios, a las 7:00 (hora de Madrid), en un
+# repositorio privado. Cómo prepararla (una vez): README, «Copia de seguridad diaria en GitHub».
+# Mientras no esté preparada, el flujo no hace nada (no falla).
+name: Copia de seguridad diaria
+
+on:
+  schedule:
+    # GitHub programa en UTC: las 7:00 de Madrid son las 6:00 UTC en invierno y las 5:00 en verano.
+    # Se lanza a las dos horas y el paso «¿Toca ahora?» solo sigue si en Madrid son las 7 (o las 8,
+    # por si GitHub se retrasa) y aún no hay copia de hoy.
+    - cron: '0 5 * * *'
+    - cron: '0 6 * * *'
+  workflow_dispatch: # para hacer una copia a mano (Actions → «Copia de seguridad diaria» → Run workflow)
+
+permissions:
+  contents: read
+  # Para que GitHub no apague la programación tras 60 días sin cambios en el repositorio.
+  actions: write
+
+concurrency:
+  group: copia-diaria
+  cancel-in-progress: false
+
+jobs:
+  copia:
+    runs-on: ubuntu-latest
+    env:
+      # Repositorio privado de las copias: <usuario>/stock-laboratorio-copias salvo que se diga otro
+      # en la variable COPIAS_REPO (Settings → Secrets and variables → Actions → Variables).
+      COPIAS_REPO: ${{ vars.COPIAS_REPO || format('{0}/stock-laboratorio-copias', github.repository_owner) }}
+    steps:
+      - name: ¿Está preparada?
+        id: preparada
+        env:
+          CORREO: ${{ secrets.COPIAS_CORREO }}
+          CONTRASENA: ${{ secrets.COPIAS_CONTRASENA }}
+          TOKEN: ${{ secrets.COPIAS_TOKEN }}
+        run: |
+          if [ -z "$CORREO" ] || [ -z "$CONTRASENA" ] || [ -z "$TOKEN" ]; then
+            echo "::notice::La copia diaria aún no está preparada (README, «Copia de seguridad diaria en GitHub»)."
+            echo "lista=no" >> "$GITHUB_OUTPUT"
+          else
+            echo "lista=si" >> "$GITHUB_OUTPUT"
+          fi
+
+      - uses: actions/checkout@v7
+        if: steps.preparada.outputs.lista == 'si'
+
+      - name: Repositorio de las copias
+        if: steps.preparada.outputs.lista == 'si'
+        uses: actions/checkout@v7
+        with:
+          repository: ${{ env.COPIAS_REPO }}
+          token: ${{ secrets.COPIAS_TOKEN }}
+          path: copias
+
+      - name: ¿Toca ahora?
+        id: toca
+        if: steps.preparada.outputs.lista == 'si'
+        run: |
+          hoy=$(TZ=Europe/Madrid date +%F)
+          hora=$(TZ=Europe/Madrid date +%H)
+          ultima=$(head -c 10 copias/ultima-copia.txt 2>/dev/null || true)
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+            echo "si=si" >> "$GITHUB_OUTPUT"
+          elif [ "$ultima" = "$hoy" ]; then
+            echo "Ya hay copia de hoy ($hoy)."
+            echo "si=no" >> "$GITHUB_OUTPUT"
+          elif [ "$hora" = "07" ] || [ "$hora" = "08" ]; then
+            echo "si=si" >> "$GITHUB_OUTPUT"
+          else
+            echo "En Madrid son las $hora: la copia es a las 7."
+            echo "si=no" >> "$GITHUB_OUTPUT"
+          fi
+
+      - uses: actions/setup-node@v7
+        if: steps.toca.outputs.si == 'si'
+        with:
+          node-version-file: .nvmrc
+
+      - name: Hacer la copia
+        if: steps.toca.outputs.si == 'si'
+        env:
+          COPIAS_CORREO: ${{ secrets.COPIAS_CORREO }}
+          COPIAS_CONTRASENA: ${{ secrets.COPIAS_CONTRASENA }}
+        run: node scripts/copia-diaria.mjs copias
+
+      - name: Guardarla en el repositorio privado
+        if: steps.toca.outputs.si == 'si'
+        working-directory: copias
+        run: |
+          git config user.name "Copia diaria"
+          git config user.email "copia-diaria@users.noreply.github.com"
+          git add -A
+          if git diff --cached --quiet; then
+            echo "Sin cambios desde la última copia."
+            exit 0
+          fi
+          git commit -q -m "Copia del $(TZ=Europe/Madrid date '+%d/%m/%Y %H:%M')"
+          git push -q
+
+      - name: Mantener activa la programación
+        if: always()
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          curl -s -o /dev/null -w "Programación: %{http_code}\n" -X PUT \
+            -H "Authorization: Bearer $GH_TOKEN" -H "Accept: application/vnd.github+json" \
+            "https://api.github.com/repos/${{ github.repository }}/actions/workflows/copia-diaria.yml/enable"

@@ -39,7 +39,13 @@ export interface StockRepository {
   siguienteCodigo(categoria: Categoria): Promise<string>
 
   // Movimientos
-  registrarMovimiento(cambio: CambioStock): Promise<{ movimiento: Movimiento; producto: Producto }>
+  /**
+   * Si es una retirada que dice su lote y lo deja a cero (o menos), el lote se archiva solo
+   * (`loteArchivado`: su código o «cad. MM/AAAA»); deshacer la retirada lo vuelve a abrir.
+   */
+  registrarMovimiento(
+    cambio: CambioStock,
+  ): Promise<{ movimiento: Movimiento; producto: Producto; loteArchivado?: string }>
   /**
    * Deshace el último movimiento de un producto (el aviso «Deshacer» tras una retirada, o «Anular»
    * en la ficha). Si era el ajuste con que se desechó un lote caducado, el lote vuelve a abrirse.
@@ -56,6 +62,13 @@ export interface StockRepository {
   cerrarLote(entradaId: string, cierre: CierreLote): Promise<Movimiento>
   /** Deshace cerrarLote (y su ajuste, que tiene que ser el último movimiento del producto). */
   reabrirLote(entradaId: string): Promise<void>
+  /**
+   * Archiva un lote abierto del producto (`clave` de dominio/lotes): todas sus entradas quedan
+   * cerradas como agotadas, sin tocar el stock.
+   */
+  archivarLote(productoId: string, clave: string, usuario: string): Promise<void>
+  /** Vuelve a abrir las entradas de un lote archivado como agotado (las desechadas, no: se reabren anulando su ajuste). */
+  desarchivarLote(productoId: string, clave: string): Promise<void>
 
   // Fotos de referencia
   listarFotos(productoId?: string): Promise<FotoReferencia[]>

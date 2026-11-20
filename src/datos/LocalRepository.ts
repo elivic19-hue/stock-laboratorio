@@ -3,6 +3,7 @@ import { normalizarCodigo, siguienteCodigo as calcularSiguienteCodigo } from '..
 import { ErrorStock } from '../dominio/errores'
 import { aplicarCambiosProducto, limpiarDatosProducto } from '../dominio/producto'
 import { formatearMesAnio } from '../dominio/formato'
+import { claveLote, lotesDeProducto, nombreDeLote, normalizarLote, type LoteProducto } from '../dominio/lotes'
 import { calcularStockResultante, validarCantidad } from '../dominio/stock'
 import type { BaseDatosStock } from './db'
 import {
@@ -17,7 +18,7 @@ import {
   type StockRepository,
   type VolcadoDatos,
 } from './StockRepository'
-import type { Categoria, EstadoPedido, FotoReferencia, Movimiento, Pedido, Producto } from './tipos'
+import type { Categoria, EstadoPedido, FotoReferencia, LoteCerrado, Movimiento, Pedido, Producto } from './tipos'
 import { sinIndefinidos, textoOpcional } from './utilidades'
 import { nuevoId } from './uuid'
 
@@ -161,7 +162,9 @@ export class LocalRepository implements StockRepository {
 
   // ─── Movimientos ──────────────────────────────────────────────────────────
 
-  async registrarMovimiento(cambio: CambioStock): Promise<{ movimiento: Movimiento; producto: Producto }> {
+  async registrarMovimiento(
+    cambio: CambioStock,
+  ): Promise<{ movimiento: Movimiento; producto: Producto; loteArchivado?: string }> {
     const revisado = revisarCambio(cambio)
     const db = this.#db
     const resultado = await db.transaction('rw', db.productos, db.movimientos, db.pedidos, () =>
@@ -172,7 +175,9 @@ export class LocalRepository implements StockRepository {
   }
 
   /** Aplica un cambio ya revisado. Se llama dentro de una transacción con productos, movimientos y pedidos. */
-  async #aplicarMovimiento(cambio: CambioRevisado): Promise<{ movimiento: Movimiento; producto: Producto }> {
+  async #aplicarMovimiento(
+    cambio: CambioRevisado,
+  ): Promise<{ movimiento: Movimiento; producto: Producto; loteArchivado?: string }> {
     const db = this.#db
     const { usuario, caducidad, confianza } = cambio
     const producto = await db.productos.get(cambio.productoId)
@@ -202,7 +207,28 @@ export class LocalRepository implements StockRepository {
         .equals([producto.id, 'pedido'])
         .modify({ estado: 'recibido', fechaRecepcion: fecha })
     }
-    return { movimiento, producto: actualizado }
+    const loteArchivado = await this.#archivarSiSeTermina(movimiento)
+    return { movimiento, producto: actualizado, ...(loteArchivado ? { loteArchivado } : {}) }
+  }
+
+  /**
+   * Si una retirada que dice su lote lo deja a cero (o menos), se archiva el lote: sus entradas
+   * abiertas quedan agotadas, apuntando a la retirada para que deshacerla lo vuelva a abrir.
+   * Devuelve cómo se llama el lote («K4920113» o «cad. 05/2028»). Dentro de una transacción.
+   */
+  async #archivarSiSeTermina(retirada: Movimiento): Promise<string | undefined> {
+    if (retirada.tipo !== 'retirada_foto' && retirada.tipo !== 'retirada_manual') return undefined
+    const clave = claveLote(retirada)
+    if (!clave) return undefined
+    const db = this.#db
+    const delProducto = await db.movimientos.where('productoId').equals(retirada.productoId).toArray()
+    const lote = lotesDeProducto(delProducto, this.#reloj()).find((l) => l.clave === clave)
+    if (!lote || lote.archivado || lote.quedan > 0) return undefined
+    const cierre: LoteCerrado = { como: 'agotado', usuario: retirada.usuario, fecha: retirada.fecha, movimientoId: retirada.id }
+    for (const entrada of lote.entradas) {
+      if (!entrada.loteCerrado) await db.movimientos.put({ ...entrada, loteCerrado: cierre })
+    }
+    return nombreDeLote(lote)
   }
 
   async deshacerMovimiento(movimientoId: string): Promise<Producto> {
@@ -234,16 +260,15 @@ export class LocalRepository implements StockRepository {
     const actualizado: Producto = { ...actual, stockActual, actualizadoEn: ahora }
     await db.productos.put(actualizado)
     await db.movimientos.delete(movimiento.id)
-    if (movimiento.tipo === 'ajuste') {
-      // Si era el ajuste con que se desechó un lote caducado, el lote vuelve a estar abierto.
-      await db.movimientos
-        .where('productoId')
-        .equals(movimiento.productoId)
-        .filter((m) => m.loteCerrado?.ajusteId === movimiento.id)
-        .modify((m) => {
-          delete m.loteCerrado
-        })
-    }
+    // Si era el ajuste con que se desechó un lote caducado, o la retirada que terminó un lote, ese
+    // lote vuelve a estar abierto.
+    await db.movimientos
+      .where('productoId')
+      .equals(movimiento.productoId)
+      .filter((m) => m.loteCerrado?.ajusteId === movimiento.id || m.loteCerrado?.movimientoId === movimiento.id)
+      .modify((m) => {
+        delete m.loteCerrado
+      })
     if (movimiento.tipo === 'entrada') {
       // Reabre el pedido que cerró esa entrada (se cerró con su misma fecha).
       await db.pedidos
@@ -256,6 +281,52 @@ export class LocalRepository implements StockRepository {
         })
     }
     return actualizado
+  }
+
+  // ─── Lotes ────────────────────────────────────────────────────────────────
+
+  async archivarLote(productoId: string, clave: string, usuario: string): Promise<void> {
+    const quien = exigirUsuario(usuario)
+    const db = this.#db
+    await db.transaction('rw', db.productos, db.movimientos, async () => {
+      if (!(await db.productos.get(productoId))) throw productoNoEncontrado()
+      const lote = await this.#lote(productoId, clave)
+      if (lote.archivado) throw new ErrorStock('datos-no-validos', 'Ese lote ya está archivado.')
+      const cierre: LoteCerrado = { como: 'agotado', usuario: quien, fecha: this.#ahora() }
+      for (const entrada of lote.entradas) {
+        if (!entrada.loteCerrado) await db.movimientos.put({ ...entrada, loteCerrado: cierre })
+      }
+    })
+    this.#avisar()
+  }
+
+  async desarchivarLote(productoId: string, clave: string): Promise<void> {
+    const db = this.#db
+    await db.transaction('rw', db.movimientos, async () => {
+      const lote = await this.#lote(productoId, clave)
+      const agotadas = lote.entradas.filter((e) => e.loteCerrado?.como === 'agotado')
+      if (agotadas.length === 0) {
+        throw new ErrorStock(
+          'datos-no-validos',
+          'Ese lote se desechó: para volver a abrirlo, anula el ajuste con que se desechó.',
+        )
+      }
+      for (const entrada of agotadas) {
+        const abierta: Movimiento = { ...entrada }
+        delete abierta.loteCerrado
+        await db.movimientos.put(abierta)
+      }
+    })
+    this.#avisar()
+  }
+
+  /** Un lote del producto por su clave. Se llama dentro de una transacción con movimientos. */
+  async #lote(productoId: string, clave: string): Promise<LoteProducto> {
+    const delProducto = await this.#db.movimientos.where('productoId').equals(productoId).toArray()
+    const buscada = clave.startsWith('cad:') ? clave : normalizarLote(clave)
+    const lote = lotesDeProducto(delProducto, this.#reloj()).find((l) => l.clave === buscada)
+    if (!lote) throw new ErrorStock('datos-no-validos', 'No se encuentra ese lote del producto.')
+    return lote
   }
 
   // ─── Lotes caducados ──────────────────────────────────────────────────────

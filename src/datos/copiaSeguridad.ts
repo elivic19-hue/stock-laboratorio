@@ -214,6 +214,7 @@ function comprobarMovimiento(o: Objeto, i: number, productos: Set<string>): Movi
             usuario: typeof cierre.usuario === 'string' ? cierre.usuario : '',
             fecha: texto(cierre, 'fecha', donde),
             ajusteId: opcional<string>(cierre, 'ajusteId', 'string', donde),
+            movimientoId: opcional<string>(cierre, 'movimientoId', 'string', donde),
           })
         : undefined,
   })

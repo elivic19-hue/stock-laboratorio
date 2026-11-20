@@ -47,8 +47,9 @@ export interface FotoReferencia {
 }
 
 /**
- * Lote caducado que alguien ha dado por terminado (docs/decisiones.md, duda 7b): desechado (se resta
- * con un ajuste) o que ya no quedaba en el armario. Solo en entradas con caducidad.
+ * Lote que se ha dado por terminado (docs/decisiones.md, duda 7b y «Lotes: archivar y restar de un
+ * lote»): desechado (se resta con un ajuste) o agotado (archivado: ya no queda). Va en las entradas
+ * con lote o caducidad.
  */
 export interface LoteCerrado {
   como: 'desechado' | 'agotado'
@@ -56,6 +57,8 @@ export interface LoteCerrado {
   fecha: string
   /** Ajuste con el que se restó lo desechado (para poder deshacerlo). */
   ajusteId?: string
+  /** Retirada con la que se terminó el lote (se archivó solo): deshacerla lo vuelve a abrir. */
+  movimientoId?: string
 }
 
 export type TipoMovimiento = 'retirada_foto' | 'retirada_manual' | 'entrada' | 'ajuste'

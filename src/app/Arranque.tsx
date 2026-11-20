@@ -7,7 +7,9 @@ import { detenerSincronizacion, prepararSincronizacion } from '../datos/sincroni
 import { ElegirLaboratorio } from '../pantallas/ElegirLaboratorio'
 import { InicioSesion } from '../pantallas/InicioSesion'
 import { App } from './App'
+import { mostrarAviso } from './avisos'
 import { AvisoActualizacion } from './AvisoActualizacion'
+import { pedirAlmacenamientoPersistente } from './plataforma'
 import { ProveedorServicios } from './ProveedorServicios'
 import { AjustesConSesion, salir, useSesion } from './sesion'
 
@@ -40,8 +42,22 @@ function AppLaboratorio({ laboratorio }: { laboratorio: IdLaboratorio }) {
 
   useEffect(() => {
     const { db, repo } = servicios
-    // Sin sesión guardada en el móvil, se vuelve al inicio de sesión.
-    void prepararSincronizacion(db, repo, laboratorio, () => void salir())
+    // Que el navegador no borre los datos del móvil aunque le falte espacio (se pide cada vez: no molesta).
+    void pedirAlmacenamientoPersistente()
+    // Sin sesión guardada en el móvil, se vuelve al inicio de sesión. En Cromatografía, la primera
+    // vez se recupera el stock que quedó en el laboratorio de antes de separarlos.
+    void prepararSincronizacion(db, repo, laboratorio, () => void salir(), (r) =>
+      mostrarAviso({
+        texto:
+          `Recuperado el stock de antes de separar los laboratorios: ${r.productosNuevos} productos con su historial` +
+          (r.productosQueYaEstaban > 0 ? `, y fotos para ${r.productosQueYaEstaban} que ya estaban` : '') +
+          '.' +
+          (r.codigosCambiados.length > 0
+            ? ` Códigos cambiados por estar repetidos: ${r.codigosCambiados.map((c) => `${c.antes} → ${c.despues}`).join(', ')}.`
+            : ''),
+        duracion: 20000,
+      }),
+    )
     return () => {
       // Se puede volver a abrir sola (en desarrollo, React monta dos veces).
       void detenerSincronizacion().finally(() => db.close({ disableAutoOpen: false }))

@@ -4,6 +4,8 @@ import {
   Bytes,
   collection,
   doc,
+  getDocFromServer,
+  getDocsFromServer,
   initializeFirestore,
   onSnapshot,
   persistentLocalCache,
@@ -16,7 +18,9 @@ import {
   type DocumentData,
   type Firestore,
 } from 'firebase/firestore'
-import type { AlmacenRemoto, CambioRemoto, DatosRemotos, Tabla } from './remoto'
+import type { VolcadoDatos } from '../StockRepository'
+import { TABLAS, type AlmacenRemoto, type CambioRemoto, type DatosRemotos, type Tabla } from './remoto'
+import { deRemoto } from './Sincronizador'
 
 /**
  * La nube de los laboratorios en Firebase (fase 2): Firestore para los datos y una cuenta de correo
@@ -30,6 +34,11 @@ import type { AlmacenRemoto, CambioRemoto, DatosRemotos, Tabla } from './remoto'
 export interface SesionFirebase {
   remoto: AlmacenRemoto
   correo: string
+  /** Lee del servidor, una vez, todo el stock de un laboratorio (sin lo borrado). Falla sin conexión. */
+  leerLaboratorio(id: string): Promise<VolcadoDatos>
+  /** Marca de una migración ya hecha (`laboratorios/{lab}/migraciones/{nombre}`), o null. */
+  leerMarca(laboratorio: string, nombre: string): Promise<Record<string, unknown> | null>
+  guardarMarca(laboratorio: string, nombre: string, datos: Record<string, unknown>): Promise<void>
   cerrar(opciones?: { cerrarSesion?: boolean }): Promise<void>
 }
 
@@ -80,15 +89,35 @@ export async function abrirSesionFirebase(configuracion: FirebaseOptions, labora
       // Caché en el móvil: los cambios hechos sin conexión se guardan y se mandan al volver.
       localCache: persistentLocalCache({ tabManager: persistentMultipleTabManager() }),
     })
+    const marca = (laboratorio: string, nombre: string) => doc(db, 'laboratorios', laboratorio, 'migraciones', nombre)
     return {
       remoto: new RemotoFirestore(db, laboratorioId),
       correo: usuario.email ?? '',
+      leerLaboratorio: (id) => leerLaboratorio(db, id),
+      leerMarca: async (laboratorio, nombre) => {
+        const documento = await getDocFromServer(marca(laboratorio, nombre))
+        return documento.exists() ? documento.data() : null
+      },
+      guardarMarca: (laboratorio, nombre, datos) =>
+        setDoc(marca(laboratorio, nombre), { ...datos, fecha: serverTimestamp() }),
       cerrar: (opciones) => cerrar(app, auth, opciones?.cerrarSesion ?? false),
     }
   } catch (error) {
     await deleteApp(app).catch(() => {})
     throw traducirError(error)
   }
+}
+
+async function leerLaboratorio(db: Firestore, id: string): Promise<VolcadoDatos> {
+  const volcado: VolcadoDatos = { productos: [], movimientos: [], fotos: [], pedidos: [] }
+  for (const tabla of TABLAS) {
+    const instantanea = await getDocsFromServer(collection(db, 'laboratorios', id, tabla))
+    const filas = instantanea.docs
+      .filter((d) => d.data().borrado !== true)
+      .map((d) => deRemoto(tabla, d.id, deFirestore(d.data())))
+    ;(volcado[tabla] as unknown[]).push(...filas)
+  }
+  return volcado
 }
 
 async function cerrar(app: FirebaseApp, auth: Auth, cerrarSesion: boolean): Promise<void> {

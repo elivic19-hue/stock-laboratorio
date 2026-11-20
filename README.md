@@ -125,19 +125,31 @@ Las fotos se guardan con la resolución del marco (hasta 640 px) y el modelo usa
 ampliarlas: para verlas bien, repítelas. En modo diagnóstico, Retirar enseña la resolución de la
 cámara y el tamaño de la foto.
 
-## Lotes y caducidades
-
-- Al **dar de alta** un producto se pueden poner el lote y la caducidad (mes/año) de lo que hay en el
-  armario. Al **registrar una entrada**, lo mismo para lo que llega.
-- La ficha de cada producto tiene su **historial de lotes**: cada lote con su caducidad, cuándo
-  entró, cuánto y quién, y si está caducado, caduca pronto, se desechó o ya no queda.
-- **Caducidades** (desde el resumen de Stock) reúne los lotes caducados y los que caducan en menos de
-  30 días, para desecharlos o marcar que ya no queda.
-
 Los pesos del modelo (14 MB) están en `public/models/` y la app los guarda para funcionar sin
 conexión desde la primera vez. Para volver a descargarlos: `npm run modelo`. Si cambian el modelo o
 las imágenes de prueba (`src/reconocimiento/patrones.ts`), hay que regenerar los vectores correctos de
 la autoprueba con `npm run autoprueba` (un test lo comprueba con el modelo de verdad).
+
+## Lotes y caducidades
+
+- Al **dar de alta** un producto se pueden poner el lote y la caducidad (mes/año) de lo que hay en el
+  armario. Al **registrar una entrada**, lo mismo para lo que llega.
+- **Lotes de la ficha:** cada lote en uso en su línea, en el orden en que toca gastarlos (lo que
+  caduca antes, primero), con lo que queda, su caducidad y «Archivar» para cuando se termine. Los
+  archivados van juntos en una sola línea que se despliega (con «Desarchivar»).
+- **Retirar de un lote:** si el producto tiene lotes en uso, al retirar se elige de cuál sale. La app
+  lee el número de lote impreso en la etiqueta de la foto (y el código de barras, si lo lleva) y lo
+  marca; si no lo lee o hay dudas entre dos parecidos, propone el que caduca antes. Se cambia con un
+  toque o se elige «Sin lote». Cuando una retirada deja un lote a cero, se archiva solo («Deshacer» lo
+  vuelve a abrir).
+- «Quedan» de cada lote cuenta las retiradas que dicen su lote; las que no lo dicen solo restan del
+  stock del producto.
+- **Caducidades** (desde el resumen de Stock) reúne los lotes caducados y los que caducan en menos de
+  30 días, para desecharlos o marcar que ya no queda.
+
+Para leer el lote, la app usa Tesseract.js en el propio móvil y sin conexión: el lector y su modelo
+de texto (unos 6 MB) están en `public/ocr/` (`npm run ocr` los vuelve a preparar). Lee mejor con la
+etiqueta de cerca, enfocada y con luz. En modo diagnóstico, Retirar enseña el texto leído.
 
 ## Avisos y lista para pedir
 
@@ -246,6 +258,43 @@ de un borrado por error. Cada copia es de un laboratorio (el que se está viendo
   cambian.
 - La app pide al navegador almacenamiento persistente, para que no borre los datos si falta espacio.
   En Ajustes se ve si lo ha concedido; instalar la app ayuda.
+- Además, GitHub guarda **cada día a las 7:00** una copia de los dos laboratorios (abajo).
+
+**Las actualizaciones no borran el stock.** Lo que pasó el 20/11/2026 fue que la versión que separó
+Cromatografía y Food Contact dejó de leer el stock de antes (seguía en la nube como «laboratorio
+principal»). Ese stock se recupera solo en Cromatografía la primera vez que un móvil la abre con
+conexión: se añaden los productos que no estaban, con su historial y fotos; a los que ya estaban con
+el mismo nombre solo se les añaden sus fotos (para no sumar el stock dos veces). Sale un aviso con lo
+recuperado y no se repite.
+
+### Copia de seguridad diaria en GitHub
+
+El flujo «Copia de seguridad diaria» (`.github/workflows/copia-diaria.yml`) entra cada día a las 7:00
+(hora de Madrid) con una cuenta propia, lee el stock de los dos laboratorios y guarda
+`cromatografia.json` y `foodcontact.json` en un **repositorio privado**. Cada día queda como un commit,
+así que hay copia de cada día. Los archivos tienen el formato de la copia de la app: se restauran con
+«Restaurar una copia…». Mientras no se prepare, el flujo no hace nada.
+
+Prepararla (una vez, unos 10 minutos):
+
+1. **Cuenta de copias en Firebase:** Authentication → Usuarios → Añadir usuario, p. ej.
+   `copias@stock-laboratorio.app` con una contraseña larga. Solo la usa GitHub.
+2. **Repositorio privado:** en GitHub, *New repository* → nombre `stock-laboratorio-copias`,
+   **Private**, marcando «Add a README file».
+3. **Permiso para escribir en él:** tu foto → Settings → Developer settings → Personal access tokens →
+   *Fine-grained tokens* → Generate new token: *Repository access* → solo `stock-laboratorio-copias`;
+   *Permissions* → *Contents: Read and write*. La caducidad, la más larga posible (cuando caduque, la
+   copia fallará y GitHub avisará por correo: se genera otro y se cambia el secreto).
+4. **Secretos:** en el repositorio de la app (`stock-laboratorio`) → Settings → Secrets and variables
+   → Actions → *New repository secret*, tres: `COPIAS_CORREO` y `COPIAS_CONTRASENA` (la cuenta del
+   paso 1) y `COPIAS_TOKEN` (el del paso 3). Si el repositorio privado se llama distinto, crea además
+   la *variable* `COPIAS_REPO` con `usuario/nombre`.
+5. **Probarla:** Actions → «Copia de seguridad diaria» → *Run workflow*. Al terminar, el repositorio
+   privado tiene los dos archivos y `ultima-copia.txt` con lo que lleva cada uno.
+
+Los registros de GitHub son públicos, así que solo escriben cuántos productos, movimientos… hay, nunca
+los datos. GitHub apaga las tareas programadas tras 60 días sin cambios en el repositorio: el propio
+flujo lo evita cada día. Si un día falla (p. ej. al caducar el token), GitHub manda un correo.
 
 ## Comandos
 
@@ -260,6 +309,7 @@ de un borrado por error. Cada copia es de un laboratorio (el que se está viendo
 | `npm run iconos` | Regenera los iconos PNG a partir del dibujo SVG (usa Edge o Chrome) |
 | `npm run modelo` | Vuelve a descargar los pesos de MobileNet v2 a `public/models/` |
 | `npm run autoprueba` | Recalcula con el procesador los vectores correctos de la autoprueba del modelo |
+| `npm run ocr` | Prepara en `public/ocr/` el lector de texto de los lotes (Tesseract.js y su modelo) |
 
 ## Estructura
 
@@ -271,12 +321,13 @@ src/
               (funciones puras, con tests)
   app/        arranque, navegación por #/rutas, hooks, avisos («Deshacer», notificaciones, icono) y compartir
   ui/         tokens de diseño, estilos base, iconos y componentes comunes
-  reconocimiento/  modelo (con su autoprueba), cámara, recorte del marco, comparación de fotos y revisión
-                   de las fotos de referencia (con tests)
+  reconocimiento/  modelo (con su autoprueba), cámara, recorte del marco, comparación de fotos, revisión
+                   de las fotos de referencia y lectura del lote en la etiqueta (con tests)
   pantallas/  una por pantalla
-public/       icono de la app, el modelo de reconocimiento (public/models/) y sw-avisos.js
+public/       icono de la app, el modelo de reconocimiento (public/models/), el lector de lotes (public/ocr/) y sw-avisos.js
               (avisos del service worker: aviso diario de caducados, número en el icono)
-scripts/      generador de iconos, descarga del modelo y vectores de la autoprueba (con su test)
+scripts/      generador de iconos, descarga del modelo, vectores de la autoprueba, lector de lotes y copia
+              diaria de GitHub (con sus tests)
 diseno/       maquetas de referencia
 docs/         decisiones tomadas durante el desarrollo
 ```
