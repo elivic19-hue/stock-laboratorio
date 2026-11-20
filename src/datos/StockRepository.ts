@@ -62,6 +62,11 @@ export interface StockRepository {
   /** Devuelve null si era una foto de confirmación y no cabía (todas las demás son de alta). */
   guardarFoto(foto: FotoNueva): Promise<FotoReferencia | null>
   borrarFoto(id: string): Promise<void>
+  /**
+   * Sustituye el vector de reconocimiento de fotos ya guardadas (al recalcularlos desde sus
+   * miniaturas). Las que ya no existen se saltan. Devuelve cuántas se han cambiado.
+   */
+  actualizarEmbeddings(cambios: readonly { id: string; embedding: number[] }[]): Promise<number>
 
   // Pedidos
   listarPedidos(estado?: EstadoPedido): Promise<Pedido[]>
@@ -95,6 +100,8 @@ export interface DatosProductoNuevo {
   notas?: string
   /** Stock con el que empieza. Si es mayor que 0 queda registrado como movimiento de ajuste. */
   stockInicial: number
+  /** Lote de ese stock inicial (opcional, solo con stockInicial > 0): va en el movimiento «Stock inicial». */
+  loteInicial?: string
 }
 
 export type CambiosProducto = Partial<

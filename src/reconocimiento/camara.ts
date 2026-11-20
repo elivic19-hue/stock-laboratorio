@@ -100,8 +100,12 @@ export async function capturarArchivo(archivo: File): Promise<HTMLCanvasElement>
   }
 }
 
-/** Miniatura JPEG de unos 160 px para la galería (§4). */
-export function crearMiniatura(lienzo: HTMLCanvasElement, lado = 160): Promise<Blob> {
+/**
+ * Miniatura JPEG para la galería (§4). Desde el 20/11/2026 es de 224 px, el tamaño de entrada del
+ * modelo, y no de 160: así se puede recalcular el vector de la foto desde la miniatura sin perder
+ * acierto (con 160 px se pierden unos 3 puntos). Ver docs/decisiones.md.
+ */
+export function crearMiniatura(lienzo: HTMLCanvasElement, lado = TAMANO_ENTRADA): Promise<Blob> {
   const pequeno = document.createElement('canvas')
   pequeno.width = lado
   pequeno.height = lado
@@ -110,6 +114,16 @@ export function crearMiniatura(lienzo: HTMLCanvasElement, lado = 160): Promise<B
   ctx.imageSmoothingQuality = 'high'
   ctx.drawImage(lienzo, 0, 0, lado, lado)
   return new Promise((resolver, rechazar) => {
-    pequeno.toBlob((blob) => (blob ? resolver(blob) : rechazar(new Error('No se pudo crear la miniatura.'))), 'image/jpeg', 0.82)
+    pequeno.toBlob((blob) => (blob ? resolver(blob) : rechazar(new Error('No se pudo crear la miniatura.'))), 'image/jpeg', 0.85)
   })
+}
+
+/** Miniatura guardada → lienzo de 224×224, para recalcular su vector. */
+export async function lienzoDeMiniatura(miniatura: Blob): Promise<HTMLCanvasElement> {
+  const imagen = await createImageBitmap(miniatura)
+  try {
+    return recortarA224(imagen, cuadradoCentrado(imagen.width, imagen.height))
+  } finally {
+    imagen.close()
+  }
 }

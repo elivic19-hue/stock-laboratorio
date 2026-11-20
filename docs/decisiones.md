@@ -349,3 +349,61 @@ pudiendo cada usuario ver solo uno de los dos. Cambia el «Primer arranque» de 
   bases de datos del móvil; la nube no se toca.
 - El service worker (avisos diarios) lee en `stock-laboratorio-movil` qué laboratorio ve quien ha
   entrado y revisa ese.
+
+### Reconocimiento: «siempre el primero con 99 %» y lote en el alta (20/11/2026)
+
+Peticiones del usuario: «al meter varios reactivos, a pesar de hacer buenas fotos, siempre detecta el
+99 % como el primer reactivo que hemos metido en el catálogo; revisa por qué pasa y corrige», y «al
+poner algo nuevo en el catálogo, poder poner como opcional el número de lote».
+
+**Investigación.** No se pudieron ver las fotos reales: leer Firestore desde el ordenador quedó
+bloqueado por los permisos. Lo comprobado:
+
+- El camino de los datos está bien: las pantallas usan el mismo repositorio del laboratorio y los
+  vectores llegan intactos a Firestore y vuelven.
+- Con 444 fotos reales de móvil de 16 envases casi iguales (GroceryStoreDataset: cartones de leche de
+  la misma marca, zumos…), con el mismo modelo y recorte que la app y 8 fotos de referencia por
+  producto: acierta el 79 %, el correcto está entre los 3 primeros el 91 %, la confianza media es del
+  34 % y ninguna equivocación sale con ≥ 90 %. Ningún producto «se lo lleva todo».
+- Ni hacer las fotos de un producto con otra luz, distancia o resolución, ni la media precisión de la
+  GPU (coseno 0,9997 con la misma foto) dan «99 %»: la diferencia de puntuación entre el primero y el
+  segundo se queda en 0,01–0,02, y para un 99 % hace falta unos 0,26.
+- Conclusión: solo sale «siempre el mismo con 99 %» si (a) los vectores guardados están mal (la GPU
+  del móvil recibe la imagen vacía o atrasada, o las fotos salieron negras) o (b) solo ese producto
+  tiene fotos válidas: con un solo candidato, el % relativo de §5 era siempre 100 %.
+
+**Cambios en el reconocimiento:**
+
+- Los píxeles se leen del lienzo (ImageData) y se pasan al modelo desde la memoria, en vez de subir el
+  lienzo directamente a la GPU. Las fotos negras o de un solo color se rechazan con un mensaje, y no se
+  dispara hasta que el vídeo tiene imagen.
+- **Autoprueba** al cargar el modelo: 4 imágenes de prueba generadas con fórmulas (iguales en cualquier
+  móvil) se comparan con sus vectores correctos, calculados con el procesador (`npm run autoprueba`;
+  un test con el modelo de verdad comprueba que siguen cuadrando). Se repite la primera al final para
+  detectar resultados que arrastran el cálculo anterior. Mínimo 0,95: la GPU en media precisión da
+  0,991 con estas imágenes; una imagen vacía o atrasada, menos de 0,6. Si falla, se pasa al procesador
+  (más lento) y Ajustes lo dice; si falla también, el reconocimiento se desactiva con un aviso.
+  Probado en un navegador real: GPU normal 0,99998 (37 ms por foto), media precisión 0,991 y GPU que
+  recibe la imagen vacía (simulada): pasa sola al procesador, 0,99998, 1,6 s por foto en el ordenador.
+- Con un solo producto con fotos, la foto queda en «No estoy seguro» y se explica por qué, sin % (y
+  sin guardar confianza si se retira desde «Puede ser»). Amplía §5.5.
+- Tras cada foto, la hoja dice qué productos no se pueden reconocer por no tener fotos.
+- Ajustes → **Fotos de referencia**: «Revisar fotos» compara cada foto con las demás, como al retirar,
+  y dice por producto lo más grave: sin fotos, fotos negras (parecido ≥ 0,8 al vector de una imagen
+  negra; las fotos reales dan como mucho 0,31), casi idénticas a las de otro producto (≥ 0,95; entre
+  productos distintos reales, como mucho 0,91), una sola foto o con qué producto se confunde.
+  «Recalcular vectores» vuelve a calcular con ese móvil el vector de cada foto desde su miniatura
+  (`StockRepository.actualizarEmbeddings`; se sincroniza). Solo con el modelo listo, que ya ha pasado
+  la autoprueba.
+- **Miniaturas de 224 px** (antes ~160 px, §4): son la entrada del modelo, así que recalcular desde
+  ellas no pierde nada; desde las de 160 px se pierden unos 3 puntos (76 % frente a 79 %).
+- Descartado por ahora cambiar el método de comparación (centrar los vectores, añadir la foto volteada,
+  agrupar con GeM): 1–2 puntos más de acierto y hasta 5 más «entre los 3 primeros», pero centrar
+  empeora mucho si las fotos de un producto están borrosas y obligaría a recalcular todo. Si el
+  procesador resulta lento en algún móvil, la alternativa sería el motor WASM de TensorFlow.js
+  (dependencia nueva: hay que preguntarlo).
+
+**Lote en el alta:** campo «Lote (opcional)» junto a «Stock inicial». Va en el movimiento de ajuste
+«Stock inicial», porque los lotes se guardan por movimiento (§4), y sale en el historial de la ficha.
+Sin stock inicial no hay a qué ponérselo: se marca el campo. No se pidió la caducidad del stock
+inicial y no se añade (las alarmas de caducidad siguen saliendo de las entradas).

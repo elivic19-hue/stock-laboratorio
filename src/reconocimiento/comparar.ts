@@ -32,8 +32,11 @@ export type EstadoReconocimiento = 'seguro' | 'dudoso' | 'sin-referencias'
 
 export interface ResultadoReconocimiento {
   estado: EstadoReconocimiento
-  /** Por qué duda, para el modo diagnóstico. */
-  motivo?: 'puntuacion-baja' | 'muy-igualados'
+  /**
+   * Por qué duda. «un-solo-producto»: solo un producto tiene fotos de referencia, así que no hay con
+   * qué compararlo (cualquier foto se le parecería más que a nada y saldría con el 100 %).
+   */
+  motivo?: 'puntuacion-baja' | 'muy-igualados' | 'un-solo-producto'
   /** Todos los productos con referencias, de mejor a peor. */
   ranking: PuntuacionProducto[]
 }
@@ -110,7 +113,8 @@ export function puntuarProductos(
 
 /**
  * Reconoce la foto: el mejor producto es seguro si su puntuación llega al umbral y le saca al
- * segundo al menos el margen; si no, se duda y se enseñan las alternativas (§5, paso 5).
+ * segundo al menos el margen; si no, se duda y se enseñan las alternativas (§5, paso 5). Con un
+ * solo producto con fotos siempre se duda: el % relativo sería 100 % con cualquier foto.
  */
 export function reconocer(
   consulta: readonly number[],
@@ -120,8 +124,9 @@ export function reconocer(
   const ranking = puntuarProductos(consulta, referencias, temperatura)
   const [primero, segundo] = ranking
   if (!primero) return { estado: 'sin-referencias', ranking }
+  if (!segundo) return { estado: 'dudoso', motivo: 'un-solo-producto', ranking }
   if (primero.puntuacion < umbral) return { estado: 'dudoso', motivo: 'puntuacion-baja', ranking }
-  if (segundo && primero.puntuacion - segundo.puntuacion < margen) {
+  if (primero.puntuacion - segundo.puntuacion < margen) {
     return { estado: 'dudoso', motivo: 'muy-igualados', ranking }
   }
   return { estado: 'seguro', ranking }

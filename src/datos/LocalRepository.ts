@@ -105,6 +105,7 @@ export class LocalRepository implements StockRepository {
           tipo: 'ajuste',
           cantidad: limpios.stockInicial,
           stockResultante: limpios.stockInicial,
+          ...(limpios.loteInicial ? { lote: limpios.loteInicial } : {}),
           nota: 'Stock inicial',
           usuario: quien,
           fecha: ahora,
@@ -342,9 +343,7 @@ export class LocalRepository implements StockRepository {
   }
 
   async guardarFoto(foto: FotoNueva): Promise<FotoReferencia | null> {
-    if (foto.embedding.length === 0 || foto.embedding.some((v) => !Number.isFinite(v))) {
-      throw new ErrorStock('datos-no-validos', 'La foto no tiene un vector de reconocimiento válido.')
-    }
+    exigirEmbeddingValido(foto.embedding)
     const db = this.#db
     const nueva: FotoReferencia = {
       id: nuevoId(),
@@ -386,6 +385,18 @@ export class LocalRepository implements StockRepository {
   async borrarFoto(id: string): Promise<void> {
     await this.#db.fotos.delete(id)
     this.#avisar()
+  }
+
+  async actualizarEmbeddings(cambios: readonly { id: string; embedding: number[] }[]): Promise<number> {
+    for (const { embedding } of cambios) exigirEmbeddingValido(embedding)
+    const db = this.#db
+    const cambiadas = await db.transaction('rw', db.fotos, async () => {
+      let cuenta = 0
+      for (const { id, embedding } of cambios) cuenta += await db.fotos.update(id, { embedding: [...embedding] })
+      return cuenta
+    })
+    if (cambiadas > 0) this.#avisar()
+    return cambiadas
   }
 
   // ─── Pedidos ──────────────────────────────────────────────────────────────
@@ -565,6 +576,12 @@ function revisarCambio(cambio: CambioStock): CambioRevisado {
 
 function productoNoEncontrado(): ErrorStock {
   return new ErrorStock('producto-no-encontrado', 'No se encuentra el producto. Puede que se haya borrado.')
+}
+
+function exigirEmbeddingValido(embedding: readonly number[]): void {
+  if (embedding.length === 0 || embedding.some((v) => !Number.isFinite(v))) {
+    throw new ErrorStock('datos-no-validos', 'La foto no tiene un vector de reconocimiento válido.')
+  }
 }
 
 function exigirUsuario(usuario: string): string {

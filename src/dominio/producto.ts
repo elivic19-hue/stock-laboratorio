@@ -28,6 +28,11 @@ export function limpiarDatosProducto(datos: DatosProductoNuevo): DatosProductoNu
     throw new ErrorStock('datos-no-validos', 'La categoría tiene que ser reactivo o fungible.')
   }
   const codigo = textoOpcional(datos.codigo)
+  const stockInicial = exigirNumero(datos.stockInicial, 0, 'El stock inicial no puede ser negativo.')
+  const loteInicial = textoOpcional(datos.loteInicial)
+  if (loteInicial !== undefined && stockInicial <= 0) {
+    throw new ErrorStock('datos-no-validos', 'El lote va con el stock inicial: indica cuántas unidades hay.')
+  }
   return sinIndefinidos({
     codigo: codigo === undefined ? undefined : normalizarCodigo(codigo),
     nombre: exigirTexto(datos.nombre, 'Falta el nombre del producto.'),
@@ -39,7 +44,8 @@ export function limpiarDatosProducto(datos: DatosProductoNuevo): DatosProductoNu
     stockMinimo: exigirNumero(datos.stockMinimo, 0, 'El stock mínimo no puede ser negativo.'),
     cantidadPedidoSugerida: cantidadSugeridaValida(datos.cantidadPedidoSugerida),
     notas: textoOpcional(datos.notas),
-    stockInicial: exigirNumero(datos.stockInicial, 0, 'El stock inicial no puede ser negativo.'),
+    stockInicial,
+    loteInicial,
   })
 }
 

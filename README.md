@@ -105,9 +105,25 @@ foto en un vector y se compara con las fotos de referencia de cada producto.
 4. **Calibrar.** En Ajustes → Reconocimiento, activa el *modo diagnóstico*: tras cada foto se ven las
    puntuaciones de los 5 mejores productos. Si confunde productos, sube el umbral; si duda con
    productos que acierta, bájalo.
+5. **Si siempre sale el mismo producto** (o reconoce mal), en Ajustes:
+   - *Reconocimiento* dice si el móvil ha pasado la **autoprueba**: al cargar el modelo se calculan
+     unas imágenes de prueba y se comparan con el resultado correcto. Si la tarjeta gráfica del móvil
+     calcula mal, la app pasa sola al procesador (más lento, pero correcto) y lo dice.
+   - *Fotos de referencia* → **Revisar fotos**: dice qué productos no tienen fotos (no se pueden
+     reconocer), cuáles tienen fotos negras o casi idénticas a las de otro producto y cuáles se
+     confunden entre sí. Cada fila lleva a la ficha del producto.
+   - **Recalcular vectores**: vuelve a calcular con ese móvil el vector de cada foto a partir de su
+     miniatura (las fotos no cambian y el cambio llega a todos los móviles). Sirve cuando la revisión
+     encuentra fotos casi idénticas entre productos distintos o las hizo un móvil que calculaba mal.
+
+Con un solo producto con fotos, la app no propone nada como seguro («No estoy seguro»): no tiene con
+qué compararlo y cualquier foto se le parecería. Tras cada foto, la hoja dice qué productos no se
+pueden reconocer por no tener fotos. Las fotos negras o sin detalle se rechazan al hacerlas.
 
 Los pesos del modelo (14 MB) están en `public/models/` y la app los guarda para funcionar sin
-conexión desde la primera vez. Para volver a descargarlos: `npm run modelo`.
+conexión desde la primera vez. Para volver a descargarlos: `npm run modelo`. Si cambian el modelo o
+las imágenes de prueba (`src/reconocimiento/patrones.ts`), hay que regenerar los vectores correctos de
+la autoprueba con `npm run autoprueba` (un test lo comprueba con el modelo de verdad).
 
 ## Avisos y lista para pedir
 
@@ -229,6 +245,7 @@ de un borrado por error. Cada copia es de un laboratorio (el que se está viendo
 | `npm run preview:local` | Sirve `dist/` por HTTP solo en este ordenador (instalación y modo sin conexión) |
 | `npm run iconos` | Regenera los iconos PNG a partir del dibujo SVG (usa Edge o Chrome) |
 | `npm run modelo` | Vuelve a descargar los pesos de MobileNet v2 a `public/models/` |
+| `npm run autoprueba` | Recalcula con el procesador los vectores correctos de la autoprueba del modelo |
 
 ## Estructura
 
@@ -240,11 +257,12 @@ src/
               (funciones puras, con tests)
   app/        arranque, navegación por #/rutas, hooks, avisos («Deshacer», notificaciones, icono) y compartir
   ui/         tokens de diseño, estilos base, iconos y componentes comunes
-  reconocimiento/  modelo, cámara, recorte del marco y comparación de fotos (la comparación, con tests)
+  reconocimiento/  modelo (con su autoprueba), cámara, recorte del marco, comparación de fotos y revisión
+                   de las fotos de referencia (con tests)
   pantallas/  una por pantalla
 public/       icono de la app, el modelo de reconocimiento (public/models/) y sw-avisos.js
               (avisos del service worker: aviso diario de caducados, número en el icono)
-scripts/      generador de iconos y descarga del modelo
+scripts/      generador de iconos, descarga del modelo y vectores de la autoprueba (con su test)
 diseno/       maquetas de referencia
 docs/         decisiones tomadas durante el desarrollo
 ```

@@ -15,6 +15,7 @@ import { SeccionCuenta } from './AjustesCuenta'
 import { salir } from '../app/sesion'
 import { navegar } from '../app/navegacion'
 import { SeccionCopia } from './AjustesCopia'
+import { SeccionFotosReferencia } from './AjustesFotos'
 import './Ajustes.css'
 
 /** Ajustes (sin maqueta): perfil, avisos, reconocimiento, copia de seguridad, datos del móvil y borrado. */
@@ -60,6 +61,8 @@ export function Ajustes() {
         {ajustes && <SeccionAvisos ajustes={ajustes} alGuardar={(cambios) => almacen.guardar(cambios)} />}
 
         {ajustes && <FormularioReconocimiento ajustes={ajustes} alGuardar={(cambios) => almacen.guardar(cambios)} />}
+
+        <SeccionFotosReferencia />
 
         {ajustes && <SeccionCopia ajustes={ajustes} recuento={recuento} />}
 
@@ -256,10 +259,19 @@ function describirModelo(modelo: EstadoModelo): string {
       return 'Cargando el modelo…'
     case 'error':
       return modelo.mensaje
-    case 'listo':
-      return `Modelo listo (${modelo.motor === 'webgl' ? 'con la GPU' : modelo.motor}), cargado en ${formatearNumero(
-        Math.round(modelo.msCarga / 100) / 10,
-      )} s.`
+    case 'listo': {
+      const segundos = formatearNumero(Math.round(modelo.msCarga / 100) / 10)
+      const motor = modelo.motor === 'webgl' ? 'con la GPU' : modelo.motor === 'cpu' ? 'con el procesador' : modelo.motor
+      const prueba = `autoprueba superada (${formatearNumero(Math.floor(modelo.autoprueba.similitud * 1000) / 1000)})`
+      if (modelo.motorDescartado) {
+        return (
+          `Modelo listo ${motor}, cargado en ${segundos} s: la GPU de este móvil calculaba mal (no pasó la ` +
+          `autoprueba), así que se usa el procesador, que es más lento. Si las fotos de referencia se hicieron con ` +
+          `este móvil, revísalas abajo y recalcula los vectores.`
+        )
+      }
+      return `Modelo listo (${motor}), cargado en ${segundos} s; ${prueba}.`
+    }
   }
 }
 

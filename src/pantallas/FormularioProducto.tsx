@@ -13,8 +13,15 @@ import {
 import { Icono } from '../ui/Icono'
 import './FormularioProducto.css'
 
-/** Campos que llevan texto de ayuda debajo (para su aria-describedby). */
-const CAMPOS_CON_AYUDA = new Set<CampoProducto>(['codigo', 'stockInicial'])
+/**
+ * Campos que llevan texto de ayuda (para su aria-describedby) y de qué campo es esa ayuda: el
+ * stock inicial y su lote comparten la nota que va debajo de los dos.
+ */
+const AYUDA_DE_CAMPO: Partial<Record<CampoProducto, CampoProducto>> = {
+  codigo: 'codigo',
+  stockInicial: 'stockInicial',
+  loteInicial: 'stockInicial',
+}
 
 const UNIDADES_HABITUALES = ['uds', 'bot.', 'bid.', 'racks', 'cajas', 'bolsas', 'paq.', 'L', 'kg', 'g']
 
@@ -108,7 +115,10 @@ export function FormularioProducto({ valoresIniciales, esAlta, textoGuardar, alG
       value: valores[campo],
       onChange: (e: { target: { value: string } }) => cambiar(campo, e.target.value),
       'aria-invalid': error ? true : undefined,
-      'aria-describedby': [error && `${prefijo}-${campo}-error`, CAMPOS_CON_AYUDA.has(campo) && `${prefijo}-${campo}-ayuda`]
+      'aria-describedby': [
+        error && `${prefijo}-${campo}-error`,
+        AYUDA_DE_CAMPO[campo] && `${prefijo}-${AYUDA_DE_CAMPO[campo]}-ayuda`,
+      ]
         .filter(Boolean)
         .join(' ') || undefined,
     }
@@ -286,20 +296,40 @@ export function FormularioProducto({ valoresIniciales, esAlta, textoGuardar, alG
           Con el stock en ese mínimo o por debajo, el producto pasa a «A pedir» con la cantidad sugerida.
         </p>
 
-        {esAlta &&
-          bloqueCampo({
-            campo: 'stockInicial',
-            etiqueta: 'Stock inicial',
-            ayuda: 'Lo que hay ahora en el armario. Queda en el historial como ajuste.',
-            children: (
-              <input
-                {...propsCampo('stockInicial')}
-                className="campo__entrada campo__entrada--mono formulario-producto__corto"
-                inputMode="decimal"
-                autoComplete="off"
-              />
-            ),
-          })}
+        {esAlta && (
+          <>
+            <div className="formulario-producto__pareja">
+              {bloqueCampo({
+                campo: 'stockInicial',
+                etiqueta: 'Stock inicial',
+                children: (
+                  <input
+                    {...propsCampo('stockInicial')}
+                    className="campo__entrada campo__entrada--mono"
+                    inputMode="decimal"
+                    autoComplete="off"
+                  />
+                ),
+              })}
+              {bloqueCampo({
+                campo: 'loteInicial',
+                etiqueta: 'Lote (opcional)',
+                children: (
+                  <input
+                    {...propsCampo('loteInicial')}
+                    className="campo__entrada campo__entrada--mono"
+                    autoCapitalize="characters"
+                    autoComplete="off"
+                    spellCheck={false}
+                  />
+                ),
+              })}
+            </div>
+            <p id={`${prefijo}-stockInicial-ayuda`} className="campo__ayuda formulario-producto__nota">
+              Lo que hay ahora en el armario y, si lo sabes, su lote. Queda en el historial como ajuste «Stock inicial».
+            </p>
+          </>
+        )}
 
         {bloqueCampo({
           campo: 'notas',

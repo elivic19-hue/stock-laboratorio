@@ -69,7 +69,8 @@ export default defineConfig(({ mode }) => {
     ],
     test: {
       environment: 'node',
-      include: ['src/**/*.test.ts'],
+      // scripts/: la comprobación de los vectores de la autoprueba con el modelo de verdad (procesador).
+      include: ['src/**/*.test.ts', 'scripts/**/*.test.mjs'],
       setupFiles: ['src/pruebas/preparar.ts'],
     },
   }

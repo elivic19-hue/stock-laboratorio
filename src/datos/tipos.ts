@@ -39,7 +39,7 @@ export interface FotoReferencia {
   productoId: string
   /** Vector de MobileNet normalizado (L2). */
   embedding: number[]
-  /** JPEG de unos 160 px para la galería. */
+  /** JPEG para la galería: 224 px desde el 20/11/2026 (antes, 160 px). Sirve para recalcular el vector. */
   miniatura: Blob
   /** Hecha a propósito («alta») o guardada al confirmar una retirada («confirmacion»). */
   origen: OrigenFoto

@@ -215,6 +215,19 @@
   gap: 12px;
 }
 
+/* Productos que no pueden salir en el reconocimiento porque no tienen fotos de referencia */
+.hoja-resultado__sin-fotos {
+  font-size: 13px;
+  line-height: 1.4;
+  color: var(--tinta-2);
+}
+
+.hoja-resultado__codigo {
+  font-size: 12px;
+  white-space: nowrap;
+  color: var(--tinta);
+}
+
 /* Modo diagnóstico (Ajustes) */
 .diagnostico {
   display: flex;

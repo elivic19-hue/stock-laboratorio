@@ -82,9 +82,10 @@ describe('reconocer', () => {
     expect(reconocer(v(1, 0, 0), [], opciones)).toEqual({ estado: 'sin-referencias', ranking: [] })
   })
 
-  it('con un solo producto con fotos, basta con el umbral', () => {
+  it('con un solo producto con fotos siempre duda: no hay con qué compararlo', () => {
+    // Antes salía «seguro» con el 100 % para cualquier foto que pasara el umbral.
     const r = reconocer(v(1, 0, 0), [{ productoId: 'a', embedding: v(1, 0.2, 0) }], opciones)
-    expect(r.estado).toBe('seguro')
-    expect(r.ranking[0]?.confianza).toBe(1)
+    expect(r).toMatchObject({ estado: 'dudoso', motivo: 'un-solo-producto' })
+    expect(r.ranking.map((p) => p.productoId)).toEqual(['a'])
   })
 })

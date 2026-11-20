@@ -16,7 +16,8 @@
     "test:vigilar": "vitest",
     "lint": "oxlint",
     "iconos": "node scripts/generar-iconos.mjs",
-    "modelo": "node scripts/descargar-modelo.mjs"
+    "modelo": "node scripts/descargar-modelo.mjs",
+    "autoprueba": "node scripts/vectores-autoprueba.mjs"
   },
   "dependencies": {
     "@fontsource/ibm-plex-mono": "^5.3.0",

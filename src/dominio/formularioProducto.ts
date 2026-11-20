@@ -15,6 +15,8 @@ export interface ValoresProducto {
   cantidadPedidoSugerida: string
   /** Solo en el alta. */
   stockInicial: string
+  /** Solo en el alta: lote de ese stock inicial (opcional). */
+  loteInicial: string
   notas: string
 }
 
@@ -33,6 +35,7 @@ export const VALORES_PRODUCTO_VACIOS: ValoresProducto = {
   stockMinimo: '',
   cantidadPedidoSugerida: '',
   stockInicial: '0',
+  loteInicial: '',
   notas: '',
 }
 
@@ -48,6 +51,7 @@ export function valoresDeProducto(p: Producto): ValoresProducto {
     stockMinimo: numeroParaCampo(p.stockMinimo),
     cantidadPedidoSugerida: numeroParaCampo(p.cantidadPedidoSugerida),
     stockInicial: numeroParaCampo(p.stockActual),
+    loteInicial: '',
     notas: p.notas ?? '',
   }
 }
@@ -64,6 +68,7 @@ export const ORDEN_CAMPOS: readonly CampoProducto[] = [
   'stockMinimo',
   'cantidadPedidoSugerida',
   'stockInicial',
+  'loteInicial',
   'notas',
 ]
 
@@ -102,6 +107,11 @@ export function validarFormularioProducto(v: ValoresProducto, { esAlta }: { esAl
   const stockMinimo = numero('stockMinimo', { opcional: false })
   const cantidadPedidoSugerida = numero('cantidadPedidoSugerida', { opcional: true })
   const stockInicial = esAlta ? numero('stockInicial', { opcional: true }) : undefined
+  // El lote es el de lo que hay al darlo de alta: sin stock inicial no hay a qué ponérselo.
+  const loteInicial = esAlta ? v.loteInicial.trim() : ''
+  if (loteInicial && !errores.stockInicial && !(stockInicial !== undefined && stockInicial > 0)) {
+    errores.loteInicial = 'El lote va con el stock inicial: escribe cuántas unidades hay.'
+  }
 
   if (Object.keys(errores).length > 0) return { valido: false, errores }
   return {
@@ -118,6 +128,7 @@ export function validarFormularioProducto(v: ValoresProducto, { esAlta }: { esAl
       ...(cantidadPedidoSugerida ? { cantidadPedidoSugerida } : {}),
       ...(v.notas.trim() ? { notas: v.notas.trim() } : {}),
       stockInicial: stockInicial ?? 0,
+      ...(loteInicial ? { loteInicial } : {}),
     },
   }
 }

@@ -7,6 +7,7 @@ export type CodigoError =
   | 'datos-no-validos'
   | 'codigo-duplicado'
   | 'limite-fotos'
+  | 'foto-no-valida'
   | 'no-es-el-ultimo-movimiento'
   | 'copia-no-valida'
 

@@ -1,4 +1,4 @@
-import { useCallback, useId, useMemo, useState } from 'react'
+import { Fragment, useCallback, useId, useMemo, useState, type ReactNode } from 'react'
 import { mostrarAviso } from '../app/avisos'
 import { notificarBajoMinimo } from '../app/avisosMovil'
 import { useServicios } from '../app/contexto'
@@ -48,12 +48,18 @@ export function Retirar() {
   const { datos } = useConsulta(async (repo) => {
     const [productos, fotos] = await Promise.all([repo.listarProductos(), repo.listarFotos()])
     const activos = new Set(productos.map((p) => p.id))
+    // Solo cuentan las fotos de productos no archivados.
+    const referencias = fotos
+      .filter((f) => activos.has(f.productoId))
+      .map((f) => ({ productoId: f.productoId, embedding: f.embedding }))
+    const conFotos = new Set(referencias.map((r) => r.productoId))
     return {
       productos,
-      // Solo cuentan las fotos de productos no archivados.
-      referencias: fotos
-        .filter((f) => activos.has(f.productoId))
-        .map((f) => ({ productoId: f.productoId, embedding: f.embedding })),
+      referencias,
+      // Los que no tienen fotos no pueden salir en el reconocimiento: se dice, para que no extrañe.
+      sinFotos: productos
+        .filter((p) => !conFotos.has(p.id))
+        .sort((a, b) => a.codigo.localeCompare(b.codigo, 'es', { numeric: true })),
     }
   }, [])
 
@@ -132,6 +138,7 @@ export function Retirar() {
         <HojaResultado
           captura={fase}
           productos={datos.productos}
+          sinFotos={datos.sinFotos}
           eleccion={eleccion}
           ajustes={ajustes}
           alElegir={setEleccion}
@@ -183,9 +190,26 @@ function nombreCorto(nombre: string): string {
   return nombre.replace(/\s+de\s+pipeta\b/i, '').replace(/\s+/g, ' ')
 }
 
+/** Códigos de los productos sin fotos: «R-002, R-005, F-001, F-007 y 3 más» (sin partir un código). */
+function textoSinFotos(sinFotos: readonly Producto[]): ReactNode {
+  const visibles = sinFotos.slice(0, 4)
+  return (
+    <>
+      {visibles.map((p, i) => (
+        <Fragment key={p.id}>
+          {i > 0 && ', '}
+          <span className="mono hoja-resultado__codigo">{p.codigo}</span>
+        </Fragment>
+      ))}
+      {sinFotos.length > 4 && ` y ${sinFotos.length - 4} más`}
+    </>
+  )
+}
+
 function HojaResultado({
   captura,
   productos,
+  sinFotos,
   eleccion,
   ajustes,
   alElegir,
@@ -194,6 +218,7 @@ function HojaResultado({
 }: {
   captura: Captura
   productos: Producto[]
+  sinFotos: Producto[]
   eleccion: Eleccion | null
   ajustes: AjustesDispositivo
   alElegir: (eleccion: Eleccion) => void
@@ -203,6 +228,9 @@ function HojaResultado({
   const porId = useMemo(() => new Map(productos.map((p) => [p.id, p])), [productos])
   const { resultado } = captura
   const conFoto = captura.vector.length > 0
+  // Con un solo producto con fotos, el % relativo no dice nada (siempre 100 %): no se enseña ni se guarda.
+  const sinPorcentaje = resultado.motivo === 'un-solo-producto'
+  const unicoConFotos = sinPorcentaje ? porId.get(resultado.ranking[0]?.productoId ?? '') : undefined
   const elegido = eleccion ? porId.get(eleccion.productoId) : undefined
   const puntuacionElegido = eleccion && resultado.ranking.find((r) => r.productoId === eleccion.productoId)
 
@@ -217,7 +245,7 @@ function HojaResultado({
         <>
           <div className="hoja-resultado__fila">
             <span className="etiqueta">{eleccion?.via === 'manual' ? 'Elegido a mano' : 'Coincidencia'}</span>
-            {eleccion?.via === 'foto' && puntuacionElegido && (
+            {eleccion?.via === 'foto' && puntuacionElegido && !sinPorcentaje && (
               <span className="insignia-confianza">{porcentaje(puntuacionElegido.confianza)}</span>
             )}
           </div>
@@ -226,7 +254,7 @@ function HojaResultado({
             producto={elegido}
             captura={captura}
             via={eleccion?.via ?? 'manual'}
-            confianza={eleccion?.via === 'foto' ? puntuacionElegido?.confianza : undefined}
+            confianza={eleccion?.via === 'foto' && !sinPorcentaje ? puntuacionElegido?.confianza : undefined}
             // Solo si se ha activado «Aprender de las retiradas» en Ajustes (desactivado por defecto).
             // Entonces se ofrece también al corregir con «¿No es este?» o a mano (duda 11).
             puedeGuardarFoto={conFoto && ajustes.aprenderDeRetiradas}
@@ -238,9 +266,17 @@ function HojaResultado({
             {resultado.estado === 'sin-referencias' ? 'Aún no hay fotos de referencia' : 'No estoy seguro'}
           </h2>
           <p className="texto-secundario">
-            {resultado.estado === 'sin-referencias'
-              ? 'Para reconocer un producto hacen falta sus fotos de referencia: hazlas desde su ficha, en «Añadir fotos». Mientras, búscalo a mano.'
-              : '¿Es alguno de estos? Si no, búscalo a mano o repite la foto con más luz y el producto centrado.'}
+            {resultado.estado === 'sin-referencias' ? (
+              'Para reconocer un producto hacen falta sus fotos de referencia: hazlas desde su ficha, en «Añadir fotos». Mientras, búscalo a mano.'
+            ) : sinPorcentaje ? (
+              <>
+                Solo <span className="mono hoja-resultado__codigo">{unicoConFotos?.codigo ?? 'un producto'}</span> tiene
+                fotos de referencia, así que no hay con qué compararlo: cualquier foto se le parecería. Haz las de los demás
+                desde su ficha («Añadir fotos»).
+              </>
+            ) : (
+              '¿Es alguno de estos? Si no, búscalo a mano o repite la foto con más luz y el producto centrado.'
+            )}
           </p>
         </div>
       )}
@@ -260,12 +296,18 @@ function HojaResultado({
                   onClick={() => alElegir({ productoId: alt.productoId, via: 'foto' })}
                 >
                   <span className="alternativa__nombre">{elegido ? nombreCorto(p.nombre) : p.nombre}</span>
-                  <span className="alternativa__porcentaje">{porcentaje(alt.confianza)}</span>
+                  {!sinPorcentaje && <span className="alternativa__porcentaje">{porcentaje(alt.confianza)}</span>}
                 </button>
               )
             })}
           </div>
         </div>
+      )}
+
+      {conFoto && sinFotos.length > 0 && resultado.estado !== 'sin-referencias' && (
+        <p className="hoja-resultado__sin-fotos">
+          Sin fotos de referencia, no se reconocen: {textoSinFotos(sinFotos)}.
+        </p>
       )}
 
       <div className="hoja-resultado__enlaces">
@@ -502,7 +544,9 @@ function Diagnostico({
         ? 'duda: puntuación por debajo del umbral'
         : resultado.motivo === 'muy-igualados'
           ? 'duda: primero y segundo muy igualados'
-          : 'sin referencias'
+          : resultado.motivo === 'un-solo-producto'
+            ? 'duda: solo un producto tiene fotos'
+            : 'sin referencias'
   const filas: PuntuacionProducto[] = resultado.ranking.slice(0, 5)
   return (
     <section className="diagnostico" aria-label="Diagnóstico del reconocimiento">

@@ -29,6 +29,11 @@ Apunta para cada foto:
 - [ ] Una foto de algo que no está en el catálogo dice «No estoy seguro».
 - [ ] El tiempo por foto es menor de 1 s.
 - [ ] La linterna se enciende (si el móvil la tiene).
+- [ ] Ajustes → Reconocimiento dice «autoprueba superada» en cada móvil (apunta cuál dice que usa el
+      procesador porque la GPU calculaba mal).
+- [ ] Ajustes → Fotos de referencia → «Revisar fotos»: todos los productos del catálogo salen «Bien»
+      (si no, seguir lo que dice cada fila).
+- [ ] Tapando la cámara con el dedo, la foto se rechaza («ha salido negra»).
 
 Con esos números se ajustan el umbral (ahora 0,6) y la temperatura (0,05).
 
@@ -37,7 +42,8 @@ Con esos números se ajustan el umbral (ahora 0,6) y la temperatura (0,05).
 - [ ] Retirar con foto: confirmar, y «Deshacer» en el aviso.
 - [ ] Registrar una entrada con lote y caducidad (mes/año).
 - [ ] Anular el último movimiento desde la ficha.
-- [ ] Dar de alta un producto de prueba y eliminarlo.
+- [ ] Dar de alta un producto de prueba con stock inicial y lote: el lote sale en el historial de la
+      ficha («Ajuste · … · lote … · Stock inicial»). Después, eliminarlo.
 - [ ] A pedir: «Marcar pedido», compartir la lista por WhatsApp o correo, y el CSV.
 - [ ] Al registrar la entrada de un producto pedido, sale de «Pedidos en curso».
 

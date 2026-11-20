@@ -78,7 +78,10 @@ export function VisorCamara({
   const disparar = useCallback(() => {
     const video = refVideo.current
     const marco = refMarco.current
-    if (ocupado || !video || !marco || video.videoWidth === 0) return
+    // Hasta tener un fotograma (HAVE_CURRENT_DATA), la foto saldría negra.
+    if (ocupado || !video || !marco || video.videoWidth === 0 || video.readyState < HTMLMediaElement.HAVE_CURRENT_DATA) {
+      return
+    }
     alCapturar(capturarMarco(video, marco))
   }, [alCapturar, ocupado])
 

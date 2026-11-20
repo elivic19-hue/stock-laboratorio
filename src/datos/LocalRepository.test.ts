@@ -62,6 +62,17 @@ describe('productos', () => {
     expect(p.stockActual).toBe(4)
     const [inicial] = await repo.listarMovimientos({ productoId: p.id })
     expect(inicial).toMatchObject({ tipo: 'ajuste', cantidad: 4, stockResultante: 4, usuario: 'JA', nota: 'Stock inicial' })
+    expect(inicial && 'lote' in inicial).toBe(false)
+  })
+
+  it('guarda el lote del stock inicial en su movimiento, y no lo admite sin stock', async () => {
+    const p = await repo.crearProducto({ ...etanol, stockInicial: 2, loteInicial: ' K4920113 ' }, 'JA')
+    const [inicial] = await repo.listarMovimientos({ productoId: p.id })
+    expect(inicial).toMatchObject({ tipo: 'ajuste', cantidad: 2, lote: 'K4920113', nota: 'Stock inicial' })
+    await expect(
+      repo.crearProducto({ ...etanol, nombre: 'Acetona', stockInicial: 0, loteInicial: 'A1' }, 'JA'),
+    ).rejects.toMatchObject({ codigo: 'datos-no-validos' })
+    expect(await repo.listarProductos()).toHaveLength(1)
   })
 
   it('rechaza datos incompletos y no guarda nada', async () => {
@@ -348,6 +359,33 @@ describe('fotos de referencia', () => {
     await expect(repo.guardarFoto({ ...foto(p.id, 'alta'), embedding: [] })).rejects.toMatchObject({
       codigo: 'datos-no-validos',
     })
+  })
+
+  it('recalcular cambia solo el vector de las fotos que existen, y avisa', async () => {
+    const p = await repo.crearProducto(etanol, 'JA')
+    const a = await repo.guardarFoto(foto(p.id, 'alta'))
+    const b = await repo.guardarFoto(foto(p.id, 'alta'))
+    let avisos = 0
+    repo.suscribir(() => avisos++)
+    const cambiadas = await repo.actualizarEmbeddings([
+      { id: a?.id ?? '', embedding: [1, 0] },
+      { id: 'ya-no-existe', embedding: [0, 1] },
+    ])
+    await Promise.resolve()
+    expect(cambiadas).toBe(1)
+    expect(avisos).toBe(1)
+    const fotos = new Map((await repo.listarFotos(p.id)).map((f) => [f.id, f]))
+    expect(fotos.get(a?.id ?? '')).toMatchObject({ embedding: [1, 0], origen: 'alta', miniatura: expect.any(Blob) })
+    expect(fotos.get(b?.id ?? '')?.embedding).toEqual([0.6, 0.8])
+  })
+
+  it('recalcular no guarda vectores no válidos', async () => {
+    const p = await repo.crearProducto(etanol, 'JA')
+    const a = await repo.guardarFoto(foto(p.id, 'alta'))
+    await expect(repo.actualizarEmbeddings([{ id: a?.id ?? '', embedding: [Number.NaN, 1] }])).rejects.toMatchObject({
+      codigo: 'datos-no-validos',
+    })
+    expect((await repo.listarFotos(p.id))[0]?.embedding).toEqual([0.6, 0.8])
   })
 })
 
