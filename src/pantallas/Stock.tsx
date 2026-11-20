@@ -305,15 +305,13 @@ function DialogoFiltros({
   )
 }
 
-/** Sin conectar: «Guardado en este móvil». Conectado al laboratorio: la hora de sincronización (§7.1). */
+/** Estado de la sincronización con la nube: la hora de la última (§7.1, fase 2). */
 function EstadoGuardado() {
   const estado = useEstadoSincronizacion()
   let texto: string
   let aviso = false
   switch (estado.modo) {
-    case 'local':
-      texto = 'Guardado en este móvil'
-      break
+    case 'parado':
     case 'iniciando':
       texto = 'Conectando…'
       break

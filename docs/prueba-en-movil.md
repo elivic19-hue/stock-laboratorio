@@ -50,12 +50,16 @@ Con esos números se ajustan el umbral (ahora 0,6) y la temperatura (0,05).
 
 ## 5. Compartir entre móviles
 
-Antes, preparar el proyecto de Firebase (README, «Compartir el stock entre móviles»).
+Las cuentas se crean en Firebase → Authentication → Usuarios (README, «Cuentas y laboratorios»).
 
-- [ ] Móvil A: Ajustes → Compartir con el laboratorio → conectar. Sube sus datos.
-- [ ] Móvil B: conectar con la misma cuenta. Avisa de que sustituye sus datos y baja los de A.
+- [ ] Móvil A: abrir la app → pide correo y contraseña → entrar → elegir Lab. Cromatografía.
+- [ ] Móvil B: entrar con otra cuenta y elegir el mismo laboratorio. Ve el mismo stock.
 - [ ] Una retirada en A aparece en B en unos segundos (y al revés).
-- [ ] Ordenador: abrir la web, conectar con la misma cuenta y ver el mismo stock.
+- [ ] Ordenador: abrir la web, entrar y ver el mismo stock.
+- [ ] Ajustes → Cambiar de laboratorio → Lab. Food Contact: stock distinto (vacío al principio). Un
+      producto dado de alta aquí no aparece en Cromatografía.
+- [ ] Cerrar la app y volver a abrirla: entra directamente en el último laboratorio, sin pedir nada.
+- [ ] Ajustes → Cerrar sesión → vuelve a pedir correo y contraseña.
 - [ ] Sin conexión en A: retirar algo. La cabecera dice «Sin conexión · 1 por enviar». Al volver la
       red se manda solo y aparece en B.
 - [ ] A y B sin conexión, retiran 1 cada uno del mismo producto; al volver, el stock baja 2.

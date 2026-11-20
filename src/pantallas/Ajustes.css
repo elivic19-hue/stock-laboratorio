@@ -62,6 +62,12 @@
   font-size: 14px;
 }
 
+.ajustes__correo {
+  min-width: 0;
+  overflow-wrap: anywhere;
+  text-align: right;
+}
+
 .ajustes__dato {
   font-size: 14px;
   font-weight: 500;

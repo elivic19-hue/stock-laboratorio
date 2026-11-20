@@ -4,7 +4,6 @@ import { useServicios } from '../app/contexto'
 import { Enlace } from '../app/Enlace'
 import { useAjustes, useConsulta } from '../app/hooks'
 import { navegar } from '../app/navegacion'
-import { useEstadoSincronizacion } from '../datos/sincronizacion/servicio'
 import type { FotoReferencia, Movimiento, Producto } from '../datos/tipos'
 import { mensajeDeError } from '../dominio/errores'
 import {
@@ -366,7 +365,6 @@ function GaleriaFotos({ productoId, fotos }: { productoId: string; fotos: FotoRe
   const ordenadas = [...fotos].sort((a, b) => a.creadoEn.localeCompare(b.creadoEn))
 
   const deRetiradas = fotos.filter((f) => f.origen === 'confirmacion')
-  const compartido = useEstadoSincronizacion().modo !== 'local'
 
   async function borrarDeRetiradas() {
     try {
@@ -429,8 +427,8 @@ function GaleriaFotos({ productoId, fotos }: { productoId: string; fotos: FotoRe
         {fotos.length < FOTOS_MINIMAS
           ? `Haz al menos ${FOTOS_MINIMAS} fotos, mejor ${FOTOS_RECOMENDADAS}, desde distintos ángulos y con distinta luz.`
           : 'Distintos ángulos y luces mejoran el reconocimiento.'}
-        {/* Maqueta Producto. Solo es verdad con el móvil conectado al laboratorio. */}
-        {compartido ? ' Las fotos que haga cualquier compañero sirven para todos.' : ''}
+        {/* Maqueta Producto: las fotos se comparten con todo el laboratorio. */}
+        {' Las fotos que haga cualquier compañero sirven para todos.'}
       </p>
       {deRetiradas.length > 0 && (
         <button type="button" className="boton galeria__borrar-retiradas" onClick={() => void borrarDeRetiradas()}>

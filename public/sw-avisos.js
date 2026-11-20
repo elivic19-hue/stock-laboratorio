@@ -8,12 +8,14 @@
  * - Número de productos a pedir en el icono de la app.
  * - Al tocar una notificación, se abre la app en la pantalla que corresponde.
  *
- * Lee la base de datos de la app (IndexedDB) directamente. Repite, en pequeño, la lógica de
+ * Lee las bases de datos de la app (IndexedDB) directamente: en «stock-laboratorio-movil» qué
+ * laboratorio ve quien ha entrado (src/datos/movil.ts) y después el stock de ese laboratorio. Repite, en pequeño, la lógica de
  * src/dominio/resumen.ts (lotesCaducados) y src/dominio/stock.ts (productosAPedir): si cambian,
  * hay que cambiarla aquí también.
  */
 ;(() => {
-  const BASE_DATOS = 'stock-laboratorio'
+  const BASE_MOVIL = 'stock-laboratorio-movil'
+  const CLAVE_SESION = 'sesion'
   const ETIQUETA_AVISO_DIARIO = 'avisos-diarios'
   const CLAVE_AJUSTES = 'dispositivo'
   const MAX_NOMBRES = 3
@@ -25,10 +27,10 @@
     })
   }
 
-  /** Abre la base de datos sin crearla si todavía no existe (la crea la app con Dexie). */
-  function abrirBaseDatos() {
+  /** Abre una base de datos sin crearla si todavía no existe (las crea la app con Dexie). */
+  function abrirBaseDatos(nombre) {
     return new Promise((resolver, rechazar) => {
-      const req = indexedDB.open(BASE_DATOS)
+      const req = indexedDB.open(nombre)
       req.onupgradeneeded = () => req.transaction.abort()
       req.onsuccess = () => resolver(req.result)
       req.onerror = () => rechazar(req.error)
@@ -40,10 +42,25 @@
     return `${fecha.getFullYear()}-${dos(fecha.getMonth() + 1)}-${dos(fecha.getDate())}`
   }
 
+  /** Laboratorio que ve la cuenta que ha entrado; null si nadie ha entrado. */
+  async function laboratorioActual() {
+    const movil = await abrirBaseDatos(BASE_MOVIL)
+    try {
+      const registro = await peticion(movil.transaction('ajustes').objectStore('ajustes').get(CLAVE_SESION))
+      const sesion = registro && registro.valor
+      const cuenta = sesion && sesion.actual && sesion.cuentas && sesion.cuentas[sesion.actual]
+      return (cuenta && cuenta.laboratorio) || null
+    } finally {
+      movil.close()
+    }
+  }
+
   async function revisarAvisos() {
     let db
     try {
-      db = await abrirBaseDatos()
+      const laboratorio = await laboratorioActual()
+      if (!laboratorio) return
+      db = await abrirBaseDatos(`stock-laboratorio-${laboratorio}`)
     } catch {
       return // Aún no hay datos.
     }

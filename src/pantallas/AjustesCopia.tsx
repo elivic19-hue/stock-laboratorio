@@ -8,7 +8,8 @@ import { crearCopia, leerCopia, nombreArchivoCopia, type CopiaLeida } from '../d
 import type { Recuento } from '../datos/StockRepository'
 import { mensajeDeError } from '../dominio/errores'
 import { formatearFechaHora, formatearNumero, formatearTamano } from '../dominio/formato'
-import { conTodoSincronizado, useEstadoSincronizacion } from '../datos/sincronizacion/servicio'
+import { conTodoSincronizado } from '../datos/sincronizacion/servicio'
+import { useAjustes } from '../app/hooks'
 import { Dialogo } from '../ui/Dialogo'
 import { Icono } from '../ui/Icono'
 
@@ -66,7 +67,7 @@ export function SeccionCopia({
   }
 
   async function restaurar(copia: CopiaLeida) {
-    // Si el móvil está conectado, la copia sustituye los datos de todo el laboratorio.
+    // La copia sustituye los datos del laboratorio en todos los móviles (el laboratorio no cambia).
     await conTodoSincronizado(() => repo.reemplazarTodo(copia.datos))
     await almacen.guardar(copia.ajustes)
     setCopiaLeida(null)
@@ -80,8 +81,9 @@ export function SeccionCopia({
         Copia de seguridad
       </h2>
       <p className="texto-secundario">
-        Por ahora los datos solo están en este móvil: si se pierde o se borra el navegador, se pierden. Guarda una
-        copia cada semana y déjala fuera del móvil (correo, Drive o el ordenador). Lleva todo, fotos incluidas.
+        El stock de {ajustes.laboratorio} está en la nube y en cada móvil, pero una copia de vez en cuando protege
+        de un borrado por error. Guárdala fuera del móvil (correo, Drive o el ordenador). Lleva todo el stock de
+        este laboratorio, fotos incluidas.
       </p>
       <p className="ajustes__ultima-copia">
         <span className="etiqueta etiqueta--pequena">Última copia</span>
@@ -164,7 +166,9 @@ function DialogoRestaurar({
   alRestaurar: () => Promise<void>
 }) {
   const [restaurando, setRestaurando] = useState(false)
-  const conectado = useEstadoSincronizacion().modo !== 'local'
+  const ajustes = useAjustes()
+  const deOtroLaboratorio =
+    copia.ajustes.laboratorio !== undefined && ajustes !== undefined && copia.ajustes.laboratorio !== ajustes.laboratorio
   const [error, setError] = useState<string | null>(null)
   const hayDatos = actual !== undefined && actual.productos + actual.movimientos + actual.fotos + actual.pedidos > 0
 
@@ -191,23 +195,23 @@ function DialogoRestaurar({
         </div>
       </dl>
       <p className="texto-secundario">Contiene {describirRecuento(copia.recuento)}.</p>
-      {conectado && (
+      {deOtroLaboratorio && (
         <p className="nota-grave">
           <Icono nombre="alerta" tamano={18} />
           <span>
-            Este móvil está conectado al laboratorio: la copia sustituye los datos de <strong>todos</strong> los móviles.
+            La copia es de «{copia.ajustes.laboratorio}» y estás en <strong>{ajustes?.laboratorio}</strong>: se
+            restauraría en {ajustes?.laboratorio}.
           </span>
         </p>
       )}
-      {hayDatos && !conectado && (
-        <p className="nota-grave">
-          <Icono nombre="alerta" tamano={18} />
-          <span>
-            Sustituye todo lo que hay ahora en este móvil ({describirRecuento(actual)}). No se puede deshacer: si
-            quieres conservarlo, cancela y descarga antes una copia.
-          </span>
-        </p>
-      )}
+      <p className="nota-grave">
+        <Icono nombre="alerta" tamano={18} />
+        <span>
+          Sustituye el stock de {ajustes?.laboratorio ?? 'este laboratorio'} en <strong>todos</strong> los móviles
+          {hayDatos ? ` (ahora hay ${describirRecuento(actual)})` : ''}. No se puede deshacer: si quieres conservarlo,
+          cancela y descarga antes una copia.
+        </span>
+      </p>
       {error && (
         <p className="mensaje-error" role="alert">
           {error}

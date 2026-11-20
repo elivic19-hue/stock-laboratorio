@@ -8,8 +8,10 @@ La especificación completa está en [CLAUDE.md](CLAUDE.md); las maquetas, en [d
 decisiones tomadas por el camino, en [docs/decisiones.md](docs/decisiones.md).
 
 **Estado:** etapa 5 de 5 en curso: falta la prueba en móviles reales
-([docs/prueba-en-movil.md](docs/prueba-en-movil.md)) y calibrar el reconocimiento. Los datos se guardan en el móvil y, si se conecta al laboratorio
-(fase 2, con Firebase), se comparten con los demás móviles y el ordenador.
+([docs/prueba-en-movil.md](docs/prueba-en-movil.md)) y calibrar el reconocimiento. Cada persona entra
+con su cuenta y elige laboratorio (**Lab. Cromatografía** o **Lab. Food Contact**, cada uno con su
+propio stock). Los datos se guardan en el móvil y se comparten con los demás móviles y el ordenador
+(fase 2, con Firebase).
 
 ## Requisitos
 
@@ -54,8 +56,8 @@ Desde la versión publicada en GitHub Pages (tiene un certificado válido):
 
 - **Android (Chrome):** menú ⋮ → «Instalar aplicación» (o «Añadir a pantalla de inicio»).
 - **iPhone (Safari):** botón Compartir → «Añadir a pantalla de inicio».
-  **Importante:** en iPhone, la app instalada guarda sus datos aparte de Safari. Instálala antes de
-  empezar a meter datos y úsala siempre desde su icono.
+  **Importante:** en iPhone, la app instalada guarda sus datos y la sesión aparte de Safari.
+  Instálala antes de entrar y úsala siempre desde su icono.
 
 En el ordenador también se puede probar la instalación y el modo sin conexión:
 
@@ -132,24 +134,34 @@ conexión desde la primera vez. Para volver a descargarlos: `npm run modelo`.
   «Archivar producto», que conserva su historial.
 - **Una foto de referencia mala:** tócala en la galería de la ficha y «Borrar foto».
 
-## Compartir el stock entre móviles
+## Cuentas y laboratorios
 
-Sin conectar, cada móvil tiene sus propios datos. Conectando los móviles (y el navegador del
-ordenador) con las **cuentas del laboratorio** (una por persona, todas en el mismo proyecto de
-Firebase), todos ven el mismo stock. Se usa
+La app abre pidiendo el **correo y la contraseña** de la persona. Después pregunta qué laboratorio
+quiere ver: **Lab. Cromatografía** o **Lab. Food Contact**. Cada laboratorio tiene su propio stock
+(productos, códigos R-001/F-001, movimientos, pedidos y fotos), totalmente separado del otro. Cada
+cuenta recuerda su laboratorio en cada móvil; se cambia en Ajustes → Cuenta y laboratorio →
+**Cambiar de laboratorio**. Los movimientos se firman con lo que va antes de la @ del correo; se puede
+cambiar en Ajustes → Perfil.
+
+Todos los móviles (y el navegador del ordenador) ven el mismo stock de cada laboratorio. Se usa
 [Firebase](https://firebase.google.com) de Google, en su plan gratuito (Spark): no pide tarjeta y da
 de sobra para un laboratorio (50.000 lecturas y 20.000 escrituras al día, 1 GB).
 
 Cómo funciona:
 
-- Cada móvil sigue guardando todo en él: la app funciona igual **sin conexión**. Los cambios hechos
-  sin red se mandan solos al volver, y los de los demás llegan al momento.
+- Solo hace falta conexión para entrar la primera vez. Después, cada móvil guarda todo en él y la app
+  funciona igual **sin conexión**: los cambios hechos sin red se mandan solos al volver, y los de los
+  demás llegan al momento.
 - El stock de cada producto es la suma de sus movimientos. Si dos personas retiran a la vez desde
   dos móviles (incluso sin conexión), al sincronizar se restan las dos.
 - La cabecera de Stock dice «Sincronizado 10:42», «Sin conexión · 3 por enviar»… y Ajustes da más
   detalle.
-- Restaurar una copia de seguridad en un móvil conectado sustituye los datos de **todo** el
-  laboratorio. «Borrar todos los datos» desconecta antes el móvil y solo borra lo suyo.
+- Restaurar una copia de seguridad sustituye el stock de ese laboratorio en **todos** los móviles.
+  «Borrar los datos de este móvil» solo borra la copia del móvil (de los dos laboratorios) y cierra la
+  sesión; la nube no se toca.
+- **Dar acceso a alguien:** crear su usuario en Firebase → Authentication → Usuarios → Agregar
+  usuario (el correo no tiene que existir de verdad). **Quitárselo:** deshabilitar o borrar su usuario.
+  Cualquier cuenta puede ver los dos laboratorios; cada persona elige cuál.
 
 El proyecto del laboratorio ya está creado (`stock-laboratorio-5abeb`, con la base de datos en Madrid)
 y su configuración está en `src/datos/sincronizacion/configuracion.ts`. Las reglas están en
@@ -185,34 +197,23 @@ Hace falta una cuenta de Google (mejor una del laboratorio que una personal).
    **Habilitar la creación (registro)**. Todas las cuentas del proyecto entran al laboratorio, así
    que solo deben existir las que se crean aquí.
 7. **Configuración del proyecto** (la rueda) → **Tus apps** → icono web `</>` → un nombre (sin
-   Hosting) → copia el bloque `const firebaseConfig = { … }`. No es secreto: lo que protege los datos
-   son las reglas y la contraseña.
-
-### Conectar los móviles
-
-- En cada móvil: Ajustes → **Compartir con el laboratorio** → el correo y la contraseña de la persona
-  → **Conectar**.
-- **Dar acceso a alguien:** crear su usuario en Authentication → Usuarios. **Quitárselo:** deshabilitar
-  o borrar su usuario (sus móviles dejan de sincronizar; los demás siguen igual).
-- El **primer** móvil que se conecta sube sus datos al laboratorio. Los siguientes se quedan con los
-  del laboratorio (si tenían datos propios, la app avisa antes de sustituirlos).
-- Si se pone la configuración en `src/datos/sincronizacion/configuracion.ts` y se publica la app, los
-  móviles solo tienen que escribir el correo y la contraseña.
-- Para dejar de compartir en un móvil: Ajustes → **Desconectar este móvil** (sus datos se quedan en él
-  como copia).
+   Hosting) → copia el bloque `const firebaseConfig = { … }` en
+   `src/datos/sincronizacion/configuracion.ts` y publica la app. No es secreto: lo que protege los
+   datos son las reglas y la contraseña.
 
 ## Copias de seguridad
 
-En la fase 1 los datos **solo están en el móvil**. Se pierden si se pierde el móvil, si se borran los
-datos del navegador o si se desinstala la app.
+El stock de cada laboratorio está en la nube y en cada móvil, pero una copia de vez en cuando protege
+de un borrado por error. Cada copia es de un laboratorio (el que se está viendo).
 
 - **Guardar una copia:** Ajustes → Copia de seguridad → «Descargar copia» (va a Descargas) o «Enviar
   copia» (correo, Drive, WhatsApp…). Es un archivo `stock-laboratorio-AAAA-MM-DD.json` con todo:
   productos, movimientos, pedidos y fotos de referencia (con sus datos de reconocimiento). Ajustes
   enseña la fecha de la última copia. Conviene hacer una cada semana y guardarla fuera del móvil.
 - **Restaurar:** «Restaurar una copia…» y elegir el archivo. La app enseña qué contiene y, al
-  confirmar, **sustituye** todos los datos del móvil (también sirve para pasar los datos a otro móvil).
-  También recupera el nombre del laboratorio, el umbral y la temperatura; el usuario no cambia.
+  confirmar, **sustituye** el stock de ese laboratorio en todos los móviles. Si la copia es del otro
+  laboratorio, lo avisa. También recupera el umbral y la temperatura; el usuario y el laboratorio no
+  cambian.
 - La app pide al navegador almacenamiento persistente, para que no borre los datos si falta espacio.
   En Ajustes se ve si lo ha concedido; instalar la app ayuda.
 

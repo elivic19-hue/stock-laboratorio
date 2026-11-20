@@ -1,7 +1,6 @@
 import { useLayoutEffect } from 'react'
 import { Ajustes } from '../pantallas/Ajustes'
 import { APedir } from '../pantallas/APedir'
-import { Bienvenida } from '../pantallas/Bienvenida'
 import { Caducidades } from '../pantallas/Caducidades'
 import { Catalogo } from '../pantallas/Catalogo'
 import { EditarProducto } from '../pantallas/EditarProducto'
@@ -32,7 +31,6 @@ export function App() {
 
   let contenido
   if (!ajustes) contenido = <div className="pantalla" aria-busy="true" />
-  else if (!ajustes.usuario) contenido = <Bienvenida />
   else contenido = <Pantalla ruta={ruta} />
 
   return (

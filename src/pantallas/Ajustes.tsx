@@ -1,7 +1,6 @@
 import { useEffect, useState, type FormEvent } from 'react'
 import { useServicios } from '../app/contexto'
 import { useAjustes, useConsulta } from '../app/hooks'
-import { navegar } from '../app/navegacion'
 import { consultarAlmacenamiento, type EstadoAlmacenamiento } from '../app/plataforma'
 import { AJUSTES_INICIALES, type AjustesDispositivo } from '../datos/ajustes'
 import { leerNumero, numeroParaCampo } from '../dominio/numeros'
@@ -12,19 +11,19 @@ import { CabeceraVolver } from '../ui/CabeceraVolver'
 import { Dialogo } from '../ui/Dialogo'
 import { PantallaCompleta } from '../ui/Pantalla'
 import { SeccionAvisos } from './AjustesAvisos'
-import { SeccionCompartir } from './AjustesCompartir'
-import { desconectar, useEstadoSincronizacion } from '../datos/sincronizacion/servicio'
+import { SeccionCuenta } from './AjustesCuenta'
+import { salir } from '../app/sesion'
+import { navegar } from '../app/navegacion'
 import { SeccionCopia } from './AjustesCopia'
 import './Ajustes.css'
 
 /** Ajustes (sin maqueta): perfil, avisos, reconocimiento, copia de seguridad, datos del móvil y borrado. */
 export function Ajustes() {
-  const { repo, ajustes: almacen } = useServicios()
+  const { ajustes: almacen } = useServicios()
   const ajustes = useAjustes()
   const recuento = useConsulta((r) => r.contar(), []).datos
   const [almacenamiento, setAlmacenamiento] = useState<EstadoAlmacenamiento>()
   const [borrarAbierto, setBorrarAbierto] = useState(false)
-  const sincronizacion = useEstadoSincronizacion()
 
   useEffect(() => {
     let vigente = true
@@ -37,12 +36,10 @@ export function Ajustes() {
   }, [recuento])
 
   async function borrarTodo() {
-    // Borrar solo afecta a este móvil: antes se desconecta para que no se borre en la nube.
-    await desconectar()
-    await repo.borrarTodo()
+    // Solo afecta a este móvil: se cierra la sesión y después se borran las bases de datos del
+    // móvil, sin mandar nada a la nube.
     navegar({ pantalla: 'stock' }, { reemplazar: true })
-    // Sin usuario, la app vuelve al primer arranque.
-    await almacen.borrar()
+    await salir({ borrarDatos: true })
   }
 
   const celdas = [
@@ -56,9 +53,9 @@ export function Ajustes() {
     <PantallaCompleta>
       <CabeceraVolver volverA={{ pantalla: 'stock' }} titulo="Ajustes" />
       <main className="contenido ajustes">
-        {ajustes && <FormularioPerfil ajustes={ajustes} alGuardar={(cambios) => almacen.guardar(cambios)} />}
+        <SeccionCuenta />
 
-        <SeccionCompartir />
+        {ajustes && <FormularioPerfil ajustes={ajustes} alGuardar={(cambios) => almacen.guardar(cambios)} />}
 
         {ajustes && <SeccionAvisos ajustes={ajustes} alGuardar={(cambios) => almacen.guardar(cambios)} />}
 
@@ -70,6 +67,7 @@ export function Ajustes() {
           <h2 id="ajustes-datos" className="seccion__titulo">
             Datos en este móvil
           </h2>
+          <p className="texto-secundario">Copia en el móvil del stock de {ajustes?.laboratorio ?? 'este laboratorio'}:</p>
           <div className="ficha">
             {celdas.map(([etiqueta, valor]) => (
               <div key={etiqueta} className="ficha__celda">
@@ -80,7 +78,7 @@ export function Ajustes() {
           </div>
           <p className="texto-secundario">{describirAlmacenamiento(almacenamiento)}</p>
           <button type="button" className="boton boton--contorno" onClick={() => setBorrarAbierto(true)}>
-            Borrar todos los datos
+            Borrar los datos de este móvil
           </button>
         </section>
 
@@ -89,7 +87,7 @@ export function Ajustes() {
         </p>
       </main>
 
-      <DialogoBorrar conectado={sincronizacion.modo !== 'local'} abierto={borrarAbierto} alCerrar={() => setBorrarAbierto(false)} alBorrar={borrarTodo} />
+      <DialogoBorrar abierto={borrarAbierto} alCerrar={() => setBorrarAbierto(false)} alBorrar={borrarTodo} />
     </PantallaCompleta>
   )
 }
@@ -119,22 +117,21 @@ function FormularioPerfil({
   alGuardar: (cambios: Partial<AjustesDispositivo>) => Promise<unknown>
 }) {
   const [usuario, setUsuario] = useState(ajustes.usuario)
-  const [laboratorio, setLaboratorio] = useState(ajustes.laboratorio)
   const [estado, setEstado] = useState<'editando' | 'guardando' | 'guardado'>('editando')
   const [error, setError] = useState<string | null>(null)
 
-  const hayCambios = usuario.trim() !== ajustes.usuario || laboratorio.trim() !== ajustes.laboratorio
+  const hayCambios = usuario.trim() !== ajustes.usuario
 
   async function guardar(evento: FormEvent<HTMLFormElement>) {
     evento.preventDefault()
-    if (!usuario.trim() || !laboratorio.trim()) {
-      setError('El usuario y el laboratorio no pueden quedar vacíos.')
+    if (!usuario.trim()) {
+      setError('El nombre no puede quedar vacío.')
       return
     }
     setError(null)
     setEstado('guardando')
     try {
-      await alGuardar({ usuario, laboratorio })
+      await alGuardar({ usuario })
       setEstado('guardado')
     } catch (e) {
       setError(mensajeDeError(e))
@@ -142,12 +139,6 @@ function FormularioPerfil({
     }
   }
 
-  function editar(cambiar: (valor: string) => void) {
-    return (valor: string) => {
-      cambiar(valor)
-      setEstado('editando')
-    }
-  }
 
   return (
     <form className="seccion" onSubmit={guardar} noValidate aria-labelledby="ajustes-perfil">
@@ -155,26 +146,21 @@ function FormularioPerfil({
         Perfil
       </h2>
       <label className="campo">
-        <span className="etiqueta">Usuario (nombre o iniciales)</span>
+        <span className="etiqueta">Tu nombre o iniciales</span>
         <input
           className="campo__entrada"
           value={usuario}
-          onChange={(e) => editar(setUsuario)(e.target.value)}
+          onChange={(e) => {
+            setUsuario(e.target.value)
+            setEstado('editando')
+          }}
           autoComplete="name"
           aria-invalid={(error !== null && !usuario.trim()) || undefined}
         />
       </label>
-      <label className="campo">
-        <span className="etiqueta">Laboratorio</span>
-        <input
-          className="campo__entrada"
-          value={laboratorio}
-          onChange={(e) => editar(setLaboratorio)(e.target.value)}
-          autoComplete="organization"
-          aria-invalid={(error !== null && !laboratorio.trim()) || undefined}
-        />
-      </label>
-      <p className="texto-secundario">Cada movimiento queda registrado a nombre del usuario actual.</p>
+      <p className="texto-secundario">
+        Cada movimiento queda registrado con este nombre. Se recuerda para tu cuenta en este móvil.
+      </p>
       {error && (
         <p className="mensaje-error" role="alert">
           {error}
@@ -193,12 +179,10 @@ function FormularioPerfil({
 }
 
 function DialogoBorrar({
-  conectado,
   abierto,
   alCerrar,
   alBorrar,
 }: {
-  conectado: boolean
   abierto: boolean
   alCerrar: () => void
   alBorrar: () => Promise<void>
@@ -227,12 +211,12 @@ function DialogoBorrar({
   }
 
   return (
-    <Dialogo abierto={abierto} alCerrar={cerrar} titulo="Borrar todos los datos">
+    <Dialogo abierto={abierto} alCerrar={cerrar} titulo="Borrar los datos de este móvil">
       <form className="dialogo-borrar" onSubmit={borrar} noValidate>
         <p className="texto-secundario">
-          Se borrarán de este móvil todos los productos, movimientos, fotos de referencia y pedidos, y la app
-          volverá al primer arranque. No se puede deshacer.
-          {conectado ? ' El móvil se desconecta antes: los datos del laboratorio en la nube no se tocan.' : ''}
+          Se borra de este móvil la copia del stock de los dos laboratorios y se cierra la sesión. Los datos en la
+          nube no se tocan: al volver a entrar, el móvil los descarga otra vez. Sirve para dejar el móvil limpio o
+          si algo se ha quedado mal en él.
         </p>
         <label className="campo">
           <span className="dialogo-borrar__instruccion">

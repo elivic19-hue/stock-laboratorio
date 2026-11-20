@@ -33,6 +33,4 @@ export interface AlmacenRemoto {
     alCambiar: (cambios: CambioRemoto[], desdeServidor: boolean) => void,
     alError: (error: unknown) => void,
   ): () => void
-  /** Si el laboratorio ya tiene productos en la nube (hace falta conexión). */
-  hayDatos(): Promise<boolean>
 }

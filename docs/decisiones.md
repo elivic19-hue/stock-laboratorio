@@ -324,3 +324,28 @@ Pedidos por el usuario al probar la etapa 4 («con las dudas haz lo que creas co
   barra de navegación del sistema; en iPhone se veía bien. `viewport-fit=cover` hace que Chrome
   dibuje por debajo de esa barra sin descontarla siempre. Ahora `viewport-fit=cover` solo se pone en
   iPhone/iPad (script en `index.html`); en Android la app termina encima de la barra del sistema.
+
+### Dos laboratorios e inicio de sesión (20/11/2026)
+
+Petición del usuario: quitar la primera pantalla (nombre, laboratorio, datos de ejemplo) y entrar
+directamente con la cuenta, y separar el stock en **Lab. Cromatografía** y **Lab. Food Contact**,
+pudiendo cada usuario ver solo uno de los dos. Cambia el «Primer arranque» de CLAUDE.md §7.
+
+- La app abre con el inicio de sesión (correo y contraseña de Firebase). Ya no hay modo «solo en
+  este móvil», ni datos de ejemplo, ni «Compartir con el laboratorio» en Ajustes: siempre se
+  sincroniza. La sesión queda guardada y la app abre sin conexión.
+- Tras entrar, se elige laboratorio; cada cuenta lo recuerda en cada móvil. Se cambia en Ajustes →
+  Cuenta y laboratorio. Interpretado como «cada uno elige qué ve», no como permisos: cualquier
+  cuenta puede abrir los dos (si hiciera falta restringirlo, se haría con las reglas de Firestore).
+- Separación total: en la nube `laboratorios/cromatografia` y `laboratorios/foodcontact`; en el
+  móvil una base de datos por laboratorio (`stock-laboratorio-cromatografia`, `-foodcontact`) y otra,
+  `stock-laboratorio-movil`, con la sesión (cuenta actual y, por cuenta, nombre y laboratorio). Así
+  las pantallas y LocalRepository no cambian, y los códigos R-001/F-001 van por laboratorio.
+- El nombre de los movimientos sale del correo (lo de antes de la @) y se puede cambiar en Ajustes →
+  Perfil. El nombre del laboratorio es fijo (`src/datos/laboratorios.ts`).
+- Lo que había en `laboratorios/principal` y en la base de datos antigua del móvil
+  (`stock-laboratorio`) no se borra ni se mueve: la app ya no lo usa.
+- «Borrar todos los datos» pasa a «Borrar los datos de este móvil»: cierra la sesión y borra las
+  bases de datos del móvil; la nube no se toca.
+- El service worker (avisos diarios) lee en `stock-laboratorio-movil` qué laboratorio ve quien ha
+  entrado y revisa ese.

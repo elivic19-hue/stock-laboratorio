@@ -40,9 +40,6 @@ class RemotoEnMemoria {
           this.#oyentes.delete(oyente)
         }
       },
-      hayDatos: async () => {
-        return [...this.docs].some(([clave, d]) => clave.startsWith('productos/') && d.datos !== null)
-      },
       pausar: () => {
         enPausa = []
         for (const o of oyentes) this.#oyentes.delete(o)

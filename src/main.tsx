@@ -11,34 +11,20 @@ import './ui/componentes.css'
 
 import { StrictMode } from 'react'
 import { createRoot } from 'react-dom/client'
-import { App } from './app/App'
-import type { Servicios } from './app/contexto'
-import { ProveedorServicios } from './app/ProveedorServicios'
-import { AlmacenAjustesLocal } from './datos/ajustes'
-import { BaseDatosStock } from './datos/db'
-import { LocalRepository } from './datos/LocalRepository'
-import { prepararSincronizacion } from './datos/sincronizacion/servicio'
-import { precargarModelo } from './reconocimiento/modelo'
+import { Arranque } from './app/Arranque'
 import { escucharServiceWorker } from './app/avisosMovil'
+import { cargarSesion } from './app/sesion'
+import { precargarModelo } from './reconocimiento/modelo'
 
-// Los datos se leen y escriben siempre en este móvil (IndexedDB), así todo funciona sin conexión.
-// Si el móvil está conectado al laboratorio (fase 2), la sincronización los comparte con los demás.
-const baseDatos = new BaseDatosStock()
-const repo = new LocalRepository(baseDatos)
-const servicios: Servicios = {
-  repo,
-  ajustes: new AlmacenAjustesLocal(baseDatos),
-}
-void prepararSincronizacion(baseDatos, repo)
+// Quién ha entrado en este móvil y qué laboratorio ve (Arranque decide qué pantalla toca).
+void cargarSesion()
 
 const raiz = document.getElementById('root')
 if (!raiz) throw new Error('Falta el elemento #root en index.html')
 
 createRoot(raiz).render(
   <StrictMode>
-    <ProveedorServicios servicios={servicios}>
-      <App />
-    </ProveedorServicios>
+    <Arranque />
   </StrictMode>,
 )
 

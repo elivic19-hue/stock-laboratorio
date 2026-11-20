@@ -1,23 +1,30 @@
-/* Primer arranque (sin maqueta: mismo lenguaje que «Registrar entrada») */
+/* Inicio de sesión y elegir laboratorio (sin maqueta: mismo lenguaje que «Registrar entrada») */
 
-.bienvenida__cabecera {
+.inicio__cabecera {
   display: flex;
   flex-direction: column;
   gap: 6px;
   padding: calc(32px + env(safe-area-inset-top, 0px)) 20px 4px;
 }
 
-.bienvenida__titulo {
+.inicio__titulo {
   font-size: 26px;
   font-weight: 600;
   letter-spacing: -0.01em;
   line-height: 1.2;
 }
 
-.bienvenida__formulario {
+.inicio__formulario {
   flex: 1;
   display: flex;
   flex-direction: column;
   gap: 16px;
   padding: 16px 20px 24px;
+}
+
+.inicio__cuenta {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 4px 8px;
 }

@@ -4,9 +4,7 @@ import {
   Bytes,
   collection,
   doc,
-  getDocsFromServer,
   initializeFirestore,
-  limit,
   onSnapshot,
   persistentLocalCache,
   persistentMultipleTabManager,
@@ -18,52 +16,73 @@ import {
   type DocumentData,
   type Firestore,
 } from 'firebase/firestore'
-import { LABORATORIO_ID } from './configuracion'
 import type { AlmacenRemoto, CambioRemoto, DatosRemotos, Tabla } from './remoto'
 
 /**
- * La nube del laboratorio en Firebase (fase 2): Firestore para los datos y una cuenta de correo y
- * contraseña por persona. Todas las cuentas del proyecto comparten el laboratorio
- * `laboratorios/{LABORATORIO_ID}`; solo existen las que se crean en la consola de Firebase, porque
- * la creación de cuentas desde la app está desactivada (README, «Compartir el stock»).
+ * La nube de los laboratorios en Firebase (fase 2): Firestore para los datos y una cuenta de correo
+ * y contraseña por persona. Cualquier cuenta del proyecto puede entrar en los dos laboratorios
+ * (`laboratorios/{id}`); solo existen las que se crean en la consola de Firebase, porque la
+ * creación de cuentas desde la app está desactivada (README, «Cuentas y laboratorios»).
  *
- * Este módulo se carga solo cuando el móvil está conectado: sin él, la app no descarga Firebase.
+ * Este módulo se carga aparte (import dinámico) para que la primera pantalla no espere a Firebase.
  */
 
 export interface SesionFirebase {
   remoto: AlmacenRemoto
-  /** Laboratorio al que se conecta (el mismo para todas las cuentas del proyecto). */
-  laboratorioId: string
   correo: string
   cerrar(opciones?: { cerrarSesion?: boolean }): Promise<void>
 }
 
+/**
+ * Nombre de la app de Firebase. La sesión que Firebase guarda en el móvil va ligada a él: no
+ * cambiarlo, o todos tendrían que volver a entrar.
+ */
 const NOMBRE_APP = 'stock-laboratorio'
 
-/** Inicia Firebase y entra con la cuenta del laboratorio (o recupera la sesión guardada). */
-export async function abrirSesionFirebase(
-  configuracion: FirebaseOptions,
-  credenciales?: { correo: string; contrasena: string },
-): Promise<SesionFirebase> {
+/** Entra con la cuenta de la persona; la sesión queda guardada en el móvil. Devuelve el correo. */
+export async function entrarEnFirebase(configuracion: FirebaseOptions, correo: string, contrasena: string): Promise<string> {
   const app = initializeApp(configuracion, NOMBRE_APP)
   try {
     const auth = getAuth(app)
     await auth.authStateReady()
-    if (credenciales) {
-      if (auth.currentUser) await signOut(auth)
-      await signInWithEmailAndPassword(auth, credenciales.correo.trim(), credenciales.contrasena)
-    }
+    if (auth.currentUser) await signOut(auth)
+    const { user } = await signInWithEmailAndPassword(auth, correo.trim(), contrasena)
+    return user.email ?? correo.trim()
+  } catch (error) {
+    throw traducirError(error)
+  } finally {
+    await deleteApp(app).catch(() => {})
+  }
+}
+
+/** Cierra la sesión guardada en el móvil. */
+export async function salirDeFirebase(configuracion: FirebaseOptions): Promise<void> {
+  const app = initializeApp(configuracion, NOMBRE_APP)
+  try {
+    const auth = getAuth(app)
+    await auth.authStateReady()
+    await signOut(auth)
+  } finally {
+    await deleteApp(app).catch(() => {})
+  }
+}
+
+/** Recupera la sesión guardada y abre el stock de un laboratorio (funciona también sin conexión). */
+export async function abrirSesionFirebase(configuracion: FirebaseOptions, laboratorioId: string): Promise<SesionFirebase> {
+  const app = initializeApp(configuracion, NOMBRE_APP)
+  try {
+    const auth = getAuth(app)
+    await auth.authStateReady()
     const usuario = auth.currentUser
-    if (!usuario) throw new ErrorSesion('La sesión del laboratorio ha caducado: vuelve a conectar este móvil.')
+    if (!usuario) throw new ErrorSesionCaducada()
     const db = initializeFirestore(app, {
       ignoreUndefinedProperties: true,
       // Caché en el móvil: los cambios hechos sin conexión se guardan y se mandan al volver.
       localCache: persistentLocalCache({ tabManager: persistentMultipleTabManager() }),
     })
     return {
-      remoto: new RemotoFirestore(db, LABORATORIO_ID),
-      laboratorioId: LABORATORIO_ID,
-      correo: usuario.email ?? credenciales?.correo ?? '',
+      remoto: new RemotoFirestore(db, laboratorioId),
+      correo: usuario.email ?? '',
       cerrar: (opciones) => cerrar(app, auth, opciones?.cerrarSesion ?? false),
     }
   } catch (error) {
@@ -79,6 +98,13 @@ async function cerrar(app: FirebaseApp, auth: Auth, cerrarSesion: boolean): Prom
 
 export class ErrorSesion extends Error {}
 
+/** No hay sesión guardada en el móvil (o ya no vale): hay que volver a entrar. */
+export class ErrorSesionCaducada extends ErrorSesion {
+  constructor() {
+    super('La sesión ha caducado: vuelve a entrar con tu cuenta.')
+  }
+}
+
 function traducirError(error: unknown): Error {
   if (error instanceof ErrorSesion) return error
   const codigo = (error as { code?: unknown } | null)?.code
@@ -87,14 +113,16 @@ function traducirError(error: unknown): Error {
     case 'auth/wrong-password':
     case 'auth/user-not-found':
     case 'auth/invalid-email':
-      return new ErrorSesion('El correo o la contraseña del laboratorio no son correctos.')
+      return new ErrorSesion('El correo o la contraseña no son correctos.')
     case 'auth/network-request-failed':
-      return new ErrorSesion('No hay conexión. Para conectar este móvil hace falta internet.')
+      return new ErrorSesion('No hay conexión. Para entrar la primera vez hace falta internet.')
     case 'auth/too-many-requests':
       return new ErrorSesion('Demasiados intentos. Espera unos minutos y vuelve a probar.')
     case 'auth/invalid-api-key':
     case 'auth/api-key-not-valid.-please-pass-a-valid-api-key.':
       return new ErrorSesion('La configuración de Firebase no es válida (apiKey).')
+    case 'auth/missing-password':
+      return new ErrorSesion('Escribe la contraseña.')
     case 'auth/operation-not-allowed':
       return new ErrorSesion('En Firebase falta activar el inicio de sesión con correo y contraseña.')
     case 'auth/user-disabled':
@@ -148,18 +176,6 @@ class RemotoFirestore implements AlmacenRemoto {
       },
       alError,
     )
-  }
-
-  async hayDatos(): Promise<boolean> {
-    const consulta = query(this.#coleccion('productos'), where('borrado', '==', false), limit(1))
-    try {
-      return !(await getDocsFromServer(consulta)).empty
-    } catch (error) {
-      if ((error as { code?: unknown }).code === 'unavailable') {
-        throw new ErrorSesion('No hay conexión. Para conectar este móvil hace falta internet.')
-      }
-      throw traducirError(error)
-    }
   }
 }
 
