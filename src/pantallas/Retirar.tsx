@@ -11,7 +11,7 @@ import { conPunto, formatearNumero } from '../dominio/formato'
 import { leerNumero, numeroParaCampo, redondear } from '../dominio/numeros'
 import { estaBajoMinimo } from '../dominio/stock'
 import { ubicacionMedia } from '../dominio/ubicacion'
-import { crearMiniatura } from '../reconocimiento/camara'
+import { crearMiniatura, type FotoCapturada } from '../reconocimiento/camara'
 import { reconocer, type PuntuacionProducto, type ResultadoReconocimiento } from '../reconocimiento/comparar'
 import { cargarModelo, useEstadoModelo } from '../reconocimiento/modelo'
 import { Icono } from '../ui/Icono'
@@ -21,9 +21,12 @@ import { VisorCamara } from '../ui/VisorCamara'
 import './Retirar.css'
 
 interface Captura {
+  /** La foto (hasta 640 px); el modelo la reduce a 224. */
   imagen: HTMLCanvasElement
   /** La misma imagen, para enseñarla fija en el marco. */
   vista: string
+  /** Resolución de la cámara y tamaño del recorte, para el modo diagnóstico. */
+  origen: Pick<FotoCapturada, 'camara' | 'recorte'> | null
   vector: number[]
   ms: number
   resultado: ResultadoReconocimiento
@@ -64,7 +67,7 @@ export function Retirar() {
   }, [])
 
   const alCapturar = useCallback(
-    async (imagen: HTMLCanvasElement) => {
+    async ({ foto: imagen, camara, recorte }: FotoCapturada) => {
       if (!datos || !ajustes) return
       const vista = imagen.toDataURL('image/jpeg', 0.85)
       setFase({ fase: 'analizando', vista })
@@ -77,7 +80,7 @@ export function Retirar() {
         })
         const mejor = resultado.ranking[0]
         setEleccion(resultado.estado === 'seguro' && mejor ? { productoId: mejor.productoId, via: 'foto' } : null)
-        setFase({ fase: 'resultado', imagen, vista, vector, ms, resultado })
+        setFase({ fase: 'resultado', imagen, vista, vector, ms, resultado, origen: { camara, recorte } })
       } catch (error) {
         setFase({ fase: 'visor' })
         mostrarAviso({ texto: mensajeDeError(error) })
@@ -121,7 +124,7 @@ export function Retirar() {
       <VisorCamara
         titulo="Retirar del stock"
         alCerrar={() => volver({ pantalla: 'stock' })}
-        alCapturar={(imagen) => void alCapturar(imagen)}
+        alCapturar={(captura) => void alCapturar(captura)}
         ocupado={fase.fase !== 'visor' || !datos || modelo.estado === 'error'}
         textoDisparador="Hacer foto y reconocer"
         congelada={fase.fase === 'visor' ? undefined : fase.vista}
@@ -163,6 +166,7 @@ export function Retirar() {
               vista: '',
               vector: [],
               ms: 0,
+              origen: null,
               resultado: { estado: 'sin-referencias', ranking: [] },
             })
           }
@@ -555,6 +559,14 @@ function Diagnostico({
         {formatearNumero(Math.round(captura.ms))} ms · umbral {formatearNumero(ajustes.umbral)} · temp.{' '}
         {formatearNumero(ajustes.temperatura)} · {motivo}
       </p>
+      {captura.origen && (
+        // Para comprobar la calidad: si la cámara da poca resolución, el recorte sale pequeño.
+        <p className="diagnostico__resumen mono">
+          {captura.origen.camara ? `cámara ${captura.origen.camara.ancho}×${captura.origen.camara.alto}` : 'foto elegida'} ·
+          recorte {formatearNumero(captura.origen.recorte)}{' '}px · foto {formatearNumero(captura.imagen.width)}
+          {' '}px
+        </p>
+      )}
       <table className="diagnostico__tabla">
         <thead>
           <tr>

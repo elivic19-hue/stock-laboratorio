@@ -98,10 +98,15 @@ export interface DatosProductoNuevo {
   stockMinimo: number
   cantidadPedidoSugerida?: number
   notas?: string
-  /** Stock con el que empieza. Si es mayor que 0 queda registrado como movimiento de ajuste. */
+  /**
+   * Stock con el que empieza. Si es mayor que 0 queda en el historial como «Stock inicial»: una
+   * entrada si lleva lote o caducidad (así cuenta como un lote más) y, si no, un ajuste.
+   */
   stockInicial: number
-  /** Lote de ese stock inicial (opcional, solo con stockInicial > 0): va en el movimiento «Stock inicial». */
+  /** Lote de ese stock inicial (opcional, solo con stockInicial > 0). */
   loteInicial?: string
+  /** Caducidad de ese stock inicial, AAAA-MM-DD (opcional, solo con stockInicial > 0). */
+  caducidadInicial?: string
 }
 
 export type CambiosProducto = Partial<

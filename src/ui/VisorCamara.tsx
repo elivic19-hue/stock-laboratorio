@@ -1,13 +1,21 @@
 import { useCallback, useEffect, useRef, useState, type ReactNode } from 'react'
-import { abrirCamara, capturarArchivo, capturarMarco, FalloCamara, MENSAJES_CAMARA, type Camara } from '../reconocimiento/camara'
+import {
+  abrirCamara,
+  capturarArchivo,
+  capturarMarco,
+  FalloCamara,
+  MENSAJES_CAMARA,
+  type Camara,
+  type FotoCapturada,
+} from '../reconocimiento/camara'
 import { Icono } from './Icono'
 import './VisorCamara.css'
 
 interface Props {
   titulo: string
   alCerrar: () => void
-  /** Recibe lo que había dentro del marco, a 224×224. */
-  alCapturar: (imagen: HTMLCanvasElement) => void
+  /** Recibe lo que había dentro del marco (hasta 640 px; el modelo lo reduce a 224). */
+  alCapturar: (captura: FotoCapturada) => void
   /** Mientras es true no se puede hacer otra foto (p. ej. analizando). */
   ocupado?: boolean
   textoDisparador?: string

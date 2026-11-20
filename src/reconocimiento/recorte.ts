@@ -36,6 +36,14 @@ export function recorteDelMarco({ videoAncho, videoAlto, vistaAncho, vistaAlto, 
   }
 }
 
+/**
+ * Lado de la foto que se guarda: el del recorte (sin ampliarlo, que no gana nitidez), como mucho
+ * `maximo` y como poco `minimo` (la entrada del modelo).
+ */
+export function ladoDeFoto(ladoRecorte: number, maximo: number, minimo: number): number {
+  return Math.max(minimo, Math.min(maximo, Math.round(ladoRecorte)))
+}
+
 /** Cuadrado centrado lo más grande posible (fotos elegidas de la galería). */
 export function cuadradoCentrado(ancho: number, alto: number): Rect {
   const lado = Math.min(ancho, alto)

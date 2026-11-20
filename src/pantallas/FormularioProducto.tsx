@@ -2,6 +2,7 @@ import { useId, useMemo, useRef, useState, type FormEvent, type ReactNode } from
 import { useConsulta } from '../app/hooks'
 import type { DatosProductoNuevo } from '../datos/StockRepository'
 import type { Categoria } from '../datos/tipos'
+import { formatearEntradaMesAnio, leerMesAnio, yaCaducado } from '../dominio/caducidad'
 import { ErrorStock, mensajeDeError } from '../dominio/errores'
 import {
   ORDEN_CAMPOS,
@@ -15,12 +16,13 @@ import './FormularioProducto.css'
 
 /**
  * Campos que llevan texto de ayuda (para su aria-describedby) y de qué campo es esa ayuda: el
- * stock inicial y su lote comparten la nota que va debajo de los dos.
+ * stock inicial, su lote y su caducidad comparten la nota que va debajo de los tres.
  */
 const AYUDA_DE_CAMPO: Partial<Record<CampoProducto, CampoProducto>> = {
   codigo: 'codigo',
   stockInicial: 'stockInicial',
   loteInicial: 'stockInicial',
+  caducidadInicial: 'caducidadInicial',
 }
 
 const UNIDADES_HABITUALES = ['uds', 'bot.', 'bid.', 'racks', 'cajas', 'bolsas', 'paq.', 'L', 'kg', 'g']
@@ -41,6 +43,7 @@ export function FormularioProducto({ valoresIniciales, esAlta, textoGuardar, alG
   const [errores, setErrores] = useState<ErroresProducto>({})
   const [errorGeneral, setErrorGeneral] = useState<string | null>(null)
   const [guardando, setGuardando] = useState(false)
+  const [ahora] = useState(() => new Date())
   const idFormulario = useId()
   const prefijo = useId()
   const campos = useRef(new Map<CampoProducto, HTMLElement>())
@@ -163,6 +166,11 @@ export function FormularioProducto({ valoresIniciales, esAlta, textoGuardar, alG
     if (!esAlta) return 'Si lo cambias, comprueba que no esté repetido.'
     return codigoAutomatico ? `Si lo dejas vacío será ${codigoAutomatico}.` : undefined
   }, [esAlta, codigoAutomatico])
+  const caducidadEscrita = leerMesAnio(valores.caducidadInicial)
+  const ayudaCaducidad =
+    caducidadEscrita.estado === 'valido' && yaCaducado(caducidadEscrita.caducidad, ahora)
+      ? 'Ojo: esa fecha ya ha pasado.'
+      : 'Mes y año de la etiqueta.'
 
   return (
     <>
@@ -298,19 +306,19 @@ export function FormularioProducto({ valoresIniciales, esAlta, textoGuardar, alG
 
         {esAlta && (
           <>
+            {bloqueCampo({
+              campo: 'stockInicial',
+              etiqueta: 'Stock inicial',
+              children: (
+                <input
+                  {...propsCampo('stockInicial')}
+                  className="campo__entrada campo__entrada--mono formulario-producto__corto"
+                  inputMode="decimal"
+                  autoComplete="off"
+                />
+              ),
+            })}
             <div className="formulario-producto__pareja">
-              {bloqueCampo({
-                campo: 'stockInicial',
-                etiqueta: 'Stock inicial',
-                children: (
-                  <input
-                    {...propsCampo('stockInicial')}
-                    className="campo__entrada campo__entrada--mono"
-                    inputMode="decimal"
-                    autoComplete="off"
-                  />
-                ),
-              })}
               {bloqueCampo({
                 campo: 'loteInicial',
                 etiqueta: 'Lote (opcional)',
@@ -324,9 +332,28 @@ export function FormularioProducto({ valoresIniciales, esAlta, textoGuardar, alG
                   />
                 ),
               })}
+              {bloqueCampo({
+                campo: 'caducidadInicial',
+                etiqueta: 'Caducidad (opcional)',
+                ayuda: ayudaCaducidad,
+                children: (
+                  <input
+                    {...propsCampo('caducidadInicial')}
+                    onChange={(e) => {
+                      const borrando = e.target.value.length < valores.caducidadInicial.length
+                      cambiar('caducidadInicial', formatearEntradaMesAnio(e.target.value, borrando))
+                    }}
+                    className="campo__entrada campo__entrada--mono"
+                    placeholder="MM / AAAA"
+                    inputMode="numeric"
+                    autoComplete="off"
+                  />
+                ),
+              })}
             </div>
             <p id={`${prefijo}-stockInicial-ayuda`} className="campo__ayuda formulario-producto__nota">
-              Lo que hay ahora en el armario y, si lo sabes, su lote. Queda en el historial como ajuste «Stock inicial».
+              Lo que hay ahora en el armario y, si los sabes, su lote y su caducidad: quedan en el historial de lotes del
+              producto y la caducidad avisa como la de cualquier entrada.
             </p>
           </>
         )}

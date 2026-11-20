@@ -42,8 +42,11 @@ Con esos números se ajustan el umbral (ahora 0,6) y la temperatura (0,05).
 - [ ] Retirar con foto: confirmar, y «Deshacer» en el aviso.
 - [ ] Registrar una entrada con lote y caducidad (mes/año).
 - [ ] Anular el último movimiento desde la ficha.
-- [ ] Dar de alta un producto de prueba con stock inicial y lote: el lote sale en el historial de la
-      ficha («Ajuste · … · lote … · Stock inicial»). Después, eliminarlo.
+- [ ] Dar de alta un producto de prueba con stock inicial, lote y caducidad: en la ficha sale en
+      «Lotes» (como «Stock inicial») y, si caduca pronto, en Caducidades. Después, eliminarlo.
+- [ ] Ficha de un reactivo con varias entradas: «Lotes» enseña cada lote con su caducidad y estado.
+- [ ] Fotos de referencia nuevas: al tocarlas en la galería de la ficha se ven nítidas. En modo
+      diagnóstico, tras una foto en Retirar, apunta la línea «cámara … · recorte … · foto …».
 - [ ] A pedir: «Marcar pedido», compartir la lista por WhatsApp o correo, y el CSV.
 - [ ] Al registrar la entrada de un producto pedido, sale de «Pedidos en curso».
 

@@ -5,7 +5,7 @@ import { useConsulta } from '../app/hooks'
 import { volver } from '../app/navegacion'
 import { MAX_FOTOS_POR_PRODUCTO } from '../datos/StockRepository'
 import { mensajeDeError } from '../dominio/errores'
-import { crearMiniatura } from '../reconocimiento/camara'
+import { crearMiniatura, type FotoCapturada } from '../reconocimiento/camara'
 import { FOTOS_MINIMAS, FOTOS_RECOMENDADAS, objetivoFotos } from '../reconocimiento/fotos'
 import { cargarModelo, useEstadoModelo } from '../reconocimiento/modelo'
 import { PantallaCompleta } from '../ui/Pantalla'
@@ -30,7 +30,7 @@ export function FotosReferencia({ id }: { id: string }) {
   const objetivo = objetivoFotos(total)
 
   const alCapturar = useCallback(
-    async (imagen: HTMLCanvasElement) => {
+    async ({ foto: imagen }: FotoCapturada) => {
       setOcupado(true)
       try {
         const extractor = await cargarModelo()
@@ -66,7 +66,7 @@ export function FotosReferencia({ id }: { id: string }) {
       <VisorCamara
         titulo={datos?.producto?.nombre ?? 'Fotos de referencia'}
         alCerrar={terminar}
-        alCapturar={(imagen) => void alCapturar(imagen)}
+        alCapturar={(captura) => void alCapturar(captura)}
         ocupado={ocupado || modelo.estado === 'error' || lleno}
         textoDisparador="Hacer foto de referencia"
         estado={

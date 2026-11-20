@@ -30,8 +30,12 @@ export function limpiarDatosProducto(datos: DatosProductoNuevo): DatosProductoNu
   const codigo = textoOpcional(datos.codigo)
   const stockInicial = exigirNumero(datos.stockInicial, 0, 'El stock inicial no puede ser negativo.')
   const loteInicial = textoOpcional(datos.loteInicial)
-  if (loteInicial !== undefined && stockInicial <= 0) {
-    throw new ErrorStock('datos-no-validos', 'El lote va con el stock inicial: indica cuántas unidades hay.')
+  const caducidadInicial = textoOpcional(datos.caducidadInicial)
+  if (caducidadInicial !== undefined && !/^\d{4}-\d{2}-\d{2}$/.test(caducidadInicial)) {
+    throw new ErrorStock('datos-no-validos', 'La caducidad tiene que ser una fecha (AAAA-MM-DD).')
+  }
+  if ((loteInicial !== undefined || caducidadInicial !== undefined) && stockInicial <= 0) {
+    throw new ErrorStock('datos-no-validos', 'El lote y la caducidad van con el stock inicial: indica cuántas unidades hay.')
   }
   return sinIndefinidos({
     codigo: codigo === undefined ? undefined : normalizarCodigo(codigo),
@@ -46,6 +50,7 @@ export function limpiarDatosProducto(datos: DatosProductoNuevo): DatosProductoNu
     notas: textoOpcional(datos.notas),
     stockInicial,
     loteInicial,
+    caducidadInicial,
   })
 }
 

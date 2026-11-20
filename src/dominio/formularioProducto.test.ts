@@ -42,25 +42,46 @@ describe('validarFormularioProducto', () => {
     expect(resultado.valido && 'cantidadPedidoSugerida' in resultado.datos).toBe(false)
   })
 
-  it('el lote del stock inicial es opcional y va con el stock inicial', () => {
-    const conLote = validarFormularioProducto({ ...puntas, loteInicial: ' K4920113 ' }, { esAlta: true })
-    expect(conLote.valido && conLote.datos).toMatchObject({ stockInicial: 12, loteInicial: 'K4920113' })
+  it('lote y caducidad del stock inicial son opcionales; la caducidad se escribe como mes/año', () => {
+    const conLote = validarFormularioProducto(
+      { ...puntas, loteInicial: ' K4920113 ', caducidadInicial: '05 / 2028' },
+      { esAlta: true },
+    )
+    expect(conLote.valido && conLote.datos).toMatchObject({
+      stockInicial: 12,
+      loteInicial: 'K4920113',
+      caducidadInicial: '2028-05-31',
+    })
     const sinLote = validarFormularioProducto(puntas, { esAlta: true })
     expect(sinLote.valido && 'loteInicial' in sinLote.datos).toBe(false)
+    expect(sinLote.valido && 'caducidadInicial' in sinLote.datos).toBe(false)
 
-    const sinStock = validarFormularioProducto({ ...puntas, stockInicial: '0', loteInicial: 'K1' }, { esAlta: true })
-    expect(sinStock).toEqual({
-      valido: false,
-      errores: { loteInicial: 'El lote va con el stock inicial: escribe cuántas unidades hay.' },
-    })
-    // Si el stock inicial ya está mal, se marca ese campo y no el lote.
-    const stockMal = validarFormularioProducto({ ...puntas, stockInicial: 'x', loteInicial: 'K1' }, { esAlta: true })
-    expect(!stockMal.valido && Object.keys(stockMal.errores)).toEqual(['stockInicial'])
+    const malEscrita = validarFormularioProducto({ ...puntas, caducidadInicial: '13/2028' }, { esAlta: true })
+    expect(malEscrita).toEqual({ valido: false, errores: { caducidadInicial: 'El mes tiene que estar entre 01 y 12.' } })
   })
 
-  it('en la edición no hay lote inicial', () => {
-    const resultado = validarFormularioProducto({ ...puntas, codigo: 'F-001', loteInicial: 'K1' }, { esAlta: false })
+  it('sin stock inicial no hay a qué poner lote ni caducidad', () => {
+    const mensaje = 'Para guardar el lote o la caducidad, escribe cuántas unidades hay.'
+    expect(validarFormularioProducto({ ...puntas, stockInicial: '0', loteInicial: 'K1' }, { esAlta: true })).toEqual({
+      valido: false,
+      errores: { stockInicial: mensaje },
+    })
+    expect(validarFormularioProducto({ ...puntas, stockInicial: '', caducidadInicial: '03/29' }, { esAlta: true })).toEqual({
+      valido: false,
+      errores: { stockInicial: mensaje },
+    })
+    // Si el stock inicial ya está mal, se queda su propio error.
+    const stockMal = validarFormularioProducto({ ...puntas, stockInicial: 'x', loteInicial: 'K1' }, { esAlta: true })
+    expect(!stockMal.valido && stockMal.errores).toEqual({ stockInicial: 'Tiene que ser un número.' })
+  })
+
+  it('en la edición no hay lote ni caducidad inicial', () => {
+    const resultado = validarFormularioProducto(
+      { ...puntas, codigo: 'F-001', loteInicial: 'K1', caducidadInicial: 'xx' },
+      { esAlta: false },
+    )
     expect(resultado.valido && 'loteInicial' in resultado.datos).toBe(false)
+    expect(resultado.valido && 'caducidadInicial' in resultado.datos).toBe(false)
   })
 
   it('marca cada campo que falta o no es un número', () => {

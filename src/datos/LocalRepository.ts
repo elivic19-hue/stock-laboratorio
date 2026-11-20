@@ -99,13 +99,16 @@ export class LocalRepository implements StockRepository {
       })
       await db.productos.add(nuevo)
       if (limpios.stockInicial > 0) {
+        // Con lote o caducidad es una entrada (cuenta en Caducidades y en el historial de lotes).
+        const conLote = limpios.loteInicial !== undefined || limpios.caducidadInicial !== undefined
         await db.movimientos.add({
           id: nuevoId(),
           productoId: nuevo.id,
-          tipo: 'ajuste',
+          tipo: conLote ? 'entrada' : 'ajuste',
           cantidad: limpios.stockInicial,
           stockResultante: limpios.stockInicial,
           ...(limpios.loteInicial ? { lote: limpios.loteInicial } : {}),
+          ...(limpios.caducidadInicial ? { caducidad: limpios.caducidadInicial } : {}),
           nota: 'Stock inicial',
           usuario: quien,
           fecha: ahora,

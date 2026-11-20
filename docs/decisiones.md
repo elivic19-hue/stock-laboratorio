@@ -403,7 +403,40 @@ bloqueado por los permisos. Lo comprobado:
   procesador resulta lento en algún móvil, la alternativa sería el motor WASM de TensorFlow.js
   (dependencia nueva: hay que preguntarlo).
 
-**Lote en el alta:** campo «Lote (opcional)» junto a «Stock inicial». Va en el movimiento de ajuste
-«Stock inicial», porque los lotes se guardan por movimiento (§4), y sale en el historial de la ficha.
-Sin stock inicial no hay a qué ponérselo: se marca el campo. No se pidió la caducidad del stock
-inicial y no se añade (las alarmas de caducidad siguen saliendo de las entradas).
+**Lote en el alta:** campo «Lote (opcional)» junto a «Stock inicial» (ampliado justo después con la
+caducidad: ver abajo).
+
+### Fotos con mejor calidad, historial de lotes y caducidad en el alta (20/11/2026)
+
+Peticiones del usuario: «las fotos salen en mala calidad, pero no creo que sea cosa de la cámara del
+móvil», «un historial de lotes para cada reactivo» y «en el alta, la opción de añadir lote y
+caducidad».
+
+**Calidad de las fotos.** Tenía razón: era la app. Todo lo que se veía después de la foto salía del
+recorte de 224×224 (la entrada del modelo); la miniatura se guardaba a 160 px y al ampliarla en la
+ficha (320 px de pantalla, unos 960 píxeles reales) se estiraba 6 veces. Además se pedía a la cámara
+1280×1280 «ideal», con lo que muchos móviles daban 720p y el marco se quedaba en unos 420 px.
+
+- Se pide 1920×1080 (en un móvil en vertical el marco ocupa unos 630 px de la imagen) y enfoque
+  continuo si el móvil lo permite.
+- El marco se recorta a su resolución, hasta 640 px, sin ampliar nunca. Esa foto es la que se enseña
+  fija en Retirar y la que se guarda (JPEG de calidad 0,85; campo `miniatura` de §4, que deja de ser
+  de 160 px). El modelo recibe su versión reducida a 224×224 con el filtro de calidad del navegador.
+- Recalcular los vectores desde estas fotos da lo mismo que la foto original. Las fotos ya hechas
+  siguen con su tamaño (160 o 224 px): para verlas nítidas hay que repetirlas.
+- El modo diagnóstico de Retirar enseña la resolución de la cámara, el recorte y el tamaño de la foto.
+- Cada foto ocupa más (unos 40-80 KB): con 20 productos × 10 fotos son unos 10-15 MB en Firestore y
+  en la copia de seguridad, dentro del plan gratuito.
+
+**Caducidad en el alta.** «Caducidad (opcional)», mes/año como en «Registrar entrada», junto al lote y
+debajo del stock inicial. Si lleva lote o caducidad, el stock inicial se guarda como **entrada**
+(nota «Stock inicial») en vez de como ajuste: así cuenta en «Caducan <30 d», Caducidades, la banda de
+la ficha, el aviso diario y se puede desechar o dar por agotado, sin tocar esa lógica (que es de
+entradas). Sin lote ni caducidad sigue siendo un ajuste, como hasta ahora. Sin stock inicial no hay a
+qué ponérselos: se marca el stock inicial.
+
+**Historial de lotes.** Nueva sección «Lotes» en la ficha, antes de «Movimientos»: cada entrada con
+lote o caducidad (también el stock inicial), de la más reciente a la más antigua, con su caducidad,
+fecha, cantidad, quién y su estado: caducado, caduca pronto (30 días, como el resumen), desechado o
+agotado (con quién y cuándo). Siguiendo la duda 7b, no se calcula cuánto queda de cada lote. Se ven
+10 y un botón para verlos todos.

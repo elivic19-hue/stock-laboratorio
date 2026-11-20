@@ -1,7 +1,13 @@
 import { TAMANO_ENTRADA } from './modelo'
-import { cuadradoCentrado, recorteDelMarco, type Rect } from './recorte'
+import { cuadradoCentrado, ladoDeFoto, recorteDelMarco, type Rect } from './recorte'
 
-/** Cámara trasera y recorte del marco (CLAUDE.md §5, paso 1). */
+/**
+ * Cámara trasera y recorte del marco (CLAUDE.md §5, paso 1).
+ *
+ * Desde el 20/11/2026 (docs/decisiones.md, «Fotos con mejor calidad»): lo que hay dentro del marco
+ * se recorta a buena resolución (hasta LADO_FOTO) para guardarlo y enseñarlo; el modelo recibe su
+ * versión de 224×224. Antes todo salía del recorte de 224 px y las fotos se veían borrosas.
+ */
 
 export type ErrorCamara = 'sin-permiso' | 'sin-camara' | 'no-segura' | 'ocupada' | 'desconocido'
 
@@ -22,6 +28,18 @@ export const MENSAJES_CAMARA: Record<ErrorCamara, string> = {
   desconocido: 'No se pudo abrir la cámara.',
 }
 
+/** Lado máximo de la foto que se guarda y se enseña (al ampliarla en la ficha ocupa casi la pantalla). */
+export const LADO_FOTO = 640
+
+export interface FotoCapturada {
+  /** Lo que había dentro del marco (o el cuadrado central de una foto elegida), hasta LADO_FOTO. */
+  foto: HTMLCanvasElement
+  /** Resolución de la cámara, o null si la foto se eligió de la galería. Para el modo diagnóstico. */
+  camara: { ancho: number; alto: number } | null
+  /** Lado del cuadrado recortado, en píxeles de la imagen original. Para el modo diagnóstico. */
+  recorte: number
+}
+
 export interface Camara {
   stream: MediaStream
   /** El dispositivo deja encender la linterna. */
@@ -30,8 +48,9 @@ export interface Camara {
   cerrar(): void
 }
 
-interface CapacidadesConLinterna extends MediaTrackCapabilities {
+interface CapacidadesCamara extends MediaTrackCapabilities {
   torch?: boolean
+  focusMode?: string[]
 }
 
 export async function abrirCamara(): Promise<Camara> {
@@ -39,9 +58,11 @@ export async function abrirCamara(): Promise<Camara> {
   if (!navigator.mediaDevices?.getUserMedia) throw new FalloCamara('sin-camara')
   let stream: MediaStream
   try {
+    // 1080p: el marco ocupa unos 700-800 px de la imagen, de sobra para una foto de 640 px.
+    // (Con 1280×1280 «ideal» muchos móviles daban 1280×720 y el marco se quedaba en unos 500 px.)
     stream = await navigator.mediaDevices.getUserMedia({
       audio: false,
-      video: { facingMode: { ideal: 'environment' }, width: { ideal: 1280 }, height: { ideal: 1280 } },
+      video: { facingMode: { ideal: 'environment' }, width: { ideal: 1920 }, height: { ideal: 1080 } },
     })
   } catch (error) {
     const nombre = error instanceof DOMException ? error.name : ''
@@ -51,7 +72,13 @@ export async function abrirCamara(): Promise<Camara> {
     throw new FalloCamara('desconocido')
   }
   const [pista] = stream.getVideoTracks()
-  const capacidades = (pista?.getCapabilities?.() ?? {}) as CapacidadesConLinterna
+  const capacidades = (pista?.getCapabilities?.() ?? {}) as CapacidadesCamara
+  if (capacidades.focusMode?.includes('continuous')) {
+    // Enfoque continuo para que el producto, de cerca, salga nítido (si el móvil lo permite).
+    void pista
+      ?.applyConstraints({ advanced: [{ focusMode: 'continuous' } as MediaTrackConstraintSet] })
+      .catch(() => undefined)
+  }
   return {
     stream,
     tieneLinterna: capacidades.torch === true,
@@ -64,20 +91,20 @@ export async function abrirCamara(): Promise<Camara> {
   }
 }
 
-/** Dibuja el cuadrado indicado de la imagen en un lienzo de 224×224 (la entrada del modelo). */
-export function recortarA224(fuente: CanvasImageSource, recorte: Rect): HTMLCanvasElement {
+/** Dibuja el cuadrado indicado de la imagen en un lienzo cuadrado de `lado` píxeles. */
+export function recortarCuadrado(fuente: CanvasImageSource, recorte: Rect, lado: number): HTMLCanvasElement {
   const lienzo = document.createElement('canvas')
-  lienzo.width = TAMANO_ENTRADA
-  lienzo.height = TAMANO_ENTRADA
+  lienzo.width = lado
+  lienzo.height = lado
   const ctx = lienzo.getContext('2d')
   if (!ctx) throw new Error('El navegador no permite dibujar en un lienzo.')
   ctx.imageSmoothingQuality = 'high'
-  ctx.drawImage(fuente, recorte.x, recorte.y, recorte.lado, recorte.lado, 0, 0, TAMANO_ENTRADA, TAMANO_ENTRADA)
+  ctx.drawImage(fuente, recorte.x, recorte.y, recorte.lado, recorte.lado, 0, 0, lado, lado)
   return lienzo
 }
 
-/** Lo que se ve dentro del marco del visor, a 224×224. */
-export function capturarMarco(video: HTMLVideoElement, marco: HTMLElement): HTMLCanvasElement {
+/** Lo que se ve dentro del marco del visor, a la mejor resolución útil (hasta LADO_FOTO). */
+export function capturarMarco(video: HTMLVideoElement, marco: HTMLElement): FotoCapturada {
   const vista = video.getBoundingClientRect()
   const caja = marco.getBoundingClientRect()
   const recorte = recorteDelMarco({
@@ -87,42 +114,45 @@ export function capturarMarco(video: HTMLVideoElement, marco: HTMLElement): HTML
     vistaAlto: vista.height,
     marco: { x: caja.left - vista.left, y: caja.top - vista.top, lado: Math.min(caja.width, caja.height) },
   })
-  return recortarA224(video, recorte)
+  return {
+    foto: recortarCuadrado(video, recorte, ladoDeFoto(recorte.lado, LADO_FOTO, TAMANO_ENTRADA)),
+    camara: { ancho: video.videoWidth, alto: video.videoHeight },
+    recorte: Math.round(recorte.lado),
+  }
 }
 
-/** Foto elegida de la galería (si no hay cámara): el cuadrado central, a 224×224. */
-export async function capturarArchivo(archivo: File): Promise<HTMLCanvasElement> {
+/** Foto elegida de la galería (si no hay cámara): el cuadrado central. */
+export async function capturarArchivo(archivo: File): Promise<FotoCapturada> {
   const imagen = await createImageBitmap(archivo, { imageOrientation: 'from-image' })
   try {
-    return recortarA224(imagen, cuadradoCentrado(imagen.width, imagen.height))
+    const recorte = cuadradoCentrado(imagen.width, imagen.height)
+    return {
+      foto: recortarCuadrado(imagen, recorte, ladoDeFoto(recorte.lado, LADO_FOTO, TAMANO_ENTRADA)),
+      camara: null,
+      recorte: Math.round(recorte.lado),
+    }
   } finally {
     imagen.close()
   }
 }
 
 /**
- * Miniatura JPEG para la galería (§4). Desde el 20/11/2026 es de 224 px, el tamaño de entrada del
- * modelo, y no de 160: así se puede recalcular el vector de la foto desde la miniatura sin perder
- * acierto (con 160 px se pierden unos 3 puntos). Ver docs/decisiones.md.
+ * Foto JPEG que se guarda con cada referencia (campo `miniatura` de §4): la de la galería, la que se
+ * amplía y la que sirve para recalcular su vector. Hasta LADO_FOTO (antes, 160 px).
  */
-export function crearMiniatura(lienzo: HTMLCanvasElement, lado = TAMANO_ENTRADA): Promise<Blob> {
-  const pequeno = document.createElement('canvas')
-  pequeno.width = lado
-  pequeno.height = lado
-  const ctx = pequeno.getContext('2d')
-  if (!ctx) return Promise.reject(new Error('El navegador no permite dibujar en un lienzo.'))
-  ctx.imageSmoothingQuality = 'high'
-  ctx.drawImage(lienzo, 0, 0, lado, lado)
+export function crearMiniatura(lienzo: HTMLCanvasElement, lado = LADO_FOTO): Promise<Blob> {
+  const destino = Math.min(lado, lienzo.width)
+  const salida = destino === lienzo.width ? lienzo : recortarCuadrado(lienzo, { x: 0, y: 0, lado: lienzo.width }, destino)
   return new Promise((resolver, rechazar) => {
-    pequeno.toBlob((blob) => (blob ? resolver(blob) : rechazar(new Error('No se pudo crear la miniatura.'))), 'image/jpeg', 0.85)
+    salida.toBlob((blob) => (blob ? resolver(blob) : rechazar(new Error('No se pudo guardar la foto.'))), 'image/jpeg', 0.85)
   })
 }
 
-/** Miniatura guardada → lienzo de 224×224, para recalcular su vector. */
+/** Foto guardada → lienzo de 224×224, para recalcular su vector. */
 export async function lienzoDeMiniatura(miniatura: Blob): Promise<HTMLCanvasElement> {
   const imagen = await createImageBitmap(miniatura)
   try {
-    return recortarA224(imagen, cuadradoCentrado(imagen.width, imagen.height))
+    return recortarCuadrado(imagen, cuadradoCentrado(imagen.width, imagen.height), TAMANO_ENTRADA)
   } finally {
     imagen.close()
   }

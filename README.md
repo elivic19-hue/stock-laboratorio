@@ -120,6 +120,20 @@ Con un solo producto con fotos, la app no propone nada como seguro («No estoy s
 qué compararlo y cualquier foto se le parecería. Tras cada foto, la hoja dice qué productos no se
 pueden reconocer por no tener fotos. Las fotos negras o sin detalle se rechazan al hacerlas.
 
+Las fotos se guardan con la resolución del marco (hasta 640 px) y el modelo usa su versión de
+224×224. Las hechas antes del 20/11/2026 se guardaron a 160 o 224 px y se ven borrosas al
+ampliarlas: para verlas bien, repítelas. En modo diagnóstico, Retirar enseña la resolución de la
+cámara y el tamaño de la foto.
+
+## Lotes y caducidades
+
+- Al **dar de alta** un producto se pueden poner el lote y la caducidad (mes/año) de lo que hay en el
+  armario. Al **registrar una entrada**, lo mismo para lo que llega.
+- La ficha de cada producto tiene su **historial de lotes**: cada lote con su caducidad, cuándo
+  entró, cuánto y quién, y si está caducado, caduca pronto, se desechó o ya no queda.
+- **Caducidades** (desde el resumen de Stock) reúne los lotes caducados y los que caducan en menos de
+  30 días, para desecharlos o marcar que ya no queda.
+
 Los pesos del modelo (14 MB) están en `public/models/` y la app los guarda para funcionar sin
 conexión desde la primera vez. Para volver a descargarlos: `npm run modelo`. Si cambian el modelo o
 las imágenes de prueba (`src/reconocimiento/patrones.ts`), hay que regenerar los vectores correctos de

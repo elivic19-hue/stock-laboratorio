@@ -27,6 +27,7 @@ import { CambioStock } from '../ui/CambioStock'
 import { Dialogo } from '../ui/Dialogo'
 import { Icono } from '../ui/Icono'
 import { PantallaCompleta } from '../ui/Pantalla'
+import { SeccionLotes } from './FichaLotes'
 import './FichaProducto.css'
 
 const MOVIMIENTOS_INICIALES = 15
@@ -180,6 +181,8 @@ export function FichaProducto({ id }: { id: string }) {
                 <p className="ficha-producto__notas">{producto.notas}</p>
               </section>
             )}
+
+            <SeccionLotes producto={producto} movimientos={datos.movimientos} ahora={datos.ahora} />
 
             <section className="ficha-movimientos" aria-labelledby="ficha-movimientos">
               <h2 id="ficha-movimientos" className="seccion__titulo">

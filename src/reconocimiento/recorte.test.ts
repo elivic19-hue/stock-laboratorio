@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { cuadradoCentrado, recorteDelMarco } from './recorte'
+import { cuadradoCentrado, ladoDeFoto, recorteDelMarco } from './recorte'
 
 describe('recorteDelMarco', () => {
   it('cámara apaisada en un visor vertical: se recorta por los lados', () => {
@@ -49,5 +49,13 @@ describe('cuadradoCentrado', () => {
   it('toma el lado corto y lo centra', () => {
     expect(cuadradoCentrado(4000, 3000)).toEqual({ x: 500, y: 0, lado: 3000 })
     expect(cuadradoCentrado(300, 500)).toEqual({ x: 0, y: 100, lado: 300 })
+  })
+})
+
+describe('ladoDeFoto', () => {
+  it('guarda el recorte a su tamaño, sin pasar de 640 ni bajar de 224', () => {
+    expect(ladoDeFoto(768.4, 640, 224)).toBe(640) // cámara 1080p: se reduce
+    expect(ladoDeFoto(512.2, 640, 224)).toBe(512) // cámara 720p: tal cual, sin ampliar
+    expect(ladoDeFoto(150, 640, 224)).toBe(224) // muy poca resolución: al menos lo que usa el modelo
   })
 })

@@ -29,7 +29,10 @@ export interface Embedding {
 }
 
 export interface Extractor {
-  /** Vector de lo que hay en el lienzo (224×224). Lanza ErrorStock si la foto es negra o sin detalle. */
+  /**
+   * Vector de lo que hay en el lienzo (de cualquier tamaño: se reduce a 224×224). Lanza ErrorStock si
+   * la foto es negra o sin detalle.
+   */
   embedding(imagen: HTMLCanvasElement): Promise<Embedding>
   /** «webgl», «wasm» o «cpu». */
   motor: string
@@ -129,15 +132,32 @@ async function crearExtractor(): Promise<Extractor> {
     motor,
     async embedding(imagen) {
       const t0 = performance.now()
-      const ctx = imagen.getContext('2d')
+      const entrada = aTamanoDeEntrada(imagen)
+      const ctx = entrada.getContext('2d')
       if (!ctx) throw new Error('El navegador no permite leer el lienzo.')
-      const pixeles = ctx.getImageData(0, 0, imagen.width, imagen.height)
+      const pixeles = ctx.getImageData(0, 0, TAMANO_ENTRADA, TAMANO_ENTRADA)
       const revision = revisarPixeles(pixeles.data)
       if (revision !== 'bien') throw new ErrorStock('foto-no-valida', MENSAJES_PIXELES[revision])
       const vector = await calcular(pixeles)
       return { vector, ms: performance.now() - t0 }
     },
   }
+}
+
+/**
+ * La foto (hasta 640 px) reducida a la entrada del modelo con el filtro de calidad del navegador.
+ * MobileNet también la reduciría, pero con un bilineal simple que en una reducción grande pierde detalle.
+ */
+function aTamanoDeEntrada(imagen: HTMLCanvasElement): HTMLCanvasElement {
+  if (imagen.width === TAMANO_ENTRADA && imagen.height === TAMANO_ENTRADA) return imagen
+  const lienzo = document.createElement('canvas')
+  lienzo.width = TAMANO_ENTRADA
+  lienzo.height = TAMANO_ENTRADA
+  const ctx = lienzo.getContext('2d')
+  if (!ctx) throw new Error('El navegador no permite dibujar en un lienzo.')
+  ctx.imageSmoothingQuality = 'high'
+  ctx.drawImage(imagen, 0, 0, TAMANO_ENTRADA, TAMANO_ENTRADA)
+  return lienzo
 }
 
 /** Carga el modelo (solo la primera vez) y lo devuelve. Si falla, el siguiente intento vuelve a probar. */

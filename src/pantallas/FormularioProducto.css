@@ -42,3 +42,7 @@
 .formulario-producto__nota {
   margin-top: -8px;
 }
+
+.formulario-producto__corto {
+  max-width: calc(50% - 6px);
+}

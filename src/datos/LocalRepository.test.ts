@@ -65,14 +65,42 @@ describe('productos', () => {
     expect(inicial && 'lote' in inicial).toBe(false)
   })
 
-  it('guarda el lote del stock inicial en su movimiento, y no lo admite sin stock', async () => {
-    const p = await repo.crearProducto({ ...etanol, stockInicial: 2, loteInicial: ' K4920113 ' }, 'JA')
+  it('con lote o caducidad, el stock inicial es una entrada de ese lote (cuenta en Caducidades)', async () => {
+    const p = await repo.crearProducto(
+      { ...etanol, stockInicial: 2, loteInicial: ' K4920113 ', caducidadInicial: '2028-05-31' },
+      'JA',
+    )
+    expect(p.stockActual).toBe(2)
     const [inicial] = await repo.listarMovimientos({ productoId: p.id })
-    expect(inicial).toMatchObject({ tipo: 'ajuste', cantidad: 2, lote: 'K4920113', nota: 'Stock inicial' })
+    expect(inicial).toMatchObject({
+      tipo: 'entrada',
+      cantidad: 2,
+      stockResultante: 2,
+      lote: 'K4920113',
+      caducidad: '2028-05-31',
+      nota: 'Stock inicial',
+    })
+    // Al ser una entrada con caducidad, se puede cerrar como cualquier lote.
+    await repo.cerrarLote(inicial?.id ?? '', { como: 'agotado', usuario: 'JA' })
+    expect((await repo.listarMovimientos({ productoId: p.id }))[0]?.loteCerrado).toMatchObject({ como: 'agotado' })
+
+    const soloCaducidad = await repo.crearProducto({ ...etanol, nombre: 'Acetona', stockInicial: 1, caducidadInicial: '2027-01-31' }, 'JA')
+    const [otra] = await repo.listarMovimientos({ productoId: soloCaducidad.id })
+    expect(otra).toMatchObject({ tipo: 'entrada', caducidad: '2027-01-31' })
+    expect(otra && 'lote' in otra).toBe(false)
+  })
+
+  it('lote y caducidad necesitan stock inicial y una fecha bien escrita', async () => {
+    await expect(repo.crearProducto({ ...etanol, stockInicial: 0, loteInicial: 'A1' }, 'JA')).rejects.toMatchObject({
+      codigo: 'datos-no-validos',
+    })
     await expect(
-      repo.crearProducto({ ...etanol, nombre: 'Acetona', stockInicial: 0, loteInicial: 'A1' }, 'JA'),
+      repo.crearProducto({ ...etanol, stockInicial: 0, caducidadInicial: '2028-05-31' }, 'JA'),
     ).rejects.toMatchObject({ codigo: 'datos-no-validos' })
-    expect(await repo.listarProductos()).toHaveLength(1)
+    await expect(
+      repo.crearProducto({ ...etanol, stockInicial: 3, caducidadInicial: '05/2028' }, 'JA'),
+    ).rejects.toMatchObject({ codigo: 'datos-no-validos' })
+    expect(await repo.listarProductos()).toHaveLength(0)
   })
 
   it('rechaza datos incompletos y no guarda nada', async () => {

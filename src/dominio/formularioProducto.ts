@@ -1,5 +1,6 @@
 import type { DatosProductoNuevo } from '../datos/StockRepository'
 import type { Categoria, Producto } from '../datos/tipos'
+import { leerMesAnio } from './caducidad'
 import { leerNumero, numeroParaCampo } from './numeros'
 
 /** Lo que hay escrito en el formulario de alta o edición (todo texto, como en los campos). */
@@ -17,6 +18,8 @@ export interface ValoresProducto {
   stockInicial: string
   /** Solo en el alta: lote de ese stock inicial (opcional). */
   loteInicial: string
+  /** Solo en el alta: caducidad de ese stock inicial, «MM / AAAA» (opcional). */
+  caducidadInicial: string
   notas: string
 }
 
@@ -36,6 +39,7 @@ export const VALORES_PRODUCTO_VACIOS: ValoresProducto = {
   cantidadPedidoSugerida: '',
   stockInicial: '0',
   loteInicial: '',
+  caducidadInicial: '',
   notas: '',
 }
 
@@ -52,6 +56,7 @@ export function valoresDeProducto(p: Producto): ValoresProducto {
     cantidadPedidoSugerida: numeroParaCampo(p.cantidadPedidoSugerida),
     stockInicial: numeroParaCampo(p.stockActual),
     loteInicial: '',
+    caducidadInicial: '',
     notas: p.notas ?? '',
   }
 }
@@ -69,6 +74,7 @@ export const ORDEN_CAMPOS: readonly CampoProducto[] = [
   'cantidadPedidoSugerida',
   'stockInicial',
   'loteInicial',
+  'caducidadInicial',
   'notas',
 ]
 
@@ -107,10 +113,13 @@ export function validarFormularioProducto(v: ValoresProducto, { esAlta }: { esAl
   const stockMinimo = numero('stockMinimo', { opcional: false })
   const cantidadPedidoSugerida = numero('cantidadPedidoSugerida', { opcional: true })
   const stockInicial = esAlta ? numero('stockInicial', { opcional: true }) : undefined
-  // El lote es el de lo que hay al darlo de alta: sin stock inicial no hay a qué ponérselo.
+  // Lote y caducidad son los de lo que hay al darlo de alta: sin stock inicial no hay a qué ponérselos.
   const loteInicial = esAlta ? v.loteInicial.trim() : ''
-  if (loteInicial && !errores.stockInicial && !(stockInicial !== undefined && stockInicial > 0)) {
-    errores.loteInicial = 'El lote va con el stock inicial: escribe cuántas unidades hay.'
+  const caducidad = esAlta ? leerMesAnio(v.caducidadInicial) : ({ estado: 'vacio' } as const)
+  if (caducidad.estado === 'no-valido') errores.caducidadInicial = caducidad.mensaje
+  const conLote = loteInicial !== '' || caducidad.estado !== 'vacio'
+  if (conLote && !errores.stockInicial && !(stockInicial !== undefined && stockInicial > 0)) {
+    errores.stockInicial = 'Para guardar el lote o la caducidad, escribe cuántas unidades hay.'
   }
 
   if (Object.keys(errores).length > 0) return { valido: false, errores }
@@ -129,6 +138,7 @@ export function validarFormularioProducto(v: ValoresProducto, { esAlta }: { esAl
       ...(v.notas.trim() ? { notas: v.notas.trim() } : {}),
       stockInicial: stockInicial ?? 0,
       ...(loteInicial ? { loteInicial } : {}),
+      ...(caducidad.estado === 'valido' ? { caducidadInicial: caducidad.caducidad } : {}),
     },
   }
 }
